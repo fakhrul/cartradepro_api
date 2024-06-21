@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Activity.cs" />
+    <Compile Remove="Area.cs" />
+    <Compile Remove="BaseDapper.cs" />
+    <Compile Remove="BleLocation.cs" />
+    <Compile Remove="Config.cs" />
+    <Compile Remove="Department.cs" />
+    <Compile Remove="Device.cs" />
+    <Compile Remove="DeviceLog.cs" />
+    <Compile Remove="DeviceType.cs" />
+    <Compile Remove="Emergency.cs" />
+    <Compile Remove="EmergencyUser.cs" />
+    <Compile Remove="FingerPrint.cs" />
+    <Compile Remove="FingerPrintDetail.cs" />
+    <Compile Remove="GeoFenceAreaItem.cs" />
+    <Compile Remove="GeoFenceByArea.cs" />
+    <Compile Remove="GeoFenceByMap.cs" />
+    <Compile Remove="GeoFenceCoordItem.cs" />
+    <Compile Remove="GeoFenceNotification.cs" />
+    <Compile Remove="GeoFenceRuleByArea.cs" />
+    <Compile Remove="GeoFenceRuleByAreaProfile.cs" />
+    <Compile Remove="GeoFenceRuleByMap.cs" />
+    <Compile Remove="GeoFenceRuleByMapProfile.cs" />
+    <Compile Remove="Level.cs" />
+    <Compile Remove="Location.cs" />
+    <Compile Remove="LocationLog.cs" />
+    <Compile Remove="Map.cs" />
+    <Compile Remove="MissingUser.cs" />
+    <Compile Remove="MovementHistory.cs" />
+    <Compile Remove="Performance.cs" />
+    <Compile Remove="Photo.cs" />
+    <Compile Remove="RainFall.cs" />
+    <Compile Remove="Schedule.cs" />
+    <Compile Remove="ServiceProvider.cs" />
+    <Compile Remove="Tenant.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="6.0.0" />
+  </ItemGroup>
+
+</Project>

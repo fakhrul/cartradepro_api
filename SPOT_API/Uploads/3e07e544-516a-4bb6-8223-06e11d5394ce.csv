@@ -1,0 +1,6 @@
+﻿Tenant Code,Map Code,Map Name,Location Code,Location Name,Level Code,Level Name,Area Code,Area Name,Finger Print,X,Y
+C1,M1,Map 1,BA,Block A,BBL1,Level 1,BBL1P,Pantry,BBL1-Pantry,20,10
+C1,M1,Map 1,BA,Block A,BBL1,Level 1,BBL1O,Office,BBL1-Office,10,10
+C1,M1,Map 1,BA,Block A,BBL2,Level 2,BBL2O,Office,BBL2-Office,20,10
+C1,M1,Map 1,BA,Block A,BBL2,Level 2,BBL2S,Surau,BBL2-Surau,20,10
+C1,M1,Map 1,BA,Block A,BBL2,Level 2,BBL2A,A,BBL2-A,20,10

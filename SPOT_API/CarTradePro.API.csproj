@@ -1,0 +1,126 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+    <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
+    <IsPackable>false</IsPackable>
+    <UserSecretsId>94c11659-5f40-4d5e-ae75-3bded0380669</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Authentication\**" />
+    <Compile Remove="Models\**" />
+    <Compile Remove="Persistence\**" />
+    <Compile Remove="Repository\**" />
+    <Content Remove="Authentication\**" />
+    <Content Remove="Models\**" />
+    <Content Remove="Persistence\**" />
+    <Content Remove="Repository\**" />
+    <EmbeddedResource Remove="Authentication\**" />
+    <EmbeddedResource Remove="Models\**" />
+    <EmbeddedResource Remove="Persistence\**" />
+    <EmbeddedResource Remove="Repository\**" />
+    <None Remove="Authentication\**" />
+    <None Remove="Models\**" />
+    <None Remove="Persistence\**" />
+    <None Remove="Repository\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoWrapper.Core" Version="4.5.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
+    <PackageReference Include="Dapper" Version="2.0.123" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Identity.Web" Version="1.20.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
+    <PackageReference Include="Novell.Directory.Ldap.NETStandard" Version="3.6.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.2.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\ActivitiesController.cs" />
+    <Compile Remove="Controllers\AdminWebhookController.cs" />
+    <Compile Remove="Controllers\AreasController.cs" />
+    <Compile Remove="Controllers\AuthenticateController.cs" />
+    <Compile Remove="Controllers\BeaconsController.cs" />
+    <Compile Remove="Controllers\BleLocationsController.cs" />
+    <Compile Remove="Controllers\DepartmentsController.cs" />
+    <Compile Remove="Controllers\DeviceLogsController.cs" />
+    <Compile Remove="Controllers\DevicesController.cs" />
+    <Compile Remove="Controllers\DeviceTypesController.cs" />
+    <Compile Remove="Controllers\EmergenciesController.cs" />
+    <Compile Remove="Controllers\EmergencyUsersController.cs" />
+    <Compile Remove="Controllers\FingerPrintDetailsController.cs" />
+    <Compile Remove="Controllers\FingerPrintsController.cs" />
+    <Compile Remove="Controllers\GeoFenceByAreasController.cs" />
+    <Compile Remove="Controllers\GeoFenceByMapsController.cs" />
+    <Compile Remove="Controllers\GeoFenceNotificationsController.cs" />
+    <Compile Remove="Controllers\GeoFenceRuleByAreasController.cs" />
+    <Compile Remove="Controllers\GeoFenceRuleByMapsController.cs" />
+    <Compile Remove="Controllers\GeoFenceRulesController.cs" />
+    <Compile Remove="Controllers\GeoFencesController.cs" />
+    <Compile Remove="Controllers\IotHubController.cs" />
+    <Compile Remove="Controllers\LevelsController.cs" />
+    <Compile Remove="Controllers\LocationLogsController.cs" />
+    <Compile Remove="Controllers\LocationsController.cs" />
+    <Compile Remove="Controllers\LoginsController.cs" />
+    <Compile Remove="Controllers\MapsController.cs" />
+    <Compile Remove="Controllers\MissingUsersController.cs" />
+    <Compile Remove="Controllers\MovementHistoriesController.cs" />
+    <Compile Remove="Controllers\PerformancesController.cs" />
+    <Compile Remove="Controllers\ProductivitiesController.cs" />
+    <Compile Remove="Controllers\SchedulesController.cs" />
+    <Compile Remove="Controllers\ServiceProvidersController.cs" />
+    <Compile Remove="Controllers\SpotBeaconController.cs" />
+    <Compile Remove="Controllers\SpotDevicesController.cs" />
+    <Compile Remove="Controllers\TenantController.cs" />
+    <Compile Remove="Controllers\TenantsController.cs" />
+    <Compile Remove="Controllers\TenantWebhookController.cs" />
+    <Compile Remove="Controllers\TestModelsController.cs" />
+    <Compile Remove="Controllers\TraceController.cs" />
+    <Compile Remove="Controllers\UserController.cs" />
+    <Compile Remove="Controllers\_DeviceLogsController.cs" />
+    <Compile Remove="Controllers\_FingerPrintsController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Uploads\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Application\Application.csproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Model\Model.csproj" />
+    <ProjectReference Include="..\Persistence\Persistence.csproj" />
+  </ItemGroup>
+
+
+
+</Project>
