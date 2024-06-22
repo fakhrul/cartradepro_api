@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240622115401_vehcileRemoveStockId")]
+    partial class vehcileRemoveStockId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1765,8 +1767,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("VehicleTypeId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("VehicleType")
+                        .HasColumnType("text");
 
                     b.Property<string>("Year")
                         .HasColumnType("text");
@@ -1776,8 +1778,6 @@ namespace Persistence.Migrations
                     b.HasIndex("BrandId");
 
                     b.HasIndex("ModelId");
-
-                    b.HasIndex("VehicleTypeId");
 
                     b.ToTable("Vehicles");
                 });
@@ -2438,15 +2438,9 @@ namespace Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ModelId");
 
-                    b.HasOne("SPOT_API.Models.VehicleType", "VehicleType")
-                        .WithMany()
-                        .HasForeignKey("VehicleTypeId");
-
                     b.Navigation("Brand");
 
                     b.Navigation("Model");
-
-                    b.Navigation("VehicleType");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.VehiclePhoto", b =>

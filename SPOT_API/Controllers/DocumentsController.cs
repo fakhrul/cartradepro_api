@@ -115,63 +115,63 @@ namespace SPOT_API.Controllers
         {
             return _context.Documents.Any(e => e.Id == id);
         }
-        [HttpPost("UploadImage"), DisableRequestSizeLimit]
-        public async Task<ActionResult<IEnumerable<DocumentDto>>> UploadImage()
-        {
-            try
-            {
-                var azureBlobConnection = _config.GetConnectionString("SpotFileStore");
-                List<DocumentDto> _imagesUrl = new List<DocumentDto>();
-                foreach (var file in Request.Form.Files)
-                {
+        //[HttpPost("UploadImage"), DisableRequestSizeLimit]
+        //public async Task<ActionResult<IEnumerable<DocumentDto>>> UploadImage()
+        //{
+        //    try
+        //    {
+        //        var azureBlobConnection = _config.GetConnectionString("SpotFileStore");
+        //        List<DocumentDto> _imagesUrl = new List<DocumentDto>();
+        //        foreach (var file in Request.Form.Files)
+        //        {
 
-                    if (file.Length > 0)
-                    {
-                        var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
-                        var extension = Path.GetExtension(fileName).Replace(".", "");
+        //            if (file.Length > 0)
+        //            {
+        //                var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+        //                var extension = Path.GetExtension(fileName).Replace(".", "");
 
-                        Guid fileId = Guid.NewGuid();
+        //                Guid fileId = Guid.NewGuid();
                         
-                        var fullName = fileId + "." + extension;
-                        var container = new BlobContainerClient(azureBlobConnection, "spot-dashboard");
-                        var createResponse = await container.CreateIfNotExistsAsync();
-                        if (createResponse != null && createResponse.GetRawResponse().Status == 201)
-                            await container.SetAccessPolicyAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
+        //                var fullName = fileId + "." + extension;
+        //                var container = new BlobContainerClient(azureBlobConnection, "spot-dashboard");
+        //                var createResponse = await container.CreateIfNotExistsAsync();
+        //                if (createResponse != null && createResponse.GetRawResponse().Status == 201)
+        //                    await container.SetAccessPolicyAsync(Azure.Storage.Blobs.Models.PublicAccessType.Blob);
 
-                        var blob = container.GetBlobClient(fullName);
-                        await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
-                        using (var fileStream = file.OpenReadStream())
-                        {
-                            await blob.UploadAsync(fileStream, new BlobHttpHeaders { ContentType = file.ContentType });
-                        }
+        //                var blob = container.GetBlobClient(fullName);
+        //                await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
+        //                using (var fileStream = file.OpenReadStream())
+        //                {
+        //                    await blob.UploadAsync(fileStream, new BlobHttpHeaders { ContentType = file.ContentType });
+        //                }
 
-                        Document doc = new Document
-                        {
-                            Id = fileId,
-                            Path = blob.Uri.ToString(),
-                            FileName = fullName,
-                            //Driver = "upload"
-                        };
-                        _context.Documents.Add(doc);
+        //                Document doc = new Document
+        //                {
+        //                    Id = fileId,
+        //                    Path = blob.Uri.ToString(),
+        //                    FileName = fullName,
+        //                    //Driver = "upload"
+        //                };
+        //                _context.Documents.Add(doc);
 
-                        _imagesUrl.Add(new DocumentDto
-                        {
-                            Id = fileId,
-                            Url = _config["ApiUrl"] + "/Documents/Image/" + fileId.ToString()
-                        });
-                        //levelObj.DocumentMapId = fileId;
-                        await _context.SaveChangesAsync();
-                        //}
-                    }
-                }
+        //                _imagesUrl.Add(new DocumentDto
+        //                {
+        //                    Id = fileId,
+        //                    Url = _config["ApiUrl"] + "/Documents/Image/" + fileId.ToString()
+        //                });
+        //                //levelObj.DocumentMapId = fileId;
+        //                await _context.SaveChangesAsync();
+        //                //}
+        //            }
+        //        }
 
-                return _imagesUrl;
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Internal server error: {ex}");
-            }
-        }
+        //        return _imagesUrl;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Internal server error: {ex}");
+        //    }
+        //}
 
         //[HttpPost("UploadImage"), DisableRequestSizeLimit]
         //public async Task<ActionResult<IEnumerable<DocumentDto>>> UploadImage()
@@ -289,35 +289,6 @@ namespace SPOT_API.Controllers
                 //return ms.ToArray();
             }
 
-            ////
-            //var folderName = "Uploads";
-            //var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
-            //if (!Directory.Exists(pathToSave))
-            //    Directory.CreateDirectory(pathToSave);
-
-            //var folder = new DirectoryInfo(pathToSave);
-
-            //var matcher = new Matcher();
-            //matcher.AddInclude(id.ToString() + "*");
-            //var result = matcher.Execute(new DirectoryInfoWrapper(folder));
-
-            //var file = result.Files.FirstOrDefault();
-
-            //if (file.Path != null)
-            //{
-            //    var filePath = Path.Combine(pathToSave, file.Path);
-
-            //    var provider = new FileExtensionContentTypeProvider();
-            //    if (!provider.TryGetContentType(filePath, out var contentType))
-            //    {
-            //        contentType = "application/octet-stream";
-            //    }
-            //    var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-
-            //    return File(bytes, contentType, Path.GetFileName(filePath));
-            //}
-
-
             return NotFound();
 
         }
@@ -429,6 +400,93 @@ namespace SPOT_API.Controllers
                         {
                             Id = doc.Id,
                             Url = _config["ApiUrl"] + "/Documents/File/" + doc.Id.ToString(),
+                            FileName = doc.FileName,
+                        });
+                        //levelObj.DocumentMapId = fileId;
+
+
+                        //Guid fileId = Guid.NewGuid();
+                        //var fullPath = Path.Combine(pathToSave, fileId + "." + extension);
+                        //using (var stream = new FileStream(fullPath, FileMode.Create))
+                        //{
+                        //    file.CopyTo(stream);
+                        //}
+
+                        //Document doc = new Document
+                        //{
+                        //    Id = fileId,
+                        //    Path = fullPath,
+                        //    Driver = "local"
+                        //};
+                        //_context.Documents.Add(doc);
+
+                        //documentUrls.Add(new DocumentDto
+                        //{
+                        //    Id = fileId,
+                        //    Url = _config["ApiUrl"] + "/Documents/File/" + fileId.ToString()
+                        //});
+                        ////levelObj.DocumentMapId = fileId;
+                        //await _context.SaveChangesAsync();
+                        //}
+                    }
+                }
+
+                return documentUrls;
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex}");
+            }
+        }
+
+
+        [HttpPost("UploadImage"), DisableRequestSizeLimit]
+        public async Task<ActionResult<IEnumerable<DocumentDto>>> UploadImage()
+        {
+            try
+            {
+                //var folderName = "Uploads";
+                //              var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+                //            if (!Directory.Exists(pathToSave))
+                //              Directory.CreateDirectory(pathToSave);
+
+                List<DocumentDto> documentUrls = new List<DocumentDto>();
+
+                foreach (var file in Request.Form.Files)
+                {
+
+                    if (file.Length > 0)
+                    {
+                        var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+                        var extension = Path.GetExtension(fileName).Replace(".", "");
+
+                        Document doc = new Document();
+                        doc.FileName = fileName;
+                        doc.Extension = extension;
+                        doc.Driver = "db";
+
+                        var provider = new FileExtensionContentTypeProvider();
+                        string contentType;
+                        if (!provider.TryGetContentType(fileName, out contentType))
+                        {
+                            contentType = "application/octet-stream";
+                        }
+                        doc.ContentType = contentType;
+
+                        using (var stream = new MemoryStream())
+                        {
+                            file.CopyTo(stream);
+                            doc.Content = stream.ToArray();
+                        }
+
+                        _context.Documents.Add(doc);
+                        await _context.SaveChangesAsync();
+
+                        documentUrls.Add(new DocumentDto
+                        {
+                            Id = doc.Id,
+                            Url = "/Documents/File/" + doc.Id.ToString(),
                             FileName = doc.FileName,
                         });
                         //levelObj.DocumentMapId = fileId;

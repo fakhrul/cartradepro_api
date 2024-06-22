@@ -62,6 +62,14 @@ namespace SPOT_API.Controllers
                 .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
                 .ThenInclude(c => c.StockStatus)
                 .Include(c => c.RemarksList)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.Brand)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.Model)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.VehicleType)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.VehiclePhotoList)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
@@ -77,6 +85,13 @@ namespace SPOT_API.Controllers
                 foreach (var s in obj.StockStatusHistories)
                     s.Stock = null;
 
+            if (obj.Vehicle != null)
+                if (obj.Vehicle.VehiclePhotoList != null)
+                    foreach (var o in obj.Vehicle.VehiclePhotoList)
+                    {
+                        o.Vehicle = null;
+                        //o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                    }
             return obj;
         }
 
@@ -92,6 +107,7 @@ namespace SPOT_API.Controllers
             }
 
             _context.Entry(obj).State = EntityState.Modified;
+            _context.Entry(obj.Vehicle).State = EntityState.Modified;
 
 
 
@@ -148,6 +164,11 @@ namespace SPOT_API.Controllers
                     StockId = obj.Id
                 });
 
+
+                var vehicle = new Vehicle();
+                _context.Vehicles.Add(vehicle);
+
+                obj.VehicleId = vehicle.Id;
                 _context.Stocks.Add(obj);
                 await _context.SaveChangesAsync();
 
@@ -296,6 +317,85 @@ namespace SPOT_API.Controllers
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+            return NoContent();
+        }
+
+
+
+        [HttpPut("UpdateVehicleImages/{id}")]
+        public async Task<IActionResult> PutUpdateVehicleImages(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.VehiclePhotoList)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            //_context.VehiclePhotos.Add
+            //if (stock.Vehicle.VehiclePhotoList == null)
+            //    stock.Vehicle.VehiclePhotoList = new List<VehiclePhoto>();
+
+            foreach (var obj in objs)
+            {
+                _context.VehiclePhotos.Add(new VehiclePhoto
+                {
+                    VehicleId = stock.VehicleId,
+                    DocumentId = obj.Id
+                });
+
+            }
+
+
+            //var newStatus = new StockStatusHistory
+            //{
+            //    ProfileId = (Guid)user.ProfileId,
+            //    StockStatusId = obj.StockStatusId,
+            //    //Name = "Draft",
+            //    StockId = id
+            //};
+
+            //_context.StockStatusHistories.Add(newStatus);
+
+            //stock.StockStatusHistories.Add(newStatus);
+            //await _context.SaveChangesAsync();
+
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Vehicle).State = EntityState.Modified;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!IsExists(id))
                 {

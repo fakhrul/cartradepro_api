@@ -80,6 +80,10 @@ namespace SPOT_API.Persistence
                 .HasIndex(x => x.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<Stock>()
+                .HasIndex(p => p.StockNo)
+                .IsUnique();
+
 
             base.OnModelCreating(modelBuilder);
 

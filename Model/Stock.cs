@@ -27,6 +27,10 @@ namespace SPOT_API.Models
         }
         public virtual ICollection<StockStatusHistory> StockStatusHistories { get; set; }
 
+        [ForeignKey("Vehicle")]
+        public Guid VehicleId { get; set; }
+        public virtual Vehicle Vehicle { get; set; }
+
 
     }
 }

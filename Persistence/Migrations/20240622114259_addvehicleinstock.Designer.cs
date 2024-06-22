@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240622114259_addvehicleinstock")]
+    partial class addvehicleinstock
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1615,7 +1617,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("VehicleId")
+                    b.Property<Guid?>("VehicleId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -1761,12 +1763,15 @@ namespace Persistence.Migrations
                     b.Property<string>("Month")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("StockId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("VehicleTypeId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("VehicleType")
+                        .HasColumnType("text");
 
                     b.Property<string>("Year")
                         .HasColumnType("text");
@@ -1777,7 +1782,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("ModelId");
 
-                    b.HasIndex("VehicleTypeId");
+                    b.HasIndex("StockId");
 
                     b.ToTable("Vehicles");
                 });
@@ -2394,9 +2399,7 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("SPOT_API.Models.Vehicle", "Vehicle")
                         .WithMany()
-                        .HasForeignKey("VehicleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("VehicleId");
 
                     b.Navigation("Vehicle");
                 });
@@ -2438,15 +2441,17 @@ namespace Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ModelId");
 
-                    b.HasOne("SPOT_API.Models.VehicleType", "VehicleType")
+                    b.HasOne("SPOT_API.Models.Stock", "Stock")
                         .WithMany()
-                        .HasForeignKey("VehicleTypeId");
+                        .HasForeignKey("StockId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Brand");
 
                     b.Navigation("Model");
 
-                    b.Navigation("VehicleType");
+                    b.Navigation("Stock");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.VehiclePhoto", b =>

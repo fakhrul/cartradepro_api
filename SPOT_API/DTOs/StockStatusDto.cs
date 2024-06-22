@@ -12,4 +12,5 @@ namespace SPOT_API.DTOs
         public Guid StockStatusId { get; set; }
 
     }
+    
 }
