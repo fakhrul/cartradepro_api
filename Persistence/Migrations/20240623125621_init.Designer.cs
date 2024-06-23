@@ -12,8 +12,8 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    [Migration("20240622115401_vehcileRemoveStockId")]
-    partial class vehcileRemoveStockId
+    [Migration("20240623125621_init")]
+    partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -828,7 +828,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Wehbsite")
+                    b.Property<string>("Website")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -849,23 +849,20 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DateOfBillOfLading")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("DateOfBillOfLading")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("EstimateDateOfArrival")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("EstimateDateOfArrival")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("EstimateDateOfDeparture")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("EstimateDateOfDeparture")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ForwardingAgentId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("ShipName")
                         .HasColumnType("text");
-
-                    b.Property<Guid>("StockId")
-                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
@@ -876,8 +873,6 @@ namespace Persistence.Migrations
                     b.HasIndex("BillOfLandingDocumentId");
 
                     b.HasIndex("ForwardingAgentId");
-
-                    b.HasIndex("StockId");
 
                     b.ToTable("Imports");
                 });
@@ -1315,9 +1310,6 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("StockId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("SupplierCurrency")
                         .HasColumnType("text");
 
@@ -1328,15 +1320,13 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("VehiclePriceLocalCurrency")
-                        .HasColumnType("text");
+                    b.Property<decimal>("VehiclePriceLocalCurrency")
+                        .HasColumnType("numeric");
 
-                    b.Property<string>("VehiclePriceSupplierCurrency")
-                        .HasColumnType("text");
+                    b.Property<decimal>("VehiclePriceSupplierCurrency")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("StockId");
 
                     b.HasIndex("SupplierId");
 
@@ -1610,6 +1600,12 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("ImportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PurchaseId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("StockNo")
                         .HasColumnType("text");
 
@@ -1621,6 +1617,13 @@ namespace Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ImportId");
+
+                    b.HasIndex("PurchaseId");
+
+                    b.HasIndex("StockNo")
+                        .IsUnique();
 
                     b.HasIndex("VehicleId");
 
@@ -1724,7 +1727,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Wehbsite")
+                    b.Property<string>("Website")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -1767,8 +1770,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("VehicleType")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("VehicleTypeId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Year")
                         .HasColumnType("text");
@@ -1778,6 +1781,8 @@ namespace Persistence.Migrations
                     b.HasIndex("BrandId");
 
                     b.HasIndex("ModelId");
+
+                    b.HasIndex("VehicleTypeId");
 
                     b.ToTable("Vehicles");
                 });
@@ -2029,17 +2034,9 @@ namespace Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ForwardingAgentId");
 
-                    b.HasOne("SPOT_API.Models.Stock", "Stock")
-                        .WithMany()
-                        .HasForeignKey("StockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("BillOfLandingDocument");
 
                     b.Navigation("ForwardingAgent");
-
-                    b.Navigation("Stock");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.JpjEDaftarDocument", b =>
@@ -2234,17 +2231,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("SPOT_API.Models.Purchase", b =>
                 {
-                    b.HasOne("SPOT_API.Models.Stock", "Stock")
-                        .WithMany()
-                        .HasForeignKey("StockId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("SPOT_API.Models.Supplier", "Supplier")
                         .WithMany()
                         .HasForeignKey("SupplierId");
-
-                    b.Navigation("Stock");
 
                     b.Navigation("Supplier");
                 });
@@ -2392,11 +2381,27 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("SPOT_API.Models.Stock", b =>
                 {
+                    b.HasOne("SPOT_API.Models.Import", "Import")
+                        .WithMany()
+                        .HasForeignKey("ImportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SPOT_API.Models.Purchase", "Purchase")
+                        .WithMany()
+                        .HasForeignKey("PurchaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("SPOT_API.Models.Vehicle", "Vehicle")
                         .WithMany()
                         .HasForeignKey("VehicleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Import");
+
+                    b.Navigation("Purchase");
 
                     b.Navigation("Vehicle");
                 });
@@ -2438,9 +2443,15 @@ namespace Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ModelId");
 
+                    b.HasOne("SPOT_API.Models.VehicleType", "VehicleType")
+                        .WithMany()
+                        .HasForeignKey("VehicleTypeId");
+
                     b.Navigation("Brand");
 
                     b.Navigation("Model");
+
+                    b.Navigation("VehicleType");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.VehiclePhoto", b =>

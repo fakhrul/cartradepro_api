@@ -23,8 +23,10 @@ namespace SPOT_API.Persistence
                 await SeedBrand(context);
                 await SeedVehicleType(context);
                 await SeedStockStatuses(context);
+                await SeedSupplier(context);
 
                 await SeedStocks(context);
+
 
                 await context.SaveChangesAsync();
             }
@@ -34,6 +36,34 @@ namespace SPOT_API.Persistence
             //}
 
         }
+
+        private static async Task SeedSupplier(SpotDBContext context)
+        {
+            
+            if (context.Suppliers.Any())
+                return;
+            var objs = new List<Supplier>
+            {
+                new Supplier {
+
+                    Name = "Pengedar Kereta Dari Jepun",
+                    Address = @"No 23A, Jalan Hiroshiman,
+Tokyo, 43650, Jepun.",
+                    Country = "JAPAN",
+                    Phone = "+801238917231",
+                    Website = "www.keretajepun.online",
+                    ContactPersonEmail = "me@keretajepun.online",
+                    ContactPersonName = "Izumaki Naruto",
+                    ContactPersonPhone = "+80112322222",
+
+
+                },
+            };
+
+            context.Suppliers.AddRange(objs);
+            await context.SaveChangesAsync();
+        }
+
         private static async Task SeedStocks(SpotDBContext context)
         {
             if (context.Stocks.Any())

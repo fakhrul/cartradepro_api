@@ -399,7 +399,7 @@ namespace SPOT_API.Controllers
                         documentUrls.Add(new DocumentDto
                         {
                             Id = doc.Id,
-                            Url = _config["ApiUrl"] + "/Documents/File/" + doc.Id.ToString(),
+                            Url = "/Documents/File/" + doc.Id.ToString(),
                             FileName = doc.FileName,
                         });
                         //levelObj.DocumentMapId = fileId;

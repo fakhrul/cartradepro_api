@@ -31,6 +31,18 @@ namespace SPOT_API.Models
         public Guid VehicleId { get; set; }
         public virtual Vehicle Vehicle { get; set; }
 
+        [ForeignKey("Purchase")]
+        public Guid PurchaseId { get; set; }
+        public virtual Purchase Purchase { get; set; }
+
+        [ForeignKey("Import")]
+        public Guid ImportId { get; set; }
+        public virtual Import Import { get; set; }
+
+        [ForeignKey("Clearance")]
+        public Guid ClearanceId { get; set; }
+        public virtual Clearance Clearance { get; set; }
+
 
     }
 }

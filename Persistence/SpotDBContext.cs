@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SPOT_API.Models;
@@ -89,6 +91,51 @@ namespace SPOT_API.Persistence
 
         }
 
+        public override int SaveChanges()
+        {
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+                {
+                    foreach (var property in entry.Properties)
+                    {
+                        if (property.Metadata.ClrType == typeof(DateTime) && property.CurrentValue != null)
+                        {
+                            var dateTime = (DateTime)property.CurrentValue;
+                            if (dateTime.Kind != DateTimeKind.Utc)
+                            {
+                                property.CurrentValue = dateTime.ToUniversalTime();
+                            }
+                        }
+                    }
+                }
+            }
+
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+                {
+                    foreach (var property in entry.Properties)
+                    {
+                        if (property.Metadata.ClrType == typeof(DateTime) && property.CurrentValue != null)
+                        {
+                            var dateTime = (DateTime)property.CurrentValue;
+                            if (dateTime.Kind != DateTimeKind.Utc)
+                            {
+                                property.CurrentValue = dateTime.ToUniversalTime();
+                            }
+                        }
+                    }
+                }
+            }
+
+            return base.SaveChangesAsync(cancellationToken);
+        }
 
 
     }

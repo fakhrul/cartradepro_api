@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Persistence.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -61,7 +61,7 @@ namespace Persistence.Migrations
                     Address = table.Column<string>(type: "text", nullable: true),
                     Country = table.Column<string>(type: "text", nullable: true),
                     Phone = table.Column<string>(type: "text", nullable: true),
-                    Wehbsite = table.Column<string>(type: "text", nullable: true),
+                    Website = table.Column<string>(type: "text", nullable: true),
                     ContactPersonName = table.Column<string>(type: "text", nullable: true),
                     ContactPersonPhone = table.Column<string>(type: "text", nullable: true),
                     ContactPersonEmail = table.Column<string>(type: "text", nullable: true),
@@ -177,20 +177,6 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Stocks",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockNo = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Stocks", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "StockStatuses",
                 columns: table => new
                 {
@@ -214,7 +200,7 @@ namespace Persistence.Migrations
                     Address = table.Column<string>(type: "text", nullable: true),
                     Country = table.Column<string>(type: "text", nullable: true),
                     Phone = table.Column<string>(type: "text", nullable: true),
-                    Wehbsite = table.Column<string>(type: "text", nullable: true),
+                    Website = table.Column<string>(type: "text", nullable: true),
                     ContactPersonName = table.Column<string>(type: "text", nullable: true),
                     ContactPersonPhone = table.Column<string>(type: "text", nullable: true),
                     ContactPersonEmail = table.Column<string>(type: "text", nullable: true),
@@ -344,116 +330,25 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AdminitrativeCosts",
+                name: "Purchases",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    AdminitrativeCostType = table.Column<string>(type: "text", nullable: true),
-                    Remark = table.Column<string>(type: "text", nullable: true),
-                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    SupplierId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SupplierCurrency = table.Column<string>(type: "text", nullable: true),
+                    VehiclePriceSupplierCurrency = table.Column<decimal>(type: "numeric", nullable: false),
+                    VehiclePriceLocalCurrency = table.Column<decimal>(type: "numeric", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AdminitrativeCosts", x => x.Id);
+                    table.PrimaryKey("PK_Purchases", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AdminitrativeCosts_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ArrivalChecklists",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    IsAvailable = table.Column<bool>(type: "boolean", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ArrivalChecklists", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ArrivalChecklists_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Completions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DeliveryDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Completions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Completions_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Expenses",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ExpenseType = table.Column<string>(type: "text", nullable: true),
-                    Remark = table.Column<string>(type: "text", nullable: true),
-                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Expenses", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Expenses_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SellingPricings",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EstimatedCostPrice = table.Column<string>(type: "text", nullable: true),
-                    MinimumSalePrice = table.Column<string>(type: "text", nullable: true),
-                    RecommendedSalePrice = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SellingPricings", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SellingPricings_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Purchases_Suppliers_SupplierId",
+                        column: x => x.SupplierId,
+                        principalTable: "Suppliers",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -461,14 +356,12 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Brand = table.Column<string>(type: "text", nullable: true),
-                    Model = table.Column<string>(type: "text", nullable: true),
-                    ModelShortName = table.Column<string>(type: "text", nullable: true),
+                    BrandId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModelId = table.Column<Guid>(type: "uuid", nullable: true),
                     ChasisNo = table.Column<string>(type: "text", nullable: true),
                     EngineNo = table.Column<string>(type: "text", nullable: true),
                     EngineCapacity = table.Column<string>(type: "text", nullable: true),
-                    VehicleType = table.Column<string>(type: "text", nullable: true),
+                    VehicleTypeId = table.Column<Guid>(type: "uuid", nullable: true),
                     Month = table.Column<string>(type: "text", nullable: true),
                     Year = table.Column<string>(type: "text", nullable: true),
                     Color = table.Column<string>(type: "text", nullable: true),
@@ -479,74 +372,19 @@ namespace Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Vehicles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Vehicles_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StockStatusHistory",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockStatusId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StockStatusHistory", x => x.Id);
+                        name: "FK_Vehicles_Brands_BrandId",
+                        column: x => x.BrandId,
+                        principalTable: "Brands",
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_StockStatusHistory_Profiles_ProfileId",
-                        column: x => x.ProfileId,
-                        principalTable: "Profiles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        name: "FK_Vehicles_Models_ModelId",
+                        column: x => x.ModelId,
+                        principalTable: "Models",
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_StockStatusHistory_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_StockStatusHistory_StockStatuses_StockStatusId",
-                        column: x => x.StockStatusId,
-                        principalTable: "StockStatuses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Purchases",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SupplierId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SupplierCurrency = table.Column<string>(type: "text", nullable: true),
-                    VehiclePriceSupplierCurrency = table.Column<string>(type: "text", nullable: true),
-                    VehiclePriceLocalCurrency = table.Column<string>(type: "text", nullable: true),
-                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Purchases", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Purchases_Stocks_StockId",
-                        column: x => x.StockId,
-                        principalTable: "Stocks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Purchases_Suppliers_SupplierId",
-                        column: x => x.SupplierId,
-                        principalTable: "Suppliers",
+                        name: "FK_Vehicles_VehicleTypes_VehicleTypeId",
+                        column: x => x.VehicleTypeId,
+                        principalTable: "VehicleTypes",
                         principalColumn: "Id");
                 });
 
@@ -859,6 +697,169 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AdminitrativeCosts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AdminitrativeCostType = table.Column<string>(type: "text", nullable: true),
+                    Remark = table.Column<string>(type: "text", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminitrativeCosts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ArrivalChecklists",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    IsAvailable = table.Column<bool>(type: "boolean", nullable: false),
+                    Remarks = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ArrivalChecklists", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BillOfLandingDocuments",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ImportId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BillOfLandingDocuments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BillOfLandingDocuments_Documents_DocumentId",
+                        column: x => x.DocumentId,
+                        principalTable: "Documents",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Imports",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ShipName = table.Column<string>(type: "text", nullable: true),
+                    EstimateDateOfDeparture = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EstimateDateOfArrival = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateOfBillOfLading = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ForwardingAgentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    BillOfLandingDocumentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Imports", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Imports_BillOfLandingDocuments_BillOfLandingDocumentId",
+                        column: x => x.BillOfLandingDocumentId,
+                        principalTable: "BillOfLandingDocuments",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Imports_ClearanceAgents_ForwardingAgentId",
+                        column: x => x.ForwardingAgentId,
+                        principalTable: "ClearanceAgents",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Stocks",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockNo = table.Column<string>(type: "text", nullable: true),
+                    VehicleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PurchaseId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ImportId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Stocks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Stocks_Imports_ImportId",
+                        column: x => x.ImportId,
+                        principalTable: "Imports",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Stocks_Purchases_PurchaseId",
+                        column: x => x.PurchaseId,
+                        principalTable: "Purchases",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Stocks_Vehicles_VehicleId",
+                        column: x => x.VehicleId,
+                        principalTable: "Vehicles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Completions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeliveryDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Completions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Completions_Stocks_StockId",
+                        column: x => x.StockId,
+                        principalTable: "Stocks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Expenses",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ExpenseType = table.Column<string>(type: "text", nullable: true),
+                    Remark = table.Column<string>(type: "text", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Expenses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Expenses_Stocks_StockId",
+                        column: x => x.StockId,
+                        principalTable: "Stocks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Remarks",
                 columns: table => new
                 {
@@ -894,58 +895,59 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BillOfLandingDocuments",
+                name: "SellingPricings",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ImportId = table.Column<Guid>(type: "uuid", nullable: false),
-                    DocumentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EstimatedCostPrice = table.Column<string>(type: "text", nullable: true),
+                    MinimumSalePrice = table.Column<string>(type: "text", nullable: true),
+                    RecommendedSalePrice = table.Column<string>(type: "text", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_BillOfLandingDocuments", x => x.Id);
+                    table.PrimaryKey("PK_SellingPricings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BillOfLandingDocuments_Documents_DocumentId",
-                        column: x => x.DocumentId,
-                        principalTable: "Documents",
+                        name: "FK_SellingPricings_Stocks_StockId",
+                        column: x => x.StockId,
+                        principalTable: "Stocks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Imports",
+                name: "StockStatusHistories",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
                     StockId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ShipName = table.Column<string>(type: "text", nullable: true),
-                    EstimateDateOfDeparture = table.Column<string>(type: "text", nullable: true),
-                    EstimateDateOfArrival = table.Column<string>(type: "text", nullable: true),
-                    DateOfBillOfLading = table.Column<string>(type: "text", nullable: true),
-                    ForwardingAgentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    BillOfLandingDocumentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    StockStatusId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Imports", x => x.Id);
+                    table.PrimaryKey("PK_StockStatusHistories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Imports_BillOfLandingDocuments_BillOfLandingDocumentId",
-                        column: x => x.BillOfLandingDocumentId,
-                        principalTable: "BillOfLandingDocuments",
-                        principalColumn: "Id");
+                        name: "FK_StockStatusHistories_Profiles_ProfileId",
+                        column: x => x.ProfileId,
+                        principalTable: "Profiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Imports_ClearanceAgents_ForwardingAgentId",
-                        column: x => x.ForwardingAgentId,
-                        principalTable: "ClearanceAgents",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Imports_Stocks_StockId",
+                        name: "FK_StockStatusHistories_Stocks_StockId",
                         column: x => x.StockId,
                         principalTable: "Stocks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StockStatusHistories_StockStatuses_StockStatusId",
+                        column: x => x.StockStatusId,
+                        principalTable: "StockStatuses",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1365,11 +1367,6 @@ namespace Persistence.Migrations
                 column: "ForwardingAgentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Imports_StockId",
-                table: "Imports",
-                column: "StockId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_JpjEDaftarDocuments_DocumentId",
                 table: "JpjEDaftarDocuments",
                 column: "DocumentId");
@@ -1482,11 +1479,6 @@ namespace Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Purchases_StockId",
-                table: "Purchases",
-                column: "StockId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Purchases_SupplierId",
                 table: "Purchases",
                 column: "SupplierId");
@@ -1577,18 +1569,39 @@ namespace Persistence.Migrations
                 column: "StockId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockStatusHistory_ProfileId",
-                table: "StockStatusHistory",
+                name: "IX_Stocks_ImportId",
+                table: "Stocks",
+                column: "ImportId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Stocks_PurchaseId",
+                table: "Stocks",
+                column: "PurchaseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Stocks_StockNo",
+                table: "Stocks",
+                column: "StockNo",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Stocks_VehicleId",
+                table: "Stocks",
+                column: "VehicleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StockStatusHistories_ProfileId",
+                table: "StockStatusHistories",
                 column: "ProfileId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockStatusHistory_StockId",
-                table: "StockStatusHistory",
+                name: "IX_StockStatusHistories_StockId",
+                table: "StockStatusHistories",
                 column: "StockId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StockStatusHistory_StockStatusId",
-                table: "StockStatusHistory",
+                name: "IX_StockStatusHistories_StockStatusId",
+                table: "StockStatusHistories",
                 column: "StockStatusId");
 
             migrationBuilder.CreateIndex(
@@ -1602,9 +1615,35 @@ namespace Persistence.Migrations
                 column: "VehicleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Vehicles_StockId",
+                name: "IX_Vehicles_BrandId",
                 table: "Vehicles",
-                column: "StockId");
+                column: "BrandId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vehicles_ModelId",
+                table: "Vehicles",
+                column: "ModelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vehicles_VehicleTypeId",
+                table: "Vehicles",
+                column: "VehicleTypeId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_AdminitrativeCosts_Stocks_StockId",
+                table: "AdminitrativeCosts",
+                column: "StockId",
+                principalTable: "Stocks",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_ArrivalChecklists_Stocks_StockId",
+                table: "ArrivalChecklists",
+                column: "StockId",
+                principalTable: "Stocks",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_BillOfLandingDocuments_Imports_ImportId",
@@ -1681,16 +1720,20 @@ namespace Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_BillOfLandingDocuments_Imports_ImportId",
-                table: "BillOfLandingDocuments");
-
-            migrationBuilder.DropForeignKey(
                 name: "FK_Clearances_K1Documents_K1DocumentId",
                 table: "Clearances");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Clearances_K8Documents_K8DocumentId",
                 table: "Clearances");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Imports_BillOfLandingDocuments_BillOfLandingDocumentId",
+                table: "Imports");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Stocks_Imports_ImportId",
+                table: "Stocks");
 
             migrationBuilder.DropForeignKey(
                 name: "FK_Loan_LetterOfUndertakingDocuments_LetterOfUndertakingDocume~",
@@ -1761,9 +1804,6 @@ namespace Persistence.Migrations
                 name: "Expenses");
 
             migrationBuilder.DropTable(
-                name: "Models");
-
-            migrationBuilder.DropTable(
                 name: "PackageCommisions");
 
             migrationBuilder.DropTable(
@@ -1771,9 +1811,6 @@ namespace Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProfilePackages");
-
-            migrationBuilder.DropTable(
-                name: "Purchases");
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
@@ -1785,22 +1822,13 @@ namespace Persistence.Migrations
                 name: "SellingPricings");
 
             migrationBuilder.DropTable(
-                name: "StockStatusHistory");
+                name: "StockStatusHistories");
 
             migrationBuilder.DropTable(
                 name: "VehiclePhotos");
 
             migrationBuilder.DropTable(
-                name: "VehicleTypes");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "Brands");
-
-            migrationBuilder.DropTable(
-                name: "Suppliers");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
@@ -1812,9 +1840,6 @@ namespace Persistence.Migrations
                 name: "StockStatuses");
 
             migrationBuilder.DropTable(
-                name: "Vehicles");
-
-            migrationBuilder.DropTable(
                 name: "Packages");
 
             migrationBuilder.DropTable(
@@ -1824,15 +1849,6 @@ namespace Persistence.Migrations
                 name: "Categories");
 
             migrationBuilder.DropTable(
-                name: "Imports");
-
-            migrationBuilder.DropTable(
-                name: "BillOfLandingDocuments");
-
-            migrationBuilder.DropTable(
-                name: "ClearanceAgents");
-
-            migrationBuilder.DropTable(
                 name: "K1Documents");
 
             migrationBuilder.DropTable(
@@ -1840,6 +1856,15 @@ namespace Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Clearances");
+
+            migrationBuilder.DropTable(
+                name: "BillOfLandingDocuments");
+
+            migrationBuilder.DropTable(
+                name: "Imports");
+
+            migrationBuilder.DropTable(
+                name: "ClearanceAgents");
 
             migrationBuilder.DropTable(
                 name: "LetterOfUndertakingDocuments");
@@ -1855,6 +1880,24 @@ namespace Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Stocks");
+
+            migrationBuilder.DropTable(
+                name: "Purchases");
+
+            migrationBuilder.DropTable(
+                name: "Vehicles");
+
+            migrationBuilder.DropTable(
+                name: "Suppliers");
+
+            migrationBuilder.DropTable(
+                name: "Models");
+
+            migrationBuilder.DropTable(
+                name: "VehicleTypes");
+
+            migrationBuilder.DropTable(
+                name: "Brands");
 
             migrationBuilder.DropTable(
                 name: "JpjEDaftarDocuments");

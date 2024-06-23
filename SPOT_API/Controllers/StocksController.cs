@@ -70,6 +70,12 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.VehicleType)
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.VehiclePhotoList)
+                .Include(c=> c.Purchase)
+                .ThenInclude(c=> c.Supplier)
+                .Include(c=> c.Import)
+                .ThenInclude(c => c.ForwardingAgent)
+                .Include(c=> c.Import)
+                .ThenInclude(c=> c.BillOfLandingDocuments)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
@@ -92,6 +98,16 @@ namespace SPOT_API.Controllers
                         o.Vehicle = null;
                         //o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
                     }
+
+            if (obj.Import != null)
+                if (obj.Import.BillOfLandingDocuments != null)
+                    foreach (var o in obj.Import.BillOfLandingDocuments)
+                    {
+                        o.Import = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
+
             return obj;
         }
 
@@ -108,6 +124,8 @@ namespace SPOT_API.Controllers
 
             _context.Entry(obj).State = EntityState.Modified;
             _context.Entry(obj.Vehicle).State = EntityState.Modified;
+            _context.Entry(obj.Purchase).State = EntityState.Modified;
+            _context.Entry(obj.Import).State = EntityState.Modified;
 
 
 
@@ -167,8 +185,17 @@ namespace SPOT_API.Controllers
 
                 var vehicle = new Vehicle();
                 _context.Vehicles.Add(vehicle);
-
                 obj.VehicleId = vehicle.Id;
+
+                var purchase = new Purchase();
+                _context.Purchases.Add(purchase);
+                obj.PurchaseId = purchase.Id;
+
+                var import = new Import();
+
+                _context.Imports.Add(import);
+                obj.ImportId = import.Id;
+
                 _context.Stocks.Add(obj);
                 await _context.SaveChangesAsync();
 
@@ -358,10 +385,6 @@ namespace SPOT_API.Controllers
                 return BadRequest();
             }
 
-            //_context.VehiclePhotos.Add
-            //if (stock.Vehicle.VehiclePhotoList == null)
-            //    stock.Vehicle.VehiclePhotoList = new List<VehiclePhoto>();
-
             foreach (var obj in objs)
             {
                 _context.VehiclePhotos.Add(new VehiclePhoto
@@ -371,20 +394,6 @@ namespace SPOT_API.Controllers
                 });
 
             }
-
-
-            //var newStatus = new StockStatusHistory
-            //{
-            //    ProfileId = (Guid)user.ProfileId,
-            //    StockStatusId = obj.StockStatusId,
-            //    //Name = "Draft",
-            //    StockId = id
-            //};
-
-            //_context.StockStatusHistories.Add(newStatus);
-
-            //stock.StockStatusHistories.Add(newStatus);
-            //await _context.SaveChangesAsync();
 
 
             _context.Entry(stock).State = EntityState.Modified;
@@ -414,6 +423,105 @@ namespace SPOT_API.Controllers
             }
             return NoContent();
         }
+
+        [HttpPut("UpdateBolDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateBolDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Import)
+                .ThenInclude(c => c.BillOfLandingDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.BillOfLandingDocuments.Add(new  BillOfLandingDocument
+                {
+                    ImportId = stock.ImportId,
+                    DocumentId = obj.Id
+                });
+
+            }
+
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Import).State = EntityState.Modified;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+            return NoContent();
+        }
+
+
+        [HttpPut("RemoveBolDocument/{importId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveBolDocument(Guid importId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.BillOfLandingDocuments
+                    .Where(c => c.ImportId == importId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.BillOfLandingDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+
+                    _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+
+            return NoContent();
+        }
+
+
 
     }
 }
