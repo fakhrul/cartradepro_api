@@ -24,6 +24,8 @@ namespace SPOT_API.Persistence
                 await SeedVehicleType(context);
                 await SeedStockStatuses(context);
                 await SeedSupplier(context);
+                await SeedBank(context);
+                await SeedCustomer(context);
 
                 await SeedStocks(context);
 
@@ -36,10 +38,61 @@ namespace SPOT_API.Persistence
             //}
 
         }
+        private static async Task SeedCustomer(SpotDBContext context)
+        {
+
+            if (context.Customers.Any())
+                return;
+            var objs = new List<Customer>
+            {
+                new Customer {
+
+                    Name = "Customer Name 1",
+                    Address = @"No 23A, Jalan Bangi,
+Bandar Baru Bangi, 43650, Selangor, Malaysia.",
+                    Phone = "+801238917231",
+                    CustomerType = "Individu",
+                     Email = "asdasd@asdasd.com",
+                      IcNumber = "900212-12-3213",
+
+
+                },
+            };
+
+            context.Customers.AddRange(objs);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task SeedBank(SpotDBContext context)
+        {
+
+            if (context.Banks.Any())
+                return;
+            var objs = new List<Bank>
+            {
+                new Bank {
+
+                    Name = "Maybank Islamic",
+                    Address = @"No 23A, Jalan Bangi,
+Bandar Baru Bangi, 43650, Selangor, Malaysia.",
+                    Country = "Malaysia",
+                    Phone = "+801238917231",
+                    Website = "www.keretajepun.online",
+                    ContactPersonEmail = "me@keretajepun.online",
+                    ContactPersonName = "Izumaki Naruto",
+                    ContactPersonPhone = "+80112322222",
+
+
+                },
+            };
+
+            context.Banks.AddRange(objs);
+            await context.SaveChangesAsync();
+        }
 
         private static async Task SeedSupplier(SpotDBContext context)
         {
-            
+
             if (context.Suppliers.Any())
                 return;
             var objs = new List<Supplier>

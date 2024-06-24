@@ -12,4 +12,5 @@ namespace SPOT_API.DTOs
         public string Remark { get; set; }
 
     }
+    
 }

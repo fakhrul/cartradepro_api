@@ -43,6 +43,36 @@ namespace SPOT_API.Models
         public Guid ClearanceId { get; set; }
         public virtual Clearance Clearance { get; set; }
 
+        [ForeignKey("Sale")]
+        public Guid SaleId { get; set; }
+        public virtual Sale Sale { get; set; }
+
+        [ForeignKey("Registration")]
+        public Guid RegistrationId { get; set; }
+        public virtual Registration Registration { get; set; }
+        
+        //[ForeignKey("SellingPricing")]
+        //public Guid SellingPricingId { get; set; }
+        //public virtual SellingPricing SellingPricing { get; set; }
+
+
+        [ForeignKey("Pricing")]
+        public Guid PricingId { get; set; }
+        public virtual Pricing Pricing { get; set; }
+
+
+        [ForeignKey("ArrivalChecklist")]
+        public Guid ArrivalChecklistId { get; set; }
+        public virtual ArrivalChecklist ArrivalChecklist { get; set; }
+
+        [ForeignKey("Expense")]
+        public Guid ExpenseId { get; set; }
+        public virtual Expense Expense { get; set; }
+
+        [ForeignKey("AdminitrativeCost")]
+        public Guid AdminitrativeCostId { get; set; }
+        public virtual AdminitrativeCost AdminitrativeCost { get; set; }
+
 
     }
 }

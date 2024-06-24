@@ -5,9 +5,6 @@ namespace SPOT_API.Models
 {
     public class Customer : BaseModel
     {
-        [ForeignKey("Stock")]
-        public Guid StockId { get; set; }
-
         public string CustomerType { get; set; }
         public string Name { get; set; }
         public string IcNumber { get; set; }

@@ -34,8 +34,13 @@ namespace SPOT_API.Persistence
         public DbSet<CustomerType> CustomerTypes { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Sale> Sales { get; set; }
-        public DbSet<SellingPricing> SellingPricings { get; set; }
+        public DbSet<Loan> Loans { get; set; }
+        public DbSet<Bank> Banks { get; set; }
+        public DbSet<Pricing> Pricings { get; set; }
         public DbSet<ArrivalChecklist> ArrivalChecklists { get; set; }
+
+        public DbSet<ArrivalChecklistItem> ArrivalChecklistItems { get; set; }
+
         public DbSet<Registration> Registrations { get; set; }
 
         public DbSet<JpjEHakMilikDocument> JpjEHakMilikDocuments { get; set; }
@@ -46,6 +51,7 @@ namespace SPOT_API.Persistence
         public DbSet<Completion> Completions { get; set; }
 
         public DbSet<AdminitrativeCost> AdminitrativeCosts { get; set; }
+        public DbSet<AdminitrativeCostItem> AdminitrativeCostItems { get; set; }
 
         ///
         public DbSet<Profile> Profiles { get; set; }
@@ -63,6 +69,7 @@ namespace SPOT_API.Persistence
         public DbSet<Remarks> Remarks { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<ExpenseItem> ExpenseItems { get; set; }
 
         public DbSet<StockStatusHistory> StockStatusHistories { get; set; }
         

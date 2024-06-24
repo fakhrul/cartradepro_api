@@ -21,7 +21,7 @@ namespace SPOT_API.Models
         //[ForeignKey("K1Document")]
         //public Guid? K1DocumentId { get; set; }
         //public virtual K1Document K1Document { get; set; }
-        public virtual ICollection<K8Document> K8Documentts { get; set; }
+        public virtual ICollection<K8Document> K8Documents { get; set; }
         public virtual ICollection<K1Document> K1Documents { get; set; }
 
     }
