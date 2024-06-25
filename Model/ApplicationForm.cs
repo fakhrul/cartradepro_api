@@ -53,7 +53,7 @@ namespace SPOT_API.Models
         public string ResidentialType { get; set; }
         public string ResidentialName { get; set; }
 
-        public DateTime AppointmentDate { get; set; }
+        public DateTime AppointmentDate { get; set; } = DateTime.MinValue.ToUniversalTime();
 
         public string Address1 { get; set; }
         public string Address2 { get; set; }
@@ -73,7 +73,7 @@ namespace SPOT_API.Models
         public virtual ICollection<Remarks> RemarksList { get; set; }
 
         public bool IsPaid { get; set; }
-        public DateTime PaymentDate { get; set; }
+        public DateTime PaymentDate { get; set; } = DateTime.MinValue.ToUniversalTime();
         public string InternalStatus { get; set; }
         public string ProviderStatus { get; set; }
 

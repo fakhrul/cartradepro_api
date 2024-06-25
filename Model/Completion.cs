@@ -9,7 +9,7 @@ namespace SPOT_API.Models
         public Guid StockId { get; set; }
         public virtual Stock Stock { get; set; }
 
-        public DateTime DeliveryDateTime { get; set; }
+        public DateTime DeliveryDateTime { get; set; } = DateTime.MinValue.ToUniversalTime();
 
     }
 

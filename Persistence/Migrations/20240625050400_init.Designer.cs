@@ -12,8 +12,8 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    [Migration("20240624121940_init2")]
-    partial class init2
+    [Migration("20240625050400_init")]
+    partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

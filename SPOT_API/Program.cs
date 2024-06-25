@@ -22,6 +22,8 @@ namespace SPOT_API
         {
             var host = CreateHostBuilder(args).Build();
 
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
             using var scope = host.Services.CreateScope();
             var services = scope.ServiceProvider;
 
@@ -30,7 +32,6 @@ namespace SPOT_API
                 var context = services.GetRequiredService<SpotDBContext>();
                 var userManager = services.GetRequiredService<UserManager<AppUser>>();
                 await context.Database.MigrateAsync();
-                Console.WriteLine("ASDadsadadaSADADS");
                 await Seed.SeedData(context, userManager);
             }
             catch (Exception ex)

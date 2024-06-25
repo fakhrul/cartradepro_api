@@ -12,7 +12,7 @@ namespace SPOT_API.Models
 
         public string RACNo { get; set; }
         public string VehicleRegistrationNumber { get; set; }
-        public DateTime VehicleRegistrationDate { get; set; } = DateTime.UtcNow;
+        public DateTime VehicleRegistrationDate { get; set; } = DateTime.MinValue.ToUniversalTime();
 
         public virtual ICollection<JpjEHakMilikDocument> JpjEHakMilikDocuments { get; set; }
         public virtual ICollection<JpjEDaftarDocument> JpjEDaftarDocuments { get; set; }

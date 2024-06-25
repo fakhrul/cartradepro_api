@@ -27,7 +27,7 @@ namespace SPOT_API.Models
         /// </summary>
         [JsonIgnore]
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public DateTime? UpdatedOn { get; set; }
+        public DateTime? UpdatedOn { get; set; } = DateTime.UtcNow;
 
         public BaseModel()
         {

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SPOT_API.Models;
 
 namespace SPOT_API.Persistence
@@ -93,8 +94,22 @@ namespace SPOT_API.Persistence
                 .HasIndex(p => p.StockNo)
                 .IsUnique();
 
+       
 
             base.OnModelCreating(modelBuilder);
+
+            // Apply configuration to all DateTime properties
+            //foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            //{
+            //    foreach (var property in entityType.GetProperties())
+            //    {
+            //        if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+            //        {
+            //            property.SetColumnType("timestamp without time zone");
+            //        }
+            //    }
+            //}
+
 
         }
 

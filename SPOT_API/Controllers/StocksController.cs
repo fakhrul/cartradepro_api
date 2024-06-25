@@ -452,6 +452,8 @@ namespace SPOT_API.Controllers
                 if(obj.AdminitrativeCost.AdminitrativeCostItems != null)
                 foreach (var o in obj.AdminitrativeCost.AdminitrativeCostItems)
                     o.AdminitrativeCost = null;
+
+                obj.LatestStockStatus.Stock = null;
             }
             catch (Exception ex)
             {
