@@ -73,7 +73,8 @@ namespace SPOT_API.Persistence
         public DbSet<ExpenseItem> ExpenseItems { get; set; }
 
         public DbSet<StockStatusHistory> StockStatusHistories { get; set; }
-        
+        public DbSet<Company> Companies  { get; set; }
+
         public SpotDBContext(DbContextOptions<SpotDBContext> options)
             : base(options)
         {

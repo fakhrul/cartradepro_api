@@ -26,6 +26,7 @@ namespace SPOT_API.Persistence
                 await SeedSupplier(context);
                 await SeedBank(context);
                 await SeedCustomer(context);
+                await SeedCompany(context);
 
                 await SeedStocks(context);
 
@@ -37,6 +38,36 @@ namespace SPOT_API.Persistence
             }
             //}
 
+        }
+
+        private static async Task SeedCompany(SpotDBContext context)
+        {
+
+            if (context.Companies.Any())
+                return;
+            var objs = new List<Company>
+            {
+                new Company {
+                            Name= "SINAR AUTO SDN BHD",
+        TagLine= "(Formerly known as Asmara Auto Sdn Bhd)",
+        Address= @"No. 6, Jalan P10/16, Seksyen 10, 
+Taman Perindustrian Selaman, 
+Bandar Baru Bangi, 43650 Selangor",
+        Phone= "+603-8920 8080",
+        LogoUrl= "path/to/logo.png", // replace with your actual logo path
+        BankAccountName= "Sinar Auto Sdn Bhd",
+        BankAccountNo= "MBB-5620 2165 5099",
+        BankName= "MAYBANK ISLAMIC BERHAD (JLN KELANG LAMA)",
+        BankAddress= @"2nd & 3rd Floor, 
+18 & 3 Jalan Desa 
+Taman Desa, 58100 Kuala Lumpur",
+                        RegNo = "1231212-D"
+
+                },
+            };
+
+            context.Companies.AddRange(objs);
+            await context.SaveChangesAsync();
         }
         private static async Task SeedCustomer(SpotDBContext context)
         {
