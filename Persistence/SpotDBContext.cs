@@ -75,6 +75,10 @@ namespace SPOT_API.Persistence
         public DbSet<StockStatusHistory> StockStatusHistories { get; set; }
         public DbSet<Company> Companies  { get; set; }
 
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Module> Modules { get; set; }
+        public DbSet<RoleModulePermission> RoleModulePermissions { get; set; }
+
         public SpotDBContext(DbContextOptions<SpotDBContext> options)
             : base(options)
         {
@@ -95,7 +99,9 @@ namespace SPOT_API.Persistence
                 .HasIndex(p => p.StockNo)
                 .IsUnique();
 
-       
+            // Define composite key for RoleModulePermission
+            modelBuilder.Entity<RoleModulePermission>()
+                .HasKey(rmp => new { rmp.RoleId, rmp.ModuleId });
 
             base.OnModelCreating(modelBuilder);
 

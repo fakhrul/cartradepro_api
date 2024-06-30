@@ -32,7 +32,7 @@ namespace SPOT_API.Controllers
         }
 
         // GET: api/Dashboards/5
-        [HttpGet("ByCurrentTenant")]
+        [HttpGet("Top")]
         public async Task<ActionResult<Dashboard>> GetDashboardByCurrentTenant()
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
@@ -40,32 +40,59 @@ namespace SPOT_API.Controllers
                 return Unauthorized();
 
 
-            var dashboard = await _context.Dashboards
-                //.Where(c=> c.TenantId == user.TenantId)
-                
-                .FirstOrDefaultAsync();
+            //var dashboard = await _context.Dashboards
+            //    //.Where(c=> c.TenantId == user.TenantId)
 
-            if (dashboard == null)
+            //    .FirstOrDefaultAsync();
+
+            //if (dashboard == null)
+            //{
+            Dashboard dashboard = null;
+            try
             {
+
+                var stocks = _context.Stocks
+                    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
+                    .ThenInclude(c => c.StockStatus)
+                    .ToList();
+
+                int totalStockAvailable = stocks.Where(p => p.LatestStockStatus.StockStatus.Name == "Available").ToList().Count();
+                int totalStockInProcess = stocks.Where(p => 
+                        p.LatestStockStatus.StockStatus.Name != "Draft" &&
+                        p.LatestStockStatus.StockStatus.Name != "Available" &&
+                        p.LatestStockStatus.StockStatus.Name != "Cancelled" &&
+                        p.LatestStockStatus.StockStatus.Name != "Sold"
+                        ).ToList().Count();
+                int totalTotalStockSoldThisYear = stocks.Where(p => 
+                    p.LatestStockStatus.StockStatus.Name == "Sold" && 
+                    p.LatestStockStatus.DateTime.Year == DateTime.Now.Year).ToList().Count();
+
+                int totalTotalStockSoldLastYear = stocks.Where(p =>
+                    p.LatestStockStatus.StockStatus.Name == "Sold" &&
+                    p.LatestStockStatus.DateTime.Year == DateTime.Now.AddYears(-1).Year).ToList().Count();
+
                 dashboard = new Dashboard
                 {
                     Date = DateTime.Now.Date,
-                   
-                    TotalAllUser = 0,
-                    TotalActiveUser = 0,
-                    TotalInActiveUser = 0,
-                    TotalHeadCount = 0,
-                    TotalMissingUser = 0,
-                    TotalPendingApproval = 0,
-                    TotalRegisteredStaff = 0,
-                    TotalRegisteredVisitor = 0,
+                    ThisYear = DateTime.Now.Year,
+                    LastYear = DateTime.Now.Year - 1,
+                    TotalStockAvailable = totalStockAvailable ,
+                    TotalStockInProcess = totalStockInProcess,
+                    TotalTotalStockSoldLastYear = totalTotalStockSoldLastYear,
+                    TotalTotalStockSoldThisYear = totalTotalStockSoldThisYear,
                 };
-
-                await _context.Dashboards.AddAsync(dashboard);
-                await _context.SaveChangesAsync();
-
-
             }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+               
+
+                //await _context.Dashboards.AddAsync(dashboard);
+                //await _context.SaveChangesAsync();
+
+            //}
 
             return dashboard;
         }

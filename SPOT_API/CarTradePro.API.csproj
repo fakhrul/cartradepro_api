@@ -92,6 +92,7 @@
     <Compile Remove="Controllers\MovementHistoriesController.cs" />
     <Compile Remove="Controllers\PerformancesController.cs" />
     <Compile Remove="Controllers\ProductivitiesController.cs" />
+    <Compile Remove="Controllers\RolesControllerProb.cs" />
     <Compile Remove="Controllers\SchedulesController.cs" />
     <Compile Remove="Controllers\ServiceProvidersController.cs" />
     <Compile Remove="Controllers\SpotBeaconController.cs" />

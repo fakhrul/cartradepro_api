@@ -42,25 +42,34 @@ namespace SPOT_API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
-            if (user == null)
-                return Unauthorized();
-
-            var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
-            if (!result.Succeeded)
-                return Unauthorized();
-
-          
-            return new UserDto
+            try
             {
-                DisplayName = user.DisplayName,
-                Image = null,
-                Token = _tokenService.CreateToken(user),
-                UserName = user.UserName,
-                Role = user.Role,
+                var user = await _userManager.FindByEmailAsync(loginDto.Email);
+                if (user == null)
+                    return Unauthorized();
 
-            };
+                var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+                if (!result.Succeeded)
+                    return Unauthorized();
 
+
+                return new UserDto
+                {
+                    DisplayName = user.DisplayName,
+                    Image = null,
+                    Token = _tokenService.CreateToken(user),
+                    UserName = user.UserName,
+                    Role = user.Role,
+
+                };
+
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
         }
 
         [AllowAnonymous]

@@ -24,9 +24,13 @@ namespace SPOT_API.Extensions
             {
                 opt.Password.RequireNonAlphanumeric = false;
             })
+                .AddRoles<IdentityRole>() // This line is essential to add roles
                 .AddEntityFrameworkStores<SpotDBContext>()
-                .AddSignInManager<SignInManager<AppUser>>();
+                .AddSignInManager<SignInManager<AppUser>>()
+                .AddRoleManager<RoleManager<IdentityRole>>();
 
+
+        
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]));
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(opt =>
