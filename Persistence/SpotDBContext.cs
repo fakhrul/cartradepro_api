@@ -79,6 +79,9 @@ namespace SPOT_API.Persistence
         public DbSet<Module> Modules { get; set; }
         public DbSet<RoleModulePermission> RoleModulePermissions { get; set; }
 
+        public DbSet<SubModule> SubModules { get; set; }
+        public DbSet<RoleSubModulePermission> RoleSubModulePermissions { get; set; }
+
         public SpotDBContext(DbContextOptions<SpotDBContext> options)
             : base(options)
         {
@@ -102,6 +105,12 @@ namespace SPOT_API.Persistence
             // Define composite key for RoleModulePermission
             modelBuilder.Entity<RoleModulePermission>()
                 .HasKey(rmp => new { rmp.RoleId, rmp.ModuleId });
+
+            modelBuilder.Entity<RoleSubModulePermission>()
+                .HasKey(rmp => new { rmp.RoleId, rmp.SubModuleId});
+
+            //modelBuilder.Entity<SubModule>()
+            //    .HasKey(rmp => new { rmp.ModuleId});
 
             base.OnModelCreating(modelBuilder);
 

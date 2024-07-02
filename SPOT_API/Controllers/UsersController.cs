@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SPOT_API.Persistence;
 using SPOT_API.Models;
+using Microsoft.AspNetCore.Identity;
+using Application.Interfaces;
 
 namespace SPOT_API.Controllers
 {
@@ -15,10 +17,14 @@ namespace SPOT_API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly SpotDBContext _context;
+        private readonly IUserAccessor _userAccessor;
+        private readonly UserManager<AppUser> _userManager;
 
-        public UsersController(SpotDBContext context)
+        public UsersController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager )
         {
             _context = context;
+            _userAccessor = userAccessor;
+            _userManager = userManager;
         }
 
         // GET: api/Users
@@ -105,5 +111,101 @@ namespace SPOT_API.Controllers
         {
             return _context.Profiles.Any(e => e.Id == id);
         }
+
+        [HttpGet("GetRolesAndPermissions")]
+        public async Task<IActionResult> GetRolesPermissionsModules()
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var roles = await _userManager.GetRolesAsync(user.Profile.AppUser);
+            var permissions = GetPermissionsForRoles(roles);
+            var modules = await GetModules();
+
+            return Ok(new { roles, permissions, modules });
+        }
+
+        private Dictionary<string, Dictionary<string, bool>> GetPermissionsForRoles(IList<string> roles)
+        {
+            // Implement your logic to get permissions based on roles
+            // This is a placeholder example
+            var permissions = new Dictionary<string, Dictionary<string, bool>>();
+
+            foreach (var role in roles)
+            {
+                // Fetch permissions for each role from your database or service
+                // This is just a placeholder logic
+                permissions[role] = new Dictionary<string, bool>
+            {
+                { "canAdd", role == "Admin" },
+                { "canEdit", role == "Admin" },
+                { "canDelete", role == "Admin" },
+                { "canView", true }
+            };
+            }
+
+            return permissions;
+        }
+
+        private async Task<List<string>> GetModules()
+        {
+            // Implement your logic to fetch modules
+            // This is a placeholder example
+            return new List<string>
+        {
+            "Stock",
+            "StockVehicle",
+            "StockPurchase",
+            "StockImport",
+            "StockClearance",
+            "StockSale",
+
+            "ParameterCustomer",
+            "ParameterInvoice",
+            
+                "ReportDisburstment",
+            "SalesVehicle",
+            // Add other modules
+        };
+        }
+
+
+        //[HttpGet("GetRolesAndPermissions")]
+        //public async Task<IActionResult> GetRolesAndPermissions()
+        //{
+        //    try
+        //    {
+        //        //var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+        //        //var roles = await _userManager.GetRolesAsync(user.Profile.AppUser);
+        //        // Assume you have a method to get permissions based on roles
+
+        //        var roles = _context.Roles.ToListAsync();
+        //        var permissions = GetPermissionsForRoles(roles);
+
+        //        return Ok(new { roles, permissions });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        throw ex;
+        //    }
+        //}
+
+        //private Dictionary<string, bool> GetPermissionsForRoles(IList<string> roles)
+        //{
+        //    // Implement your logic to get permissions based on roles
+        //    // This is a placeholder
+        //    return new Dictionary<string, bool>
+        //{
+        //    { "canAdd", roles.Contains("Admin") || roles.Contains("Stock Manager") },
+        //    { "canEdit", roles.Contains("Admin") || roles.Contains("Stock Manager") },
+        //    { "canDelete", roles.Contains("Admin") },
+        //    { "canView", true }
+        //};
+        //}
     }
 }

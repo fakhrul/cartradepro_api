@@ -52,7 +52,49 @@ namespace SPOT_API.Controllers
                 if (!result.Succeeded)
                     return Unauthorized();
 
+                //Prepare Permission for this Rol
+                var modules = await _context.RoleModulePermissions
+                    .Include(c=> c.Module)
+                    .Include(c => c.Role)
 
+                    .Where(c => c.CanView == true && c.Role.Name == user.Role).ToListAsync();
+
+                var permisionList = new List<PermissionDto>();
+                foreach (var entry in modules)
+                {
+                    permisionList.Add(new PermissionDto {  Module= entry.Module.Name, CanAdd = entry.CanAdd,
+                     CanUpdate = entry.CanUpdate,
+                     CanView = entry.CanView,
+                     CanDelete = entry.CanDelete});
+                }
+                //Prepare Module and Role
+                Dictionary<string, List<string>> moduleRoleDictionary = new Dictionary<string, List<string>>();
+                foreach(var module in modules)
+                {
+                    if(!moduleRoleDictionary.ContainsKey(module.Module.Name))
+                    {
+                        var o = new List<string>();
+                        o.Add(module.Role.Name);
+                        moduleRoleDictionary.Add(module.Module.Name, o);
+                    }
+                    else
+                    {
+                        moduleRoleDictionary[module.Module.Name].Add(module.Role.Name);
+                    }
+                }
+                var moduleRoleList = new List<ModuleRoleDto>();
+                foreach (var entry in moduleRoleDictionary)
+                {
+                    moduleRoleList.Add(new ModuleRoleDto { Module = entry.Key, Roles = entry.Value });
+                }
+
+                var permissions = await _context.RoleModulePermissions
+                    .Include(c=> c.Module)
+                    .Where(c => c.Role.Name == user.Role).ToListAsync();
+
+                foreach (var p in permissions)
+                    p.Module.RoleModulePermissions = null;
+                var roles = new string[] { user.Role };
                 return new UserDto
                 {
                     DisplayName = user.DisplayName,
@@ -60,7 +102,9 @@ namespace SPOT_API.Controllers
                     Token = _tokenService.CreateToken(user),
                     UserName = user.UserName,
                     Role = user.Role,
-
+                    Roles = roles,
+                    Permisions = permisionList,
+                    Modules = moduleRoleList
                 };
 
 
@@ -70,6 +114,14 @@ namespace SPOT_API.Controllers
 
                 throw ex;
             }
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var user = await _userManager.Users
+                .FirstOrDefaultAsync(x => x.Email == User.FindFirstValue(ClaimTypes.Email));
+            return Ok("Registration success");
         }
 
         [AllowAnonymous]

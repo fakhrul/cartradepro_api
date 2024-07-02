@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SPOT_API.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,5 +23,25 @@ namespace SPOT_API.DTOs
         public Guid? TenantId { get; set; }
 
         public bool IsAzureAd { get; set; }
+        public string[] Roles { get; internal set; }
+        //public List<RoleModulePermission> Permisions { get; internal set; }
+        public List<PermissionDto> Permisions { get; internal set; }
+
+        //public Dictionary<string, List<string>> Modules { get; internal set; }
+        public List<ModuleRoleDto> Modules { get; set; }
+    }
+
+    public class ModuleRoleDto
+    {
+        public string Module { get; set; }
+        public List<string> Roles { get; set; }
+    }
+    public class PermissionDto
+    {
+        public string Module { get; set; }
+        public bool CanAdd { get; set; }
+        public bool CanUpdate { get; set; }
+        public bool CanDelete { get; set; }
+        public bool CanView { get; set; }
     }
 }

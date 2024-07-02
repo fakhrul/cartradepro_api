@@ -30,6 +30,43 @@ namespace SPOT_API.Controllers
             return await _context.RoleModulePermissions.Include(rmp => rmp.Role).Include(rmp => rmp.Module).ToListAsync();
         }
 
+
+        //[HttpGet("GetRolesAndPermissions")]
+        //public async Task<IActionResult> GetRolesAndPermissions()
+        //{
+        //    try
+        //    {
+        //        //var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+        //        //var roles = await _userManager.GetRolesAsync(user.Profile.AppUser);
+        //        // Assume you have a method to get permissions based on roles
+
+        //        var roles = _context.Roles.ToListAsync();
+        //        var permissions = GetPermissionsForRoles(roles);
+
+        //        return Ok(new { roles, permissions });
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+
+        //        throw ex;
+        //    }
+        //}
+
+        //private Dictionary<string, bool> GetPermissionsForRoles(IList<string> roles)
+        //{
+        //    // Implement your logic to get permissions based on roles
+        //    // This is a placeholder
+        //    return new Dictionary<string, bool>
+        //{
+        //    { "canAdd", roles.Contains("Admin") || roles.Contains("Stock Manager") },
+        //    { "canEdit", roles.Contains("Admin") || roles.Contains("Stock Manager") },
+        //    { "canDelete", roles.Contains("Admin") },
+        //    { "canView", true }
+        //};
+        //}
+
+
         [HttpGet("{roleId}/{moduleId}")]
         public async Task<ActionResult<RoleModulePermission>> GetPermission(Guid roleId, Guid moduleId)
         {

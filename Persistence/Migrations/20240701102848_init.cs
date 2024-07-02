@@ -137,6 +137,29 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Companies",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    RegNo = table.Column<string>(type: "text", nullable: true),
+                    TagLine = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: true),
+                    Phone = table.Column<string>(type: "text", nullable: true),
+                    LogoUrl = table.Column<string>(type: "text", nullable: true),
+                    BankAccountName = table.Column<string>(type: "text", nullable: true),
+                    BankAccountNo = table.Column<string>(type: "text", nullable: true),
+                    BankName = table.Column<string>(type: "text", nullable: true),
+                    BankAddress = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Companies", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Customers",
                 columns: table => new
                 {
@@ -175,14 +198,6 @@ namespace Persistence.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TotalAllUser = table.Column<int>(type: "integer", nullable: false),
-                    TotalActiveUser = table.Column<int>(type: "integer", nullable: false),
-                    TotalInActiveUser = table.Column<int>(type: "integer", nullable: false),
-                    TotalHeadCount = table.Column<int>(type: "integer", nullable: false),
-                    TotalMissingUser = table.Column<int>(type: "integer", nullable: false),
-                    TotalPendingApproval = table.Column<int>(type: "integer", nullable: false),
-                    TotalRegisteredStaff = table.Column<int>(type: "integer", nullable: false),
-                    TotalRegisteredVisitor = table.Column<int>(type: "integer", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -221,6 +236,20 @@ namespace Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Expenses", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Modules",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Modules", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -280,6 +309,20 @@ namespace Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Registrations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Roles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -565,6 +608,27 @@ namespace Persistence.Migrations
                         name: "FK_ExpenseItems_Expenses_ExpenseId",
                         column: x => x.ExpenseId,
                         principalTable: "Expenses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SubModules",
+                columns: table => new
+                {
+                    ModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubModules", x => x.ModuleId);
+                    table.ForeignKey(
+                        name: "FK_SubModules_Modules_ModuleId",
+                        column: x => x.ModuleId,
+                        principalTable: "Modules",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -999,6 +1063,74 @@ namespace Persistence.Migrations
                         column: x => x.ImportId,
                         principalTable: "Imports",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RoleModulePermissions",
+                columns: table => new
+                {
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CanAdd = table.Column<bool>(type: "boolean", nullable: false),
+                    CanUpdate = table.Column<bool>(type: "boolean", nullable: false),
+                    CanDelete = table.Column<bool>(type: "boolean", nullable: false),
+                    CanView = table.Column<bool>(type: "boolean", nullable: false),
+                    SubModuleModuleId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoleModulePermissions", x => new { x.RoleId, x.ModuleId });
+                    table.ForeignKey(
+                        name: "FK_RoleModulePermissions_Modules_ModuleId",
+                        column: x => x.ModuleId,
+                        principalTable: "Modules",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RoleModulePermissions_Roles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RoleModulePermissions_SubModules_SubModuleModuleId",
+                        column: x => x.SubModuleModuleId,
+                        principalTable: "SubModules",
+                        principalColumn: "ModuleId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RoleSubModulePermissions",
+                columns: table => new
+                {
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubModuleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CanAdd = table.Column<bool>(type: "boolean", nullable: false),
+                    CanUpdate = table.Column<bool>(type: "boolean", nullable: false),
+                    CanDelete = table.Column<bool>(type: "boolean", nullable: false),
+                    CanView = table.Column<bool>(type: "boolean", nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoleSubModulePermissions", x => new { x.RoleId, x.SubModuleId });
+                    table.ForeignKey(
+                        name: "FK_RoleSubModulePermissions_Roles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RoleSubModulePermissions_SubModules_SubModuleId",
+                        column: x => x.SubModuleId,
+                        principalTable: "SubModules",
+                        principalColumn: "ModuleId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -1593,6 +1725,21 @@ namespace Persistence.Migrations
                 column: "StockId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RoleModulePermissions_ModuleId",
+                table: "RoleModulePermissions",
+                column: "ModuleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RoleModulePermissions_SubModuleModuleId",
+                table: "RoleModulePermissions",
+                column: "SubModuleModuleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RoleSubModulePermissions_SubModuleId",
+                table: "RoleSubModulePermissions",
+                column: "SubModuleId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Sales_CustomerId",
                 table: "Sales",
                 column: "CustomerId");
@@ -1729,6 +1876,9 @@ namespace Persistence.Migrations
                 name: "BillOfLandingDocuments");
 
             migrationBuilder.DropTable(
+                name: "Companies");
+
+            migrationBuilder.DropTable(
                 name: "Completions");
 
             migrationBuilder.DropTable(
@@ -1777,6 +1927,12 @@ namespace Persistence.Migrations
                 name: "Remarks");
 
             migrationBuilder.DropTable(
+                name: "RoleModulePermissions");
+
+            migrationBuilder.DropTable(
+                name: "RoleSubModulePermissions");
+
+            migrationBuilder.DropTable(
                 name: "StockStatusHistories");
 
             migrationBuilder.DropTable(
@@ -1792,6 +1948,12 @@ namespace Persistence.Migrations
                 name: "ApplicationForms");
 
             migrationBuilder.DropTable(
+                name: "Roles");
+
+            migrationBuilder.DropTable(
+                name: "SubModules");
+
+            migrationBuilder.DropTable(
                 name: "Stocks");
 
             migrationBuilder.DropTable(
@@ -1805,6 +1967,9 @@ namespace Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Profiles");
+
+            migrationBuilder.DropTable(
+                name: "Modules");
 
             migrationBuilder.DropTable(
                 name: "AdminitrativeCosts");

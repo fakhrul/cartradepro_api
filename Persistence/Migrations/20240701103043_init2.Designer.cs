@@ -12,8 +12,8 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    [Migration("20240630045409_udpate-dashboard")]
-    partial class udpatedashboard
+    [Migration("20240701103043_init2")]
+    partial class init2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -1193,6 +1193,28 @@ namespace Persistence.Migrations
                     b.ToTable("Models");
                 });
 
+            modelBuilder.Entity("SPOT_API.Models.Module", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Modules");
+                });
+
             modelBuilder.Entity("SPOT_API.Models.Package", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1611,6 +1633,109 @@ namespace Persistence.Migrations
                     b.ToTable("Remarks");
                 });
 
+            modelBuilder.Entity("SPOT_API.Models.Role", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("SPOT_API.Models.RoleModulePermission", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CanAdd")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanUpdate")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanView")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SubModuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RoleId", "ModuleId");
+
+                    b.HasIndex("ModuleId");
+
+                    b.HasIndex("SubModuleId");
+
+                    b.ToTable("RoleModulePermissions");
+                });
+
+            modelBuilder.Entity("SPOT_API.Models.RoleSubModulePermission", b =>
+                {
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SubModuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CanAdd")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanUpdate")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanView")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RoleId", "SubModuleId");
+
+                    b.HasIndex("SubModuleId");
+
+                    b.ToTable("RoleSubModulePermissions");
+                });
+
             modelBuilder.Entity("SPOT_API.Models.Sale", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1784,6 +1909,33 @@ namespace Persistence.Migrations
                     b.HasIndex("StockStatusId");
 
                     b.ToTable("StockStatusHistories");
+                });
+
+            modelBuilder.Entity("SPOT_API.Models.SubModule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModuleId");
+
+                    b.ToTable("SubModules");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.Supplier", b =>
@@ -2365,6 +2517,48 @@ namespace Persistence.Migrations
                     b.Navigation("Stock");
                 });
 
+            modelBuilder.Entity("SPOT_API.Models.RoleModulePermission", b =>
+                {
+                    b.HasOne("SPOT_API.Models.Module", "Module")
+                        .WithMany("RoleModulePermissions")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SPOT_API.Models.Role", "Role")
+                        .WithMany("RoleModulePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SPOT_API.Models.SubModule", null)
+                        .WithMany("RoleModulePermissions")
+                        .HasForeignKey("SubModuleId");
+
+                    b.Navigation("Module");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("SPOT_API.Models.RoleSubModulePermission", b =>
+                {
+                    b.HasOne("SPOT_API.Models.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SPOT_API.Models.SubModule", "SubModule")
+                        .WithMany()
+                        .HasForeignKey("SubModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("SubModule");
+                });
+
             modelBuilder.Entity("SPOT_API.Models.Sale", b =>
                 {
                     b.HasOne("SPOT_API.Models.Customer", "Customer")
@@ -2490,6 +2684,17 @@ namespace Persistence.Migrations
                     b.Navigation("StockStatus");
                 });
 
+            modelBuilder.Entity("SPOT_API.Models.SubModule", b =>
+                {
+                    b.HasOne("SPOT_API.Models.Module", "Module")
+                        .WithMany("SubModules")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Module");
+                });
+
             modelBuilder.Entity("SPOT_API.Models.Vehicle", b =>
                 {
                     b.HasOne("SPOT_API.Models.Brand", "Brand")
@@ -2574,6 +2779,13 @@ namespace Persistence.Migrations
                     b.Navigation("LetterOfUndertakingDocuments");
                 });
 
+            modelBuilder.Entity("SPOT_API.Models.Module", b =>
+                {
+                    b.Navigation("RoleModulePermissions");
+
+                    b.Navigation("SubModules");
+                });
+
             modelBuilder.Entity("SPOT_API.Models.Profile", b =>
                 {
                     b.Navigation("AppUser");
@@ -2592,11 +2804,21 @@ namespace Persistence.Migrations
                     b.Navigation("PuspakomB7SlipDocuments");
                 });
 
+            modelBuilder.Entity("SPOT_API.Models.Role", b =>
+                {
+                    b.Navigation("RoleModulePermissions");
+                });
+
             modelBuilder.Entity("SPOT_API.Models.Stock", b =>
                 {
                     b.Navigation("RemarksList");
 
                     b.Navigation("StockStatusHistories");
+                });
+
+            modelBuilder.Entity("SPOT_API.Models.SubModule", b =>
+                {
+                    b.Navigation("RoleModulePermissions");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.Vehicle", b =>
