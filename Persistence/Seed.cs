@@ -31,6 +31,7 @@ namespace SPOT_API.Persistence
                 await SeedBank(context);
                 await SeedCustomer(context);
                 await SeedCompany(context);
+                await SeedClearanceAgent(context);
 
 
                 await SeedStocks(context);
@@ -100,6 +101,80 @@ Taman Desa, 58100 Kuala Lumpur",
             await context.SaveChangesAsync();
 
             Console.WriteLine("Customers seeded successfully.");
+        }
+
+
+        private static async Task SeedClearanceAgent(SpotDBContext context)
+        {
+            if (context.ClearanceAgents.Any())
+            {
+                Console.WriteLine("Clearance Angentalready exist in the database. Skipping seeding.");
+                return;
+            }
+
+            var banks = new List<ForwardingAgent>
+    {
+          new ForwardingAgent
+            {
+                Name = "Global Forwarders Ltd.",
+                Address = "123 International Road, Suite 100",
+                Country = "USA",
+                Phone = "+1-555-1234-567",
+                Website = "http://www.globalforwarders.com",
+                ContactPersonName = "John Doe",
+                ContactPersonPhone = "+1-555-5678-910",
+                ContactPersonEmail = "johndoe@globalforwarders.com"
+            },
+            new ForwardingAgent
+            {
+                Name = "FastTrack Logistics",
+                Address = "456 Cargo Lane, Warehouse 5",
+                Country = "Germany",
+                Phone = "+49-30-1234-567",
+                Website = "http://www.fasttracklogistics.de",
+                ContactPersonName = "Anna Schmidt",
+                ContactPersonPhone = "+49-30-5678-910",
+                ContactPersonEmail = "annaschmidt@fasttracklogistics.de"
+            },
+            new ForwardingAgent
+            {
+                Name = "Pacific Shipping Co.",
+                Address = "789 Ocean Blvd, Building 2",
+                Country = "Japan",
+                Phone = "+81-3-1234-5678",
+                Website = "http://www.pacificshipping.co.jp",
+                ContactPersonName = "Taro Yamada",
+                ContactPersonPhone = "+81-3-5678-9101",
+                ContactPersonEmail = "taroyamada@pacificshipping.co.jp"
+            },
+            new ForwardingAgent
+            {
+                Name = "EuroTrans Services",
+                Address = "101 Main St, Office 45",
+                Country = "France",
+                Phone = "+33-1-2345-6789",
+                Website = "http://www.eurotransservices.fr",
+                ContactPersonName = "Marie Dupont",
+                ContactPersonPhone = "+33-1-6789-0123",
+                ContactPersonEmail = "mariedupont@eurotransservices.fr"
+            },
+            new ForwardingAgent
+            {
+                Name = "Aussie Freight Forwarders",
+                Address = "202 Outback Rd, Unit 3",
+                Country = "Australia",
+                Phone = "+61-2-1234-5678",
+                Website = "http://www.aussiefreight.com.au",
+                ContactPersonName = "Bruce Smith",
+                ContactPersonPhone = "+61-2-5678-9101",
+                ContactPersonEmail = "brucesmith@aussiefreight.com.au"
+            }
+    };
+
+            context.ClearanceAgents.AddRange(banks);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine("Clearance Agent seeded successfully.");
         }
 
 

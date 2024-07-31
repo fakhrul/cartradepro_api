@@ -112,6 +112,11 @@ namespace SPOT_API.Persistence
             //modelBuilder.Entity<SubModule>()
             //    .HasKey(rmp => new { rmp.ModuleId});
 
+            modelBuilder.Entity<Brand>()
+                .HasMany(b => b.Models)
+                .WithOne(m => m.Brand)
+                .HasForeignKey(m => m.BrandId);
+
             base.OnModelCreating(modelBuilder);
 
             // Apply configuration to all DateTime properties

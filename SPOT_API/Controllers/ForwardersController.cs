@@ -15,40 +15,39 @@ namespace SPOT_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BrandsController : ControllerBase
+    public class ForwardersController : ControllerBase
     {
         private readonly SpotDBContext _context;
         private readonly IUserAccessor _userAccessor;
         private readonly UserManager<AppUser> _userManager;
 
-        public BrandsController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
+        public ForwardersController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
         {
             _context = context;
             _userAccessor = userAccessor;
             _userManager = userManager;
         }
 
-        // GET: api/Brands
+        // GET: api/Forwarders
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Brand>>> GetAll()
+        public async Task<ActionResult<IEnumerable<ForwardingAgent>>> GetAll()
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
             if (user == null)
                 return Unauthorized();
 
-            var objs = await _context.Brands
+            var objs = await _context.ClearanceAgents
                 .ToListAsync();
 
             return objs;
         }
 
 
-        // GET: api/Brands/5
+        // GET: api/Forwarders/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Brand>> Get(Guid id)
+        public async Task<ActionResult<ForwardingAgent>> Get(Guid id)
         {
-            var obj = await _context.Brands
-                .Include(x => x.Models)
+            var obj = await _context.ClearanceAgents
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
@@ -56,19 +55,14 @@ namespace SPOT_API.Controllers
                 return NotFound();
             }
 
-            foreach (var model in obj.Models)
-            {
-                model.Brand = null;
-            }
-
             return obj;
         }
 
 
-        // PUT: api/Brands/5
+        // PUT: api/Forwarders/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(Guid id, Brand obj)
+        public async Task<IActionResult> Put(Guid id, ForwardingAgent obj)
         {
             if (id != obj.Id)
             {
@@ -108,10 +102,10 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
-        // POST: api/Brands
+        // POST: api/Forwarders
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Brand>> Post(Brand obj)
+        public async Task<ActionResult<ForwardingAgent>> Post(ForwardingAgent obj)
         {
             try
             {
@@ -119,7 +113,7 @@ namespace SPOT_API.Controllers
                 if (user == null)
                     return Unauthorized();
 
-                _context.Brands.Add(obj);
+                _context.ClearanceAgents.Add(obj);
                 await _context.SaveChangesAsync();
 
             }
@@ -130,7 +124,7 @@ namespace SPOT_API.Controllers
             return CreatedAtAction("Get", new { id = obj.Id }, obj);
         }
 
-        // DELETE: api/Brands/5
+        // DELETE: api/Forwarders/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -140,14 +134,14 @@ namespace SPOT_API.Controllers
 
 
 
-            var category = await _context.Brands
+            var category = await _context.ClearanceAgents
                 .FirstOrDefaultAsync(c => c.Id == id);
             if (category == null)
             {
                 return NotFound();
             }
 
-            _context.Brands.Remove(category);
+            _context.ClearanceAgents.Remove(category);
             await _context.SaveChangesAsync();
 
 
@@ -156,66 +150,9 @@ namespace SPOT_API.Controllers
 
         private bool IsExists(Guid id)
         {
-            return _context.Brands.Any(e => e.Id == id);
+            return _context.ClearanceAgents.Any(e => e.Id == id);
         }
 
-
-        [HttpDelete("RemoveModel/{brandId}/{modelId}")]
-        public async Task<IActionResult> PutRemoveModel(Guid brandId, Guid modelId)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-            if (user == null)
-                return Unauthorized();
-
-            try
-            {
-                var model = _context.Models.Find(modelId);
-                _context.Models.Remove(model);
-                await _context.SaveChangesAsync();
-            }
-
-            catch (Exception ex)
-            {
-                throw ex;
-
-            }
-
-
-            return NoContent();
-        }
-
-        [HttpPost("AddModel/{brandId}")]
-        public async Task<IActionResult> PostAddModel(Guid brandId, Model model)
-        {
-            try
-            {
-                var user = await _context.Users
-                .Include(c => c.Profile)
-                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-                if (user == null)
-                    return Unauthorized();
-
-                Brand brand = _context.Brands.Find(brandId);
-                if (brand == null)
-                {
-                    return BadRequest();
-                }
-
-                model.BrandId = brandId;
-                _context.Models.Add(model);
-
-                await _context.SaveChangesAsync();
-
-            }
-            catch (Exception ex)
-            {
-            }
-
-            //return CreatedAtAction("Get", new { id = brand.Id }, brand);
-
-
-            return NoContent();
-        }
 
     }
 }

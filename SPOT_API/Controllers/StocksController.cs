@@ -39,14 +39,25 @@ namespace SPOT_API.Controllers
             var objs = await _context.Stocks
                 .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
                 .ThenInclude(c => c.StockStatus)
+                .Include(c=> c.Vehicle)
+                .ThenInclude(c=> c.Brand)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.Model)
                 .OrderByDescending(c=> c.CreatedOn)
                 .ToListAsync();
 
 
 
             foreach (var obj in objs)
+            {
                 foreach (var s in obj.StockStatusHistories)
                     s.Stock = null;
+                if (obj.Vehicle != null && obj.Vehicle.Model != null)
+                    obj.Vehicle.Model.Brand = null;
+
+            } 
+
+
 
 
             return objs;
@@ -279,6 +290,16 @@ namespace SPOT_API.Controllers
                         o.AdminitrativeCost = null;
                     }
                 }
+            }
+
+            if(obj.Vehicle != null && obj.Vehicle.Brand != null)
+            {
+                obj.Vehicle.Brand.Models = null;
+
+            }
+            if (obj.Vehicle != null && obj.Vehicle.Model != null)
+            {
+                obj.Vehicle.Model.Brand = null;
             }
 
             return obj;
