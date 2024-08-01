@@ -43,6 +43,9 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c=> c.Brand)
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.Model)
+                .Include(c=> c.Pricing)
+                .Include(c=> c.Vehicle)
+                .ThenInclude(c=> c.VehiclePhotoList)
                 .OrderByDescending(c=> c.CreatedOn)
                 .ToListAsync();
 
@@ -55,6 +58,14 @@ namespace SPOT_API.Controllers
                 if (obj.Vehicle != null && obj.Vehicle.Model != null)
                     obj.Vehicle.Model.Brand = null;
 
+                if (obj.Vehicle != null && obj.Vehicle.VehiclePhotoList != null)
+                {
+                    foreach(var p in obj.Vehicle.VehiclePhotoList)
+                    {
+                        p.Vehicle = null;
+                        p.Document = null;
+                    }
+                }
             } 
 
 
@@ -324,6 +335,8 @@ namespace SPOT_API.Controllers
             _context.Entry(obj.Sale).State = EntityState.Modified;
             _context.Entry(obj.Sale.Loan).State = EntityState.Modified;
             _context.Entry(obj.Registration).State = EntityState.Modified;
+            _context.Entry(obj.Pricing).State = EntityState.Modified;
+
             //_context.Entry(obj.SellingPricing).State = EntityState.Modified;
 
 
