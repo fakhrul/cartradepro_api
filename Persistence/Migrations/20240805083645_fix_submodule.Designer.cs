@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240805083645_fix_submodule")]
+    partial class fix_submodule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2513,7 +2515,7 @@ namespace Persistence.Migrations
             modelBuilder.Entity("SPOT_API.Models.RoleModulePermission", b =>
                 {
                     b.HasOne("SPOT_API.Models.Module", "Module")
-                        .WithMany()
+                        .WithMany("RoleModulePermissions")
                         .HasForeignKey("ModuleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2532,7 +2534,7 @@ namespace Persistence.Migrations
             modelBuilder.Entity("SPOT_API.Models.RoleSubModulePermission", b =>
                 {
                     b.HasOne("SPOT_API.Models.Role", "Role")
-                        .WithMany("RoleSubModulePermissions")
+                        .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2775,6 +2777,8 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("SPOT_API.Models.Module", b =>
                 {
+                    b.Navigation("RoleModulePermissions");
+
                     b.Navigation("SubModules");
                 });
 
@@ -2799,8 +2803,6 @@ namespace Persistence.Migrations
             modelBuilder.Entity("SPOT_API.Models.Role", b =>
                 {
                     b.Navigation("RoleModulePermissions");
-
-                    b.Navigation("RoleSubModulePermissions");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.Stock", b =>

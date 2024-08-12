@@ -52,61 +52,51 @@ namespace SPOT_API.Controllers
                 if (!result.Succeeded)
                     return Unauthorized();
 
-                //Prepare Permission for this Rol
-                var modules = await _context.RoleModulePermissions
-                    .Include(c=> c.Module)
-                    .Include(c => c.Role)
 
-                    .Where(c => c.CanView == true && c.Role.Name == user.Role).ToListAsync();
+                var role = await _context.Roles
+                    .Include(c=> c.RoleModulePermissions)
+                    .ThenInclude(c=> c.Module)
+                    .Include(c=> c.RoleSubModulePermissions)
+                    .ThenInclude(c=> c.SubModule)
+                    .ThenInclude(c=> c.Module)
+                    .Where(c => c.Name == user.Role)
+                    .FirstOrDefaultAsync();
 
-                var permisionList = new List<PermissionDto>();
-                foreach (var entry in modules)
+                foreach(var subModule in role.RoleSubModulePermissions)
                 {
-                    permisionList.Add(new PermissionDto {  Module= entry.Module.Name, CanAdd = entry.CanAdd,
-                     CanUpdate = entry.CanUpdate,
-                     CanView = entry.CanView,
-                     CanDelete = entry.CanDelete});
+                    subModule.SubModule.Module.SubModules = null;
+                    subModule.SubModule.RoleModulePermissions = null;
+                    subModule.Role = null;
                 }
-                //Prepare Module and Role
-                Dictionary<string, List<string>> moduleRoleDictionary = new Dictionary<string, List<string>>();
-                foreach(var module in modules)
+                foreach(var module in role.RoleModulePermissions)
                 {
-                    if(!moduleRoleDictionary.ContainsKey(module.Module.Name))
-                    {
-                        var o = new List<string>();
-                        o.Add(module.Role.Name);
-                        moduleRoleDictionary.Add(module.Module.Name, o);
-                    }
-                    else
-                    {
-                        moduleRoleDictionary[module.Module.Name].Add(module.Role.Name);
-                    }
+                    module.Role = null;
+                    module.Module.SubModules = null;
                 }
-                var moduleRoleList = new List<ModuleRoleDto>();
-                foreach (var entry in moduleRoleDictionary)
+                var roleModulePermissionList = role.RoleModulePermissions.ToList();
+                foreach(var r in roleModulePermissionList)
                 {
-                    moduleRoleList.Add(new ModuleRoleDto { Module = entry.Key, Roles = entry.Value });
+                    r.Role = null;
+                }
+                var roleSubModulePermissionsList = role.RoleSubModulePermissions.ToList();
+                foreach (var r in roleSubModulePermissionsList)
+                {
+                    r.Role = null;
                 }
 
-                var permissions = await _context.RoleModulePermissions
-                    .Include(c=> c.Module)
-                    .Where(c => c.Role.Name == user.Role).ToListAsync();
-
-                foreach (var p in permissions)
-                    p.Module.RoleModulePermissions = null;
-                var roles = new string[] { user.Role };
-                return new UserDto
+                var userDto = new UserDto
                 {
                     DisplayName = user.DisplayName,
                     Image = null,
                     Token = _tokenService.CreateToken(user),
                     UserName = user.UserName,
                     Role = user.Role,
-                    Roles = roles,
-                    Permisions = permisionList,
-                    Modules = moduleRoleList
+                    //Roles = roles,
+                    RoleModulePermissions = roleModulePermissionList,
+                    RoleSubModulePermissions = roleSubModulePermissionsList
                 };
 
+                return userDto;
 
             }
             catch (Exception ex)

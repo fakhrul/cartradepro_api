@@ -23,12 +23,9 @@ namespace SPOT_API.DTOs
         public Guid? TenantId { get; set; }
 
         public bool IsAzureAd { get; set; }
-        public string[] Roles { get; internal set; }
-        //public List<RoleModulePermission> Permisions { get; internal set; }
-        public List<PermissionDto> Permisions { get; internal set; }
 
-        //public Dictionary<string, List<string>> Modules { get; internal set; }
-        public List<ModuleRoleDto> Modules { get; set; }
+        public List<RoleModulePermission> RoleModulePermissions { get; internal set; }
+        public List<RoleSubModulePermission> RoleSubModulePermissions { get; internal set; }
     }
 
     public class ModuleRoleDto

@@ -48,7 +48,7 @@ namespace SPOT_API.Controllers
                     foreach (var v in obj.RoleModulePermissions)
                     {
                         v.Role = null;
-                        v.Module.RoleModulePermissions = null;
+                        //v.Module.RoleModulePermissions = null;
                     }
             return objs;
         }
@@ -71,7 +71,7 @@ namespace SPOT_API.Controllers
             foreach(var v in obj.RoleModulePermissions)
             {
                     v.Role = null;
-                    v.Module.RoleModulePermissions = null;
+                    //v.Module.RoleModulePermissions = null;
             }
             return obj;
         }
@@ -79,17 +79,73 @@ namespace SPOT_API.Controllers
 
         // PUT: api/Roles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> Put(Guid id, Role obj)
+        //{
+        //    if (id != obj.Id)
+        //    {
+        //        return BadRequest();
+        //    }
+
+        //    _context.Entry(obj).State = EntityState.Modified;
+
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!IsExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
+
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+
+        //    }
+
+
+
+
+
+        //    return NoContent();
+        //}
+
+        // PUT: api/Roles/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, Role obj)
         {
             if (id != obj.Id)
             {
-                return BadRequest();
+                return BadRequest("The ID in the URL does not match the ID in the object.");
             }
 
-            _context.Entry(obj).State = EntityState.Modified;
+            var existingRole = await _context.Roles
+                .Include(r => r.RoleModulePermissions)
+                .Include(r => r.RoleSubModulePermissions)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
+            if (existingRole == null)
+            {
+                return NotFound("The role you are trying to update does not exist.");
+            }
 
+            // Update the existing role's properties
+            existingRole.Name = obj.Name;
+
+            // Update RoleModulePermissions
+            UpdateRoleModulePermissions(existingRole, obj);
+
+            // Update RoleSubModulePermissions
+            //UpdateRoleSubModulePermissions(existingRole, obj);
 
             try
             {
@@ -99,26 +155,91 @@ namespace SPOT_API.Controllers
             {
                 if (!IsExists(id))
                 {
-                    return NotFound();
+                    return NotFound("The role was deleted by another user.");
                 }
                 else
                 {
                     throw;
                 }
             }
-
             catch (Exception ex)
             {
-                throw ex;
-
+                return StatusCode(StatusCodes.Status500InternalServerError, $"An error occurred while updating the role: {ex.Message}");
             }
-
-
-
-
 
             return NoContent();
         }
+
+        private void UpdateRoleModulePermissions(Role existingRole, Role updatedRole)
+        {
+            // Remove RoleModulePermissions that are no longer in the updatedRole
+            var removedModulePermissions = existingRole.RoleModulePermissions
+                .Where(p => !updatedRole.RoleModulePermissions.Any(up => up.Id == p.Id))
+                .ToList();
+
+            foreach (var permission in removedModulePermissions)
+            {
+                _context.RoleModulePermissions.Remove(permission);
+            }
+
+            // Add or update RoleModulePermissions
+            foreach (var updatedPermission in updatedRole.RoleModulePermissions)
+            {
+                var existingPermission = existingRole.RoleModulePermissions
+                    .FirstOrDefault(p => p.Id == updatedPermission.Id);
+
+                if (existingPermission != null)
+                {
+                    // Update the existing permission
+                    existingPermission.CanAdd = updatedPermission.CanAdd;
+                    existingPermission.CanUpdate = updatedPermission.CanUpdate;
+                    existingPermission.CanDelete = updatedPermission.CanDelete;
+                    existingPermission.CanView = updatedPermission.CanView;
+                    // Update other properties as necessary
+                }
+                else
+                {
+                    // Add the new permission
+                    existingRole.RoleModulePermissions.Add(updatedPermission);
+                }
+            }
+        }
+
+        private void UpdateRoleSubModulePermissions(Role existingRole, Role updatedRole)
+        {
+            // Remove RoleSubModulePermissions that are no longer in the updatedRole
+            var removedSubModulePermissions = existingRole.RoleSubModulePermissions
+                .Where(p => !updatedRole.RoleSubModulePermissions.Any(up => up.Id == p.Id))
+                .ToList();
+
+            foreach (var permission in removedSubModulePermissions)
+            {
+                _context.RoleSubModulePermissions.Remove(permission);
+            }
+
+            // Add or update RoleSubModulePermissions
+            foreach (var updatedPermission in updatedRole.RoleSubModulePermissions)
+            {
+                var existingPermission = existingRole.RoleSubModulePermissions
+                    .FirstOrDefault(p => p.Id == updatedPermission.Id);
+
+                if (existingPermission != null)
+                {
+                    // Update the existing permission
+                    existingPermission.CanAdd = updatedPermission.CanAdd;
+                    existingPermission.CanUpdate = updatedPermission.CanUpdate;
+                    existingPermission.CanDelete = updatedPermission.CanDelete;
+                    existingPermission.CanView = updatedPermission.CanView;
+                    // Update other properties as necessary
+                }
+                else
+                {
+                    // Add the new permission
+                    existingRole.RoleSubModulePermissions.Add(updatedPermission);
+                }
+            }
+        }
+
 
         // POST: api/Roles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

@@ -118,6 +118,7 @@ namespace SPOT_API.Controllers
                 .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
                 .ThenInclude(c => c.StockStatus)
                 .Include(c => c.RemarksList)
+                .ThenInclude(c=> c.Profile)
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.Brand)
                 .Include(c => c.Vehicle)

@@ -7,7 +7,7 @@ namespace SPOT_API.Models
     public class SubModule : BaseModel
     {
         public string Name { get; set; }
-        public ICollection<RoleModulePermission> RoleModulePermissions { get; set; }
+        public ICollection<RoleSubModulePermission> RoleModulePermissions { get; set; }
 
         [ForeignKey("Module")]
         public Guid ModuleId { get; set; }

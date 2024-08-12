@@ -9,6 +9,7 @@ namespace SPOT_API.Models
     {
         public string Name { get; set; }
         public ICollection<RoleModulePermission> RoleModulePermissions { get; set; }
+        public ICollection<RoleSubModulePermission> RoleSubModulePermissions { get; set; }
 
     }
 }

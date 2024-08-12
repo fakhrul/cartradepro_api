@@ -20,7 +20,8 @@ namespace SPOT_API.Persistence
             try
             {
                 await SeedRoles(context, roleManager);
-                await SeedRolesForSubmodule(context, roleManager);
+                await SeedModulesAndSubModules(context);
+                await SeedRolePermissionsForMainModule(context);
                 await SeedUsers(context, userManager);
 
                 await SeedBrand(context);
@@ -1059,121 +1060,559 @@ London, W1A 1AA, United Kingdom.",
             Console.WriteLine("Vehicle types seeded successfully.");
         }
 
-        private static async Task SeedUsers(SpotDBContext context, UserManager<AppUser> userManager)
-        {
-            await SeedSuperAdminUser(context, userManager);
-            await SeedStockManagerUser(context, userManager);
-            await SeedCustomerManagerUser(context, userManager);
-            await SeedFinanceManagerUser(context, userManager);
-            await SeedSalesUser(context, userManager);
+        //private static async Task SeedUsers(SpotDBContext context, UserManager<AppUser> userManager)
+        //{
+        //    await SeedSuperAdminUser(context, userManager);
+        //    await SeedStockManagerUser(context, userManager);
+        //    await SeedCustomerManagerUser(context, userManager);
+        //    await SeedFinanceManagerUser(context, userManager);
+        //    await SeedSalesUser(context, userManager);
 
-        }
+        //}
 
-        private static async Task SeedRolesForSubmodule(SpotDBContext context, RoleManager<IdentityRole> roleManager)
-        {
-            if (context.SubModules.Any())
-                return;
+        //private static async Task SeedRolesForSubmodule(SpotDBContext context, RoleManager<IdentityRole> roleManager)
+        //{
+        //    if (context.SubModules.Any())
+        //        return;
 
-            var stock = context.Modules.FirstOrDefault(c => c.Name == "Stock");
-            if (stock == null)
-                return;
+        //    var stock = context.Modules.FirstOrDefault(c => c.Name == "Stock");
+        //    if (stock == null)
+        //        return;
 
-            context.SubModules.AddRange(
-                new SubModule
-                {
-                    Name = "Vehicle",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "Purchase",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "Import",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "Clearance",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "Sale",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "ArrivalChecklist",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "Pricing",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "Registration",
-                    ModuleId = stock.Id,
-                }, new SubModule
-                {
-                    Name = "AdminCost",
-                    ModuleId = stock.Id,
-                }
-                );
-            await context.SaveChangesAsync();
+        //    context.SubModules.AddRange(
+        //        new SubModule
+        //        {
+        //            Name = "Vehicle",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "Purchase",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "Import",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "Clearance",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "Sale",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "ArrivalChecklist",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "Pricing",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "Registration",
+        //            ModuleId = stock.Id,
+        //        }, new SubModule
+        //        {
+        //            Name = "AdminCost",
+        //            ModuleId = stock.Id,
+        //        }
+        //        );
+        //    await context.SaveChangesAsync();
 
-            var roleModulePermissions = new List<RoleSubModulePermission>();
-            roleModulePermissions.Add(new RoleSubModulePermission
-            {
-                RoleId = context.Roles.FirstOrDefault(c => c.Name == "Admin").Id,
-                SubModuleId = context.SubModules.FirstOrDefault(c => c.Name == "Vehicle").Id,
-                CanView = true,
-            });
+        //    var roleModulePermissions = new List<RoleSubModulePermission>();
+        //    roleModulePermissions.Add(new RoleSubModulePermission
+        //    {
+        //        RoleId = context.Roles.FirstOrDefault(c => c.Name == "Admin").Id,
+        //        SubModuleId = context.SubModules.FirstOrDefault(c => c.Name == "Vehicle").Id,
+        //        CanView = true,
+        //    });
 
-            context.RoleSubModulePermissions.AddRange(roleModulePermissions);
-            await context.SaveChangesAsync();
+        //    context.RoleSubModulePermissions.AddRange(roleModulePermissions);
+        //    await context.SaveChangesAsync();
 
-        }
+        //}
 
+        //private static async Task SeedRoles(SpotDBContext context, RoleManager<IdentityRole> roleManager)
+        //{
+        //    if (context.Roles.Any())
+        //        return;
+        //    context.Roles.AddRange(
+        //        new Role { Name = "Admin" },
+        //        new Role { Name = "Stock Manager" },
+        //        new Role { Name = "Customer Manager" },
+        //        new Role { Name = "Finance Manager" },
+        //        new Role { Name = "Sales" }
+        //    );
+        //    await context.SaveChangesAsync();
+
+
+        //    context.Modules.AddRange(
+        //        new Module { Name = "Dashboard" },
+        //        new Module { Name = "Stock" },
+        //        new Module { Name = "Invoice" },
+        //        new Module { Name = "Customer" },
+        //        new Module { Name = "Supplier" },
+        //        new Module { Name = "Forwarder" },
+        //        new Module { Name = "Bank" },
+        //        new Module { Name = "Brand" },
+        //        new Module { Name = "Model" },
+        //        new Module { Name = "Report" },
+        //        new Module { Name = "Sales" },
+        //        new Module { Name = "User" }
+        //    );
+        //    await context.SaveChangesAsync();
+
+
+        //    var roles = context.Roles.ToList();
+        //    var modules = context.Modules.ToList();
+        //    var roleModulePermissions = new List<RoleModulePermission>();
+
+        //    foreach (var role in roles)
+        //    {
+        //        foreach (var module in modules)
+        //        {
+        //            var permission = new RoleModulePermission
+        //            {
+        //                RoleId = role.Id,
+        //                ModuleId = module.Id
+        //            };
+        //            if (role.Name == "Admin")
+        //            {
+        //                permission.CanAdd = true;
+        //                permission.CanUpdate = true;
+        //                permission.CanDelete = true;
+        //                permission.CanView = true;
+        //            }
+        //            else if (role.Name == "Stock Manager")
+        //            {
+        //                if (module.Name == "Dashboard" ||
+        //                    module.Name == "Customer" ||
+        //                    module.Name == "Supplier" ||
+        //                    module.Name == "Forwarder" ||
+        //                    module.Name == "Bank" ||
+        //                    module.Name == "Brand" ||
+        //                    module.Name == "Model" ||
+        //                    module.Name == "Stock"
+        //                    )
+        //                {
+        //                    permission.CanAdd = true;
+        //                    permission.CanUpdate = true;
+        //                    permission.CanDelete = true;
+        //                    permission.CanView = true;
+        //                }
+        //            }
+        //            else if (role.Name == "Customer Manager")
+        //            {
+        //                if (module.Name == "Dashboard" ||
+        //                    module.Name == "Customer" ||
+        //                    module.Name == "Supplier" ||
+        //                    module.Name == "Forwarder" ||
+        //                    module.Name == "Bank" ||
+        //                    module.Name == "Brand" ||
+        //                    module.Name == "Model" ||
+        //                    module.Name == "Stock"
+        //                    )
+        //                {
+        //                    permission.CanAdd = true;
+        //                    permission.CanUpdate = true;
+        //                    permission.CanDelete = true;
+        //                    permission.CanView = true;
+        //                }
+        //            }
+        //            else if (role.Name == "Finance Manager")
+        //            {
+        //                if (module.Name == "Dashboard" ||
+        //                    module.Name == "Customer" ||
+        //                    module.Name == "Supplier" ||
+        //                    module.Name == "Forwarder" ||
+        //                    module.Name == "Bank" ||
+        //                    module.Name == "Brand" ||
+        //                    module.Name == "Model" ||
+        //                    module.Name == "Stock" ||
+        //                    module.Name == "Report" ||
+        //                    module.Name == "Invoice"
+        //                    )
+        //                {
+        //                    permission.CanAdd = true;
+        //                    permission.CanUpdate = true;
+        //                    permission.CanDelete = true;
+        //                    permission.CanView = true;
+        //                }
+        //            }
+        //            else if (role.Name == "Sales")
+        //            {
+        //                if (module.Name == "Sales")
+        //                {
+        //                    permission.CanAdd = true;
+        //                    permission.CanUpdate = true;
+        //                    permission.CanDelete = true;
+        //                    permission.CanView = true;
+        //                }
+        //            }
+
+        //            roleModulePermissions.Add(permission);
+        //        }
+        //    }
+
+        //    context.RoleModulePermissions.AddRange(roleModulePermissions);
+        //    await context.SaveChangesAsync();
+
+
+        //    //var roles = new[] { "Admin", "Stock Manager" };
+        //    foreach (var role in roles)
+        //    {
+        //        if (!await roleManager.RoleExistsAsync(role.Name))
+        //        {
+        //            await roleManager.CreateAsync(new IdentityRole(role.Name));
+        //        }
+
+        //        //if (!await _userManager.IsInRoleAsync(user, role))
+        //        //{
+        //        //    await _userManager.AddToRoleAsync(user, role);
+        //        //}
+        //    }
+
+
+        //}
+
+
+        //private static async Task SeedSuperAdminUser(SpotDBContext context, UserManager<AppUser> userManager)
+        //{
+        //    if (context.Profiles.Where(c => c.Role == "Admin").Any())
+        //        return;
+
+        //    Profile userAdmin = new Profile
+        //    {
+        //        FullName = "Administrator",
+        //        Email = "admin@email.com",
+        //        Phone = "0192563019",
+        //        Role = "Admin",
+        //    };
+
+        //    await context.Profiles.AddAsync(userAdmin);
+
+        //    AppUser user = new AppUser
+        //    {
+        //        DisplayName = "Super Admin",
+        //        UserName = "admin@email.com",
+        //        ProfileId = userAdmin.Id,
+        //        Email = "admin@email.com",
+        //        //IsSuperAdmin = true
+        //        Role = "Admin"
+        //    };
+
+        //    await CreateAppUser(userManager, user);
+        //    //await userManager.AddToRoleAsync(user, "Admin");
+        //    if (!await userManager.IsInRoleAsync(user, "Admin"))
+        //    {
+        //        await userManager.AddToRoleAsync(user, "Admin");
+        //    }
+
+        //    //modelBuilder.Entity<User>().HasData(userAdmin);
+        //    //Login loginAdmin = new Login
+        //    //{
+        //    //    Username = "admin",
+        //    //    Password = "admin",
+        //    //    UserId = userAdmin.Id,
+        //    //    //Email = "admin@email.com"
+        //    //};
+        //    //await context.Logins.AddAsync(loginAdmin);
+        //    //modelBuilder.Entity<Login>().HasData(loginAdmin);
+        //}
+        /// <summary>
+        ///       new Role { Name = "Admin" },
+        //new Role { Name = "Stock Manager" },
+        //new Role { Name = "Customer Manager" },
+        //new Role { Name = "Finance Manager" },
+        //new Role { Name = "Sales" }
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="userManager"></param>
+        /// <returns></returns>
+        /// 
+
+        //private static async Task SeedSalesUser(SpotDBContext context, UserManager<AppUser> userManager)
+        //{
+        //    if (context.Profiles.Where(c => c.Role == "Sales").Any())
+
+        //        return;
+
+        //    Profile userAdmin = new Profile
+        //    {
+        //        FullName = "Sales",
+        //        Email = "sale@email.com",
+        //        Phone = "0192563019",
+        //        Role = "Sales",
+        //    };
+
+        //    await context.Profiles.AddAsync(userAdmin);
+
+        //    AppUser user = new AppUser
+        //    {
+        //        DisplayName = "Sales",
+        //        UserName = "sale@email.com",
+        //        ProfileId = userAdmin.Id,
+        //        Email = "sale@email.com",
+        //        //IsSuperAdmin = true
+        //        Role = "Sales"
+        //    };
+
+        //    await CreateAppUser(userManager, user);
+        //    //await userManager.AddToRoleAsync(user, "Sales");
+        //    if (!await userManager.IsInRoleAsync(user, "Sales"))
+        //    {
+        //        await userManager.AddToRoleAsync(user, "Sales");
+        //    }
+
+        //}
+
+
+        //private static async Task SeedFinanceManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
+        //{
+        //    if (context.Profiles.Where(c => c.Role == "Finance Manager").Any())
+
+        //        return;
+
+        //    Profile userAdmin = new Profile
+        //    {
+        //        FullName = "Finance Manager",
+        //        Email = "finance@email.com",
+        //        Phone = "0192563019",
+        //        Role = "Finance Manager",
+        //    };
+
+        //    await context.Profiles.AddAsync(userAdmin);
+
+        //    AppUser user = new AppUser
+        //    {
+        //        DisplayName = "Finance Manager",
+        //        UserName = "finance@email.com",
+        //        ProfileId = userAdmin.Id,
+        //        Email = "finance@email.com",
+        //        //IsSuperAdmin = true
+        //        Role = "Finance Manager"
+        //    };
+
+        //    await CreateAppUser(userManager, user);
+        //    //await userManager.AddToRoleAsync(user, "Finance Manager");
+        //    if (!await userManager.IsInRoleAsync(user, "Finance Manager"))
+        //    {
+        //        await userManager.AddToRoleAsync(user, "Finance Manager");
+        //    }
+
+        //}
+
+        //private static async Task SeedCustomerManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
+        //{
+        //    if (context.Profiles.Where(c => c.Role == "Customer Manager").Any())
+        //        return;
+
+        //    Profile userAdmin = new Profile
+        //    {
+        //        FullName = "Customer Manager",
+        //        Email = "customer@email.com",
+        //        Phone = "0192563019",
+        //        Role = "Customer Manager",
+        //    };
+
+        //    await context.Profiles.AddAsync(userAdmin);
+
+        //    AppUser user = new AppUser
+        //    {
+        //        DisplayName = "Customer Manager",
+        //        UserName = "customer@email.com",
+        //        ProfileId = userAdmin.Id,
+        //        Email = "customer@email.com",
+        //        //IsSuperAdmin = true
+        //        Role = "Customer Manager"
+        //    };
+
+        //    await CreateAppUser(userManager, user);
+        //    if (!await userManager.IsInRoleAsync(user, "Customer Manager"))
+        //    {
+        //        await userManager.AddToRoleAsync(user, "Customer Manager");
+        //    }
+        //}
+
+
+        //private static async Task SeedStockManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
+        //{
+        //    if (context.Profiles.Where(c => c.Role == "Stock Manager").Any())
+        //        return;
+
+        //    Profile userAdmin = new Profile
+        //    {
+        //        FullName = "Stock Manager",
+        //        Email = "stock@email.com",
+        //        Phone = "0192563019",
+        //        Role = "Stock Manager",
+        //    };
+
+        //    await context.Profiles.AddAsync(userAdmin);
+
+        //    AppUser user = new AppUser
+        //    {
+        //        DisplayName = "Stock Manager",
+        //        UserName = "stock@email.com",
+        //        ProfileId = userAdmin.Id,
+        //        Email = "stock@email.com",
+        //        //IsSuperAdmin = true
+        //        Role = "Stock Manager"
+        //    };
+
+        //    await CreateAppUser(userManager, user);
+        //    if (!await userManager.IsInRoleAsync(user, "Stock Manager"))
+        //    {
+        //        await userManager.AddToRoleAsync(user, "Stock Manager");
+        //    }
+
+
+        //}
+
+
+        //private static async Task CreateAppUser(UserManager<AppUser> userManager, AppUser user)
+        //{
+        //    Console.WriteLine(string.Format("Email:{0}, UserName:{1}", user.Email, user.UserName));
+        //    await userManager.CreateAsync(user, "Qwerty@123");
+        //}
+
+
+        ///
         private static async Task SeedRoles(SpotDBContext context, RoleManager<IdentityRole> roleManager)
         {
             if (context.Roles.Any())
                 return;
-            context.Roles.AddRange(
-                new Role { Name = "Admin" },
-                new Role { Name = "Stock Manager" },
-                new Role { Name = "Customer Manager" },
-                new Role { Name = "Finance Manager" },
-                new Role { Name = "Sales" }
-            );
+
+            var roles = new List<Role>
+        {
+            new Role { Name = "Admin" },
+            new Role { Name = "Stock Manager" },
+            new Role { Name = "Customer Manager" },
+            new Role { Name = "Finance Manager" },
+            new Role { Name = "Sales" }
+        };
+
+            context.Roles.AddRange(roles);
             await context.SaveChangesAsync();
 
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role.Name))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role.Name));
+                }
+            }
+        }
 
-            context.Modules.AddRange(
+        private static async Task SeedModulesAndSubModules(SpotDBContext context)
+        {
+            if (!context.Modules.Any())
+            {
+                // Add main modules
+                var modules = new List<Module>
+            {
                 new Module { Name = "Dashboard" },
-                new Module { Name = "Stock" },
-                //new Module { Name = "StockVehicle" },
-                //new Module { Name = "StockPurchase" },
-                //new Module { Name = "StockImport" },
-                //new Module { Name = "StockClearance" },
-                //new Module { Name = "StockSale" },
-                //new Module { Name = "StockArrivalChecklist" },
-                //new Module { Name = "StockPricing" },
-                //new Module { Name = "StockRegistration" },
-                //new Module { Name = "StockAdminCost" },
-                new Module { Name = "Invoice" },
+                new Module { Name = "Stocks" },
                 new Module { Name = "Customer" },
-                new Module { Name = "Supplier" },
-                new Module { Name = "Forwarder" },
-                new Module { Name = "Bank" },
-                new Module { Name = "Brand" },
-                new Module { Name = "Model" },
-                new Module { Name = "Report" },
-                new Module { Name = "Sales" },
-                new Module { Name = "User" }
-            );
-            await context.SaveChangesAsync();
+                new Module { Name = "MasterData" },
+                new Module { Name = "Letters" },
+                new Module { Name = "Reports" },
+                new Module { Name = "Vehicle" },
+                new Module { Name = "Administration" },
+                new Module { Name = "System" }
+            };
 
+                context.Modules.AddRange(modules);
+                await context.SaveChangesAsync();
 
+                // Add submodules for "Stocks"
+                var stocksModule = context.Modules.FirstOrDefault(m => m.Name == "Stocks");
+                if (stocksModule != null)
+                {
+                    var stockSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "Vehicle", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Purchase", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Import", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Clearance", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Sale", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "ArrivalChecklist", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Pricing", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Registration", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "AdminCost", ModuleId = stocksModule.Id }
+                };
+                    context.SubModules.AddRange(stockSubModules);
+                }
+
+                // Add submodules for "MasterData"
+                var masterDataModule = context.Modules.FirstOrDefault(m => m.Name == "MasterData");
+                if (masterDataModule != null)
+                {
+                    var masterDataSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "Suppliers", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Forwarders", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Banks", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Brands", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Models", ModuleId = masterDataModule.Id }
+                };
+                    context.SubModules.AddRange(masterDataSubModules);
+                }
+
+                // Add submodules for "Letters"
+                var lettersModule = context.Modules.FirstOrDefault(m => m.Name == "Letters");
+                if (lettersModule != null)
+                {
+                    var lettersSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "Disrbustments", ModuleId = lettersModule.Id }
+                };
+                    context.SubModules.AddRange(lettersSubModules);
+                }
+
+                // Add submodules for "Reports"
+                var reportsModule = context.Modules.FirstOrDefault(m => m.Name == "Reports");
+                if (reportsModule != null)
+                {
+                    var reportsSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "SalesMonthly", ModuleId = reportsModule.Id },
+                    new SubModule { Name = "SalesYearly", ModuleId = reportsModule.Id }
+                };
+                    context.SubModules.AddRange(reportsSubModules);
+                }
+
+                // Add submodules for "Administration"
+                var administrationModule = context.Modules.FirstOrDefault(m => m.Name == "Administration");
+                if (administrationModule != null)
+                {
+                    var administrationSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "User", ModuleId = administrationModule.Id },
+                    new SubModule { Name = "Roles", ModuleId = administrationModule.Id }
+                };
+                    context.SubModules.AddRange(administrationSubModules);
+                }
+
+                // Add submodules for "System"
+                var systemModule = context.Modules.FirstOrDefault(m => m.Name == "System");
+                if (systemModule != null)
+                {
+                    var systemSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "Company", ModuleId = systemModule.Id }
+                };
+                    context.SubModules.AddRange(systemSubModules);
+                }
+
+                await context.SaveChangesAsync();
+            }
+        }
+        private static async Task SeedRolePermissionsForMainModule(SpotDBContext context)
+        {
             var roles = context.Roles.ToList();
-            var modules = context.Modules.ToList();
+            var modules = context.Modules.Include(c => c.SubModules).ToList();
             var roleModulePermissions = new List<RoleModulePermission>();
 
             foreach (var role in roles)
@@ -1191,156 +1630,196 @@ London, W1A 1AA, United Kingdom.",
                         permission.CanUpdate = true;
                         permission.CanDelete = true;
                         permission.CanView = true;
-                    }
-                    else if (role.Name == "Stock Manager")
-                    {
-                        if (module.Name == "Dashboard" ||
-                            module.Name == "Customer" ||
-                            module.Name == "Supplier" ||
-                            module.Name == "Forwarder" ||
-                            module.Name == "Bank" ||
-                            module.Name == "Brand" ||
-                            module.Name == "Model" ||
-                            module.Name == "Stock"
-                            )
+
+                        var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                        foreach (var subModule in module.SubModules)
                         {
-                            permission.CanAdd = true;
-                            permission.CanUpdate = true;
-                            permission.CanDelete = true;
-                            permission.CanView = true;
+                            var subModulePermission = new RoleSubModulePermission
+                            {
+                                SubModuleId = subModule.Id,
+                                RoleId = role.Id,
+                                CanAdd = true,
+                                CanUpdate = true,
+                                CanDelete = true,
+                                CanView = true
+                            };
+                            roleSubModulePermissions.Add(subModulePermission);
                         }
+                        context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                        await context.SaveChangesAsync();
                     }
                     else if (role.Name == "Customer Manager")
                     {
                         if (module.Name == "Dashboard" ||
+                            //module.Name == "Stocks" ||
                             module.Name == "Customer" ||
-                            module.Name == "Supplier" ||
-                            module.Name == "Forwarder" ||
-                            module.Name == "Bank" ||
-                            module.Name == "Brand" ||
-                            module.Name == "Model" ||
-                            module.Name == "Stock"
+                            //module.Name == "MasterData" ||
+                            //module.Name == "Letters" ||
+                            //module.Name == "Reports" ||
+                            module.Name == "Vehicle" 
+                            //module.Name == "Administration" ||
+                            //module.Name == "System"
                             )
                         {
                             permission.CanAdd = true;
                             permission.CanUpdate = true;
                             permission.CanDelete = true;
                             permission.CanView = true;
-                        }
-                    }
-                    else if (role.Name == "Finance Manager")
-                    {
-                        if (module.Name == "Dashboard" ||
-                            module.Name == "Customer" ||
-                            module.Name == "Supplier" ||
-                            module.Name == "Forwarder" ||
-                            module.Name == "Bank" ||
-                            module.Name == "Brand" ||
-                            module.Name == "Model" ||
-                            module.Name == "Stock" ||
-                            module.Name == "Report" ||
-                            module.Name == "Invoice"
-                            )
-                        {
-                            permission.CanAdd = true;
-                            permission.CanUpdate = true;
-                            permission.CanDelete = true;
-                            permission.CanView = true;
+
+                            var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                            foreach (var subModule in module.SubModules)
+                            {
+                                var subModulePermission = new RoleSubModulePermission
+                                {
+                                    SubModuleId = subModule.Id,
+                                    RoleId = role.Id,
+                                    CanAdd = true,
+                                    CanUpdate = true,
+                                    CanDelete = true,
+                                    CanView = true
+                                };
+                                roleSubModulePermissions.Add(subModulePermission);
+                            }
+                            context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                            await context.SaveChangesAsync();
+
                         }
                     }
                     else if (role.Name == "Sales")
                     {
-                        if (module.Name == "Sales")
+                        if (
+                            module.Name == "Vehicle"
+                            )
                         {
                             permission.CanAdd = true;
                             permission.CanUpdate = true;
                             permission.CanDelete = true;
                             permission.CanView = true;
+
+                            var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                            foreach (var subModule in module.SubModules)
+                            {
+                                var subModulePermission = new RoleSubModulePermission
+                                {
+                                    SubModuleId = subModule.Id,
+                                    RoleId = role.Id,
+                                    CanAdd = true,
+                                    CanUpdate = true,
+                                    CanDelete = true,
+                                    CanView = true
+                                };
+                                roleSubModulePermissions.Add(subModulePermission);
+                            }
+                            context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                            await context.SaveChangesAsync();
+
                         }
                     }
 
-                    //switch (role.Name)
-                    //{
-                    //    case "Admin":
-                    //        permission.CanAdd = true;
-                    //        permission.CanUpdate = true;
-                    //        permission.CanDelete = true;
-                    //        permission.CanView = true;
-                    //        break;
-                    //    case "Stock Manager":
-                    //        permission.CanAdd = true;
-                    //        permission.CanUpdate = true;
-                    //        permission.CanDelete = true;
-                    //        permission.CanView = true;
-
-                    //        //permission.CanAdd = module.Name.StartsWith("Stock");
-                    //        //permission.CanUpdate = module.Name.StartsWith("Stock");
-                    //        //permission.CanDelete = module.Name.StartsWith("Stock");
-                    //        //permission.CanView = module.Name.StartsWith("Stock");
-                    //        break;
-                    //    case "Customer Manager":
-                    //        permission.CanAdd = true;
-                    //        permission.CanUpdate = true;
-                    //        permission.CanDelete = true;
-                    //        permission.CanView = true;
-
-                    //        permission.CanAdd = module.Name == "Customer";
-                    //        permission.CanUpdate = module.Name == "Customer";
-                    //        permission.CanDelete = module.Name == "Customer";
-                    //        permission.CanView = module.Name == "Customer";
-                    //        break;
-                    //    case "Finance Manager":
-                    //        permission.CanAdd = true;
-                    //        permission.CanUpdate = true;
-                    //        permission.CanDelete = true;
-                    //        permission.CanView = true;
-
-                    //        permission.CanAdd = module.Name == "Invoice" || module.Name == "Report";
-                    //        permission.CanUpdate = module.Name == "Invoice" || module.Name == "Report";
-                    //        permission.CanDelete = module.Name == "Invoice" || module.Name == "Report";
-                    //        permission.CanView = module.Name == "Invoice" || module.Name == "Report";
-                    //        break;
-                    //    case "Sales":
-
-                    //        permission.CanAdd = module.Name == "Sales";
-                    //        permission.CanUpdate = module.Name == "Sales";
-                    //        permission.CanDelete = module.Name == "Sales";
-                    //        permission.CanView = module.Name == "Sales";
-                    //        break;
-                    //}
-
                     roleModulePermissions.Add(permission);
+
+
                 }
             }
-
             context.RoleModulePermissions.AddRange(roleModulePermissions);
             await context.SaveChangesAsync();
 
-
-            //var roles = new[] { "Admin", "Stock Manager" };
-            foreach (var role in roles)
-            {
-                if (!await roleManager.RoleExistsAsync(role.Name))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(role.Name));
-                }
-
-                //if (!await _userManager.IsInRoleAsync(user, role))
-                //{
-                //    await _userManager.AddToRoleAsync(user, role);
-                //}
-            }
-
-
         }
 
+        //private static async Task SeedRolePermissionsForSubModule(SpotDBContext context)
+        //{
+
+        //    var roles = context.Roles.ToList();
+        //    var modules = context.SubModules.ToList();
+        //    var roleModulePermissions = new List<RoleModulePermission>();
+        //    var adminPermisions = context.RoleModulePermissions.Where(c => c.Role.Name == "Admin");
+
+        //    foreach(var admin in adminPermisions)
+        //    {
+        //        var roleSubModulePermission = new RoleSubModulePermission();
+        //    }
+
+
+        //    foreach (var role in roles)
+        //    {
+        //        foreach (var module in modules)
+        //        {
+        //            var permission = new RoleModulePermission
+        //            {
+        //                RoleId = role.Id,
+        //                ModuleId = module.Id
+        //            };
+        //            if (role.Name == "Admin")
+        //            {
+        //                permission.CanAdd = true;
+        //                permission.CanUpdate = true;
+        //                permission.CanDelete = true;
+        //                permission.CanView = true;
+
+        //                if (role.SubModules != null)
+        //                {
+        //                    var roleSubModulePermissions = new List<RoleSubModulePermission>();
+
+        //                    foreach (var subModule in module.SubModules)
+        //                    {
+        //                        //if (!context.RoleModulePermissions.Any(rmp => rmp.RoleId == role.Id && rmp.ModuleId == subModule.ModuleId))
+        //                        //{
+        //                        var subModulePermission = new RoleSubModulePermission
+        //                        {
+        //                            RoleId = role.Id,
+        //                            SubModuleId = subModule.ModuleId,
+        //                            CanAdd = true,
+        //                            CanUpdate = true,
+        //                            CanDelete = true,
+        //                            CanView = true // Example, adjust as needed
+        //                        };
+
+        //                        roleSubModulePermissions.Add(subModulePermission);
+        //                        //}
+        //                    }
+
+
+
+        //                    //    var roleModulePermissions = new List<RoleSubModulePermission>();
+        //                    //    roleModulePermissions.Add(new RoleSubModulePermission
+        //                    //    {
+        //                    //        RoleId = context.Roles.FirstOrDefault(c => c.Name == "Admin").Id,
+        //                    //        SubModuleId = context.SubModules.FirstOrDefault(c => c.Name == "Vehicle").Id,
+        //                    //        CanView = true,
+        //                    //    });
+
+        //                    context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+        //                    await context.SaveChangesAsync();
+
+        //                }
+
+        //            }
+
+        //            roleModulePermissions.Add(permission);
+        //        }
+        //    }
+        //    context.RoleModulePermissions.AddRange(roleModulePermissions);
+        //    await context.SaveChangesAsync();
+
+        //}
+
+
+
+        private static async Task SeedUsers(SpotDBContext context, UserManager<AppUser> userManager)
+        {
+            await SeedSuperAdminUser(context, userManager);
+            await SeedStockManagerUser(context, userManager);
+            await SeedCustomerManagerUser(context, userManager);
+            await SeedFinanceManagerUser(context, userManager);
+            await SeedSalesUser(context, userManager);
+        }
 
         private static async Task SeedSuperAdminUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
             if (context.Profiles.Where(c => c.Role == "Admin").Any())
                 return;
 
-            Profile userAdmin = new Profile
+            var userAdminProfile = new Profile
             {
                 FullName = "Administrator",
                 Email = "admin@email.com",
@@ -1348,55 +1827,31 @@ London, W1A 1AA, United Kingdom.",
                 Role = "Admin",
             };
 
-            await context.Profiles.AddAsync(userAdmin);
+            await context.Profiles.AddAsync(userAdminProfile);
+            await context.SaveChangesAsync();
 
-            AppUser user = new AppUser
+            var userAdmin = new AppUser
             {
                 DisplayName = "Super Admin",
                 UserName = "admin@email.com",
-                ProfileId = userAdmin.Id,
+                ProfileId = userAdminProfile.Id,
                 Email = "admin@email.com",
-                //IsSuperAdmin = true
                 Role = "Admin"
             };
 
-            await CreateAppUser(userManager, user);
-            //await userManager.AddToRoleAsync(user, "Admin");
-            if (!await userManager.IsInRoleAsync(user, "Admin"))
+            await CreateAppUser(userManager, userAdmin);
+            if (!await userManager.IsInRoleAsync(userAdmin, "Admin"))
             {
-                await userManager.AddToRoleAsync(user, "Admin");
+                await userManager.AddToRoleAsync(userAdmin, "Admin");
             }
-
-            //modelBuilder.Entity<User>().HasData(userAdmin);
-            //Login loginAdmin = new Login
-            //{
-            //    Username = "admin",
-            //    Password = "admin",
-            //    UserId = userAdmin.Id,
-            //    //Email = "admin@email.com"
-            //};
-            //await context.Logins.AddAsync(loginAdmin);
-            //modelBuilder.Entity<Login>().HasData(loginAdmin);
         }
-        /// <summary>
-        ///       new Role { Name = "Admin" },
-        //new Role { Name = "Stock Manager" },
-        //new Role { Name = "Customer Manager" },
-        //new Role { Name = "Finance Manager" },
-        //new Role { Name = "Sales" }
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="userManager"></param>
-        /// <returns></returns>
-        /// 
 
         private static async Task SeedSalesUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
             if (context.Profiles.Where(c => c.Role == "Sales").Any())
-
                 return;
 
-            Profile userAdmin = new Profile
+            var salesProfile = new Profile
             {
                 FullName = "Sales",
                 Email = "sale@email.com",
@@ -1404,35 +1859,31 @@ London, W1A 1AA, United Kingdom.",
                 Role = "Sales",
             };
 
-            await context.Profiles.AddAsync(userAdmin);
+            await context.Profiles.AddAsync(salesProfile);
+            await context.SaveChangesAsync();
 
-            AppUser user = new AppUser
+            var salesUser = new AppUser
             {
                 DisplayName = "Sales",
                 UserName = "sale@email.com",
-                ProfileId = userAdmin.Id,
+                ProfileId = salesProfile.Id,
                 Email = "sale@email.com",
-                //IsSuperAdmin = true
                 Role = "Sales"
             };
 
-            await CreateAppUser(userManager, user);
-            //await userManager.AddToRoleAsync(user, "Sales");
-            if (!await userManager.IsInRoleAsync(user, "Sales"))
+            await CreateAppUser(userManager, salesUser);
+            if (!await userManager.IsInRoleAsync(salesUser, "Sales"))
             {
-                await userManager.AddToRoleAsync(user, "Sales");
+                await userManager.AddToRoleAsync(salesUser, "Sales");
             }
-
         }
-
 
         private static async Task SeedFinanceManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
             if (context.Profiles.Where(c => c.Role == "Finance Manager").Any())
-
                 return;
 
-            Profile userAdmin = new Profile
+            var financeManagerProfile = new Profile
             {
                 FullName = "Finance Manager",
                 Email = "finance@email.com",
@@ -1440,25 +1891,23 @@ London, W1A 1AA, United Kingdom.",
                 Role = "Finance Manager",
             };
 
-            await context.Profiles.AddAsync(userAdmin);
+            await context.Profiles.AddAsync(financeManagerProfile);
+            await context.SaveChangesAsync();
 
-            AppUser user = new AppUser
+            var financeManagerUser = new AppUser
             {
                 DisplayName = "Finance Manager",
                 UserName = "finance@email.com",
-                ProfileId = userAdmin.Id,
+                ProfileId = financeManagerProfile.Id,
                 Email = "finance@email.com",
-                //IsSuperAdmin = true
                 Role = "Finance Manager"
             };
 
-            await CreateAppUser(userManager, user);
-            //await userManager.AddToRoleAsync(user, "Finance Manager");
-            if (!await userManager.IsInRoleAsync(user, "Finance Manager"))
+            await CreateAppUser(userManager, financeManagerUser);
+            if (!await userManager.IsInRoleAsync(financeManagerUser, "Finance Manager"))
             {
-                await userManager.AddToRoleAsync(user, "Finance Manager");
+                await userManager.AddToRoleAsync(financeManagerUser, "Finance Manager");
             }
-
         }
 
         private static async Task SeedCustomerManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
@@ -1466,7 +1915,7 @@ London, W1A 1AA, United Kingdom.",
             if (context.Profiles.Where(c => c.Role == "Customer Manager").Any())
                 return;
 
-            Profile userAdmin = new Profile
+            var customerManagerProfile = new Profile
             {
                 FullName = "Customer Manager",
                 Email = "customer@email.com",
@@ -1474,32 +1923,31 @@ London, W1A 1AA, United Kingdom.",
                 Role = "Customer Manager",
             };
 
-            await context.Profiles.AddAsync(userAdmin);
+            await context.Profiles.AddAsync(customerManagerProfile);
+            await context.SaveChangesAsync();
 
-            AppUser user = new AppUser
+            var customerManagerUser = new AppUser
             {
                 DisplayName = "Customer Manager",
                 UserName = "customer@email.com",
-                ProfileId = userAdmin.Id,
+                ProfileId = customerManagerProfile.Id,
                 Email = "customer@email.com",
-                //IsSuperAdmin = true
                 Role = "Customer Manager"
             };
 
-            await CreateAppUser(userManager, user);
-            if (!await userManager.IsInRoleAsync(user, "Customer Manager"))
+            await CreateAppUser(userManager, customerManagerUser);
+            if (!await userManager.IsInRoleAsync(customerManagerUser, "Customer Manager"))
             {
-                await userManager.AddToRoleAsync(user, "Customer Manager");
+                await userManager.AddToRoleAsync(customerManagerUser, "Customer Manager");
             }
         }
-
 
         private static async Task SeedStockManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
             if (context.Profiles.Where(c => c.Role == "Stock Manager").Any())
                 return;
 
-            Profile userAdmin = new Profile
+            var stockManagerProfile = new Profile
             {
                 FullName = "Stock Manager",
                 Email = "stock@email.com",
@@ -1507,33 +1955,34 @@ London, W1A 1AA, United Kingdom.",
                 Role = "Stock Manager",
             };
 
-            await context.Profiles.AddAsync(userAdmin);
+            await context.Profiles.AddAsync(stockManagerProfile);
+            await context.SaveChangesAsync();
 
-            AppUser user = new AppUser
+            var stockManagerUser = new AppUser
             {
                 DisplayName = "Stock Manager",
                 UserName = "stock@email.com",
-                ProfileId = userAdmin.Id,
+                ProfileId = stockManagerProfile.Id,
                 Email = "stock@email.com",
-                //IsSuperAdmin = true
                 Role = "Stock Manager"
             };
 
-            await CreateAppUser(userManager, user);
-            if (!await userManager.IsInRoleAsync(user, "Stock Manager"))
+            await CreateAppUser(userManager, stockManagerUser);
+            if (!await userManager.IsInRoleAsync(stockManagerUser, "Stock Manager"))
             {
-                await userManager.AddToRoleAsync(user, "Stock Manager");
+                await userManager.AddToRoleAsync(stockManagerUser, "Stock Manager");
             }
-
-
         }
-
 
         private static async Task CreateAppUser(UserManager<AppUser> userManager, AppUser user)
         {
-            Console.WriteLine(string.Format("Email:{0}, UserName:{1}", user.Email, user.UserName));
-            await userManager.CreateAsync(user, "Qwerty@123");
+            var result = await userManager.CreateAsync(user, "qwe123");
+            if (!result.Succeeded)
+            {
+                throw new Exception(string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
         }
+
 
     }
 }
