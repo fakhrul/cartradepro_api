@@ -61,14 +61,14 @@ namespace SPOT_API.Controllers
                 return Unauthorized();
 
             var objs = await _context.Profiles
-                .Include(c => c.Leader)
-                .Where(c => c.Role == "agent")
+                //.Include(c => c.Leader)
+                //.Where(c => c.Role == "agent")
                 .ToListAsync();
             foreach (var obj in objs)
             {
                 obj.AppUser = null;
-                if (obj.Leader != null)
-                    obj.Leader.AppUser = null;
+                //if (obj.Leader != null)
+                //    obj.Leader.AppUser = null;
             }
 
             return objs;

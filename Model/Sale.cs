@@ -19,7 +19,10 @@ namespace SPOT_API.Models
 
         public decimal SaleAmount { get; set; }
         public decimal DepositAmount { get; set; }
+        public decimal TradeInAmount { get; set; }
 
+        public decimal EoeAmount { get; set; }
+        
         public bool IsUseLoan { get; set; }
 
 
