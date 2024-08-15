@@ -19,11 +19,11 @@ namespace SPOT_API.Models
 
         public DateTime SaleDateTime { get; set; } = DateTime.Now.ToUniversalTime();
 
-        public decimal SaleAmount { get; set; }
-        public decimal DepositAmount { get; set; }
-        public decimal TradeInAmount { get; set; }
+        public float SaleAmount { get; set; }
+        public float DepositAmount { get; set; }
+        public float TradeInAmount { get; set; }
 
-        public decimal EoeAmount { get; set; }
+        public float EoeAmount { get; set; }
         
         public bool IsUseLoan { get; set; }
 

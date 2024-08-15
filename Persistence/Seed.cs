@@ -453,7 +453,7 @@ London, W1A 1AA, United Kingdom.",
             purchase.SupplierId = context.Suppliers.Skip(random.Next(0, context.Suppliers.Count())).FirstOrDefault().Id;
             purchase.SupplierCurrency = "USD";
             purchase.VehiclePriceSupplierCurrency = 20000;
-            purchase.VehiclePriceLocalCurrency= 100000;
+            purchase.VehiclePriceLocalCurrency = 100000;
 
             context.Purchases.Add(purchase);
             obj.PurchaseId = purchase.Id;
@@ -467,6 +467,9 @@ London, W1A 1AA, United Kingdom.",
             obj.ClearanceId = clearance.Id;
 
             var pricing = new Pricing();
+            pricing.RecommendedSalePrice = 250000;
+            pricing.MinimumSalePrice = 250000;
+
             context.Pricings.Add(pricing);
             obj.PricingId = pricing.Id;
 
@@ -494,10 +497,10 @@ London, W1A 1AA, United Kingdom.",
             sale.SaleDateTime = GetRandomDate(2022, 2024);
             sale.CustomerId = context.Customers.Skip(random.Next(0, context.Customers.Count())).FirstOrDefault().Id;
             sale.SaleAmount = random.Next(150000, 250000);
-            sale.DepositAmount= random.Next(1000, 5000);
-            sale.TradeInAmount= random.Next(0, 50000);
+            sale.DepositAmount = random.Next(1000, 5000);
+            sale.TradeInAmount = random.Next(0, 50000);
             sale.IsUseLoan = true;
-            
+            sale.EoeAmount = 600;
 
             //var loan = new Loan();
             //sale.LoanId = loan.Id;
@@ -512,6 +515,7 @@ London, W1A 1AA, United Kingdom.",
 
 
             var registration = new Registration();
+            registration.VehicleRegistrationNumber = "XXX 1234";
             context.Registrations.Add(registration);
             //_context.Imports.Add(import);
             obj.RegistrationId = registration.Id;
@@ -524,9 +528,35 @@ London, W1A 1AA, United Kingdom.",
 
 
             var administrativeCost = new AdminitrativeCost();
+            if (administrativeCost.AdminitrativeCostItems == null)
+                administrativeCost.AdminitrativeCostItems = new List<AdminitrativeCostItem>();
+            administrativeCost.AdminitrativeCostItems.Add(new AdminitrativeCostItem
+            {
+                AdminitrativeCostId = administrativeCost.Id,
+                Name = "Vehicle Regn. Fee",
+                Amount = 200,
+            });
+            administrativeCost.AdminitrativeCostItems.Add(new AdminitrativeCostItem
+            {
+                AdminitrativeCostId = administrativeCost.Id,
+                Name = "Road Tax",
+                Amount = 20,
+            });
+
+            administrativeCost.AdminitrativeCostItems.Add(new AdminitrativeCostItem
+            {
+                AdminitrativeCostId = administrativeCost.Id,
+                Name = "Insurance",
+                Amount = 1676.66F,
+            });
+
+
+
             context.AdminitrativeCosts.Add(administrativeCost);
             obj.AdminitrativeCostId = administrativeCost.Id;
 
+
+            //
             //Stocks
             context.Stocks.Add(obj);
             context.SaveChanges();

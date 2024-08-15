@@ -12,13 +12,13 @@ namespace SPOT_API.Models
 
 
         //public string BankName { get; set; }
-        public decimal DepositAmount { get; set; }
+        public float DepositAmount { get; set; }
 
-        public decimal UnpaidBalanceAmount { get; set; }
+        public float UnpaidBalanceAmount { get; set; }
 
-        public decimal RequestedLoanAmount { get; set; }
+        public float RequestedLoanAmount { get; set; }
 
-        public decimal ApprovedLoanAmount { get; set; }
+        public float ApprovedLoanAmount { get; set; }
 
         public string LoanTenure { get; set; }
 

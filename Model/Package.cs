@@ -16,7 +16,7 @@ namespace SPOT_API.Models
         public string Code { get; set; }
         public string Name { get; set; }
 
-        public decimal CommisionAmount { get; set; }
+        public float CommisionAmount { get; set; }
 
         public string ConsumerType { get; set; }
 

@@ -21,7 +21,7 @@ namespace CarTradePro.API.DTOs
     public class SalesData
     {
         public int Total { get; set; }
-        public decimal Amount { get; set; }
+        public float Amount { get; set; }
     }
 
     public class StockStatusData

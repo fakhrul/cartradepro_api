@@ -13,10 +13,10 @@ namespace SPOT_API.Models
         //public Guid StockId { get; set; }
         //public virtual Stock Stock { get; set; }
         public string ShipName { get; set; }
-        public DateTime EstimateDateOfDeparture { get; set; } = DateTime.MinValue.ToUniversalTime();
-        public DateTime EstimateDateOfArrival { get; set; } = DateTime.MinValue.ToUniversalTime();
+        public DateTime EstimateDateOfDeparture { get; set; } = DateTime.Now.ToUniversalTime();
+        public DateTime EstimateDateOfArrival { get; set; } = DateTime.Now.ToUniversalTime();
         //public string ClearanceAgent { get; set; }
-        public DateTime DateOfBillOfLading { get; set; } = DateTime.MinValue.ToUniversalTime();
+        public DateTime DateOfBillOfLading { get; set; } = DateTime.Now.ToUniversalTime();
 
         [ForeignKey("ForwardingAgent")]
         public Guid? ForwardingAgentId { get; set; }

@@ -17,7 +17,7 @@ namespace SPOT_API.Models
         public Guid PackageId { get; set; }
         public virtual Package Package { get; set; }
 
-        public decimal CommissionAmount { get; set; }
+        public float CommissionAmount { get; set; }
 
         public bool IsEnable { get; set; }
 

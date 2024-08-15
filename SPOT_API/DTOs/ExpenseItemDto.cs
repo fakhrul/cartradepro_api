@@ -3,7 +3,7 @@
     public class ExpenseItemDto
     {
         public string Name { get; set; }
-        public decimal Amount { get; set; }
+        public float Amount { get; set; }
         public string Remarks { get; set; }
 
     }
