@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Interfaces;
+using CarTradePro.API.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +34,7 @@ namespace SPOT_API.Controllers
 
         // GET: api/Dashboards/5
         [HttpGet("Top")]
-        public async Task<ActionResult<Dashboard>> GetDashboardByCurrentTenant()
+        public async Task<ActionResult<DashboardDto>> GetDashboardByCurrentTenant()
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
             if (user == null)
@@ -47,40 +48,122 @@ namespace SPOT_API.Controllers
 
             //if (dashboard == null)
             //{
-            Dashboard dashboard = null;
+            DashboardDto dashboard = null;
             try
             {
 
-                var stocks = _context.Stocks
-                    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
-                    .ThenInclude(c => c.StockStatus)
+                var lastYearSales = await _context.Stocks
+                    .Where(s => s.Sale.SaleDateTime.Year == DateTime.Now.Year - 1)
+                    .GroupBy(s => 1)
+                    .Select(g => new SalesData
+                    {
+                        Total = g.Count(),
+                        Amount = g.Sum(s => s.Sale.SaleAmount)
+                    })
+                    .FirstOrDefaultAsync();
+
+                var thisYearSales = await _context.Stocks
+                    .Where(s => s.Sale.SaleDateTime.Year == DateTime.Now.Year)
+                    .GroupBy(s => 1)
+                    .Select(g => new SalesData
+                    {
+                        Total = g.Count(),
+                        Amount = g.Sum(s => s.Sale.SaleAmount)
+                    })
+                    .FirstOrDefaultAsync();
+
+
+                var stockDataStatuses = await _context.Stocks
+                    .Include(c=> c.StockStatusHistories)
+                    .ThenInclude(c=> c.StockStatus)
+                    .ToListAsync();
+
+                var stockData = stockDataStatuses.
+                    GroupBy(c => c.LatestStockStatus.StockStatus.Name)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count()
+                    })
                     .ToList();
 
-                int totalStockAvailable = stocks.Where(p => p.LatestStockStatus.StockStatus.Name == "Available").ToList().Count();
-                int totalStockInProcess = stocks.Where(p => 
-                        p.LatestStockStatus.StockStatus.Name != "Draft" &&
-                        p.LatestStockStatus.StockStatus.Name != "Available" &&
-                        p.LatestStockStatus.StockStatus.Name != "Cancelled" &&
-                        p.LatestStockStatus.StockStatus.Name != "Sold"
-                        ).ToList().Count();
-                int totalTotalStockSoldThisYear = stocks.Where(p => 
-                    p.LatestStockStatus.StockStatus.Name == "Sold" && 
-                    p.LatestStockStatus.DateTime.Year == DateTime.Now.Year).ToList().Count();
-
-                int totalTotalStockSoldLastYear = stocks.Where(p =>
-                    p.LatestStockStatus.StockStatus.Name == "Sold" &&
-                    p.LatestStockStatus.DateTime.Year == DateTime.Now.AddYears(-1).Year).ToList().Count();
-
-                dashboard = new Dashboard
+                var stockStatus = new StockStatusData
                 {
-                    Date = DateTime.Now.Date,
-                    ThisYear = DateTime.Now.Year,
-                    LastYear = DateTime.Now.Year - 1,
-                    TotalStockAvailable = totalStockAvailable ,
-                    TotalStockInProcess = totalStockInProcess,
-                    TotalTotalStockSoldLastYear = totalTotalStockSoldLastYear,
-                    TotalTotalStockSoldThisYear = totalTotalStockSoldThisYear,
+                    Available = stockData.FirstOrDefault(s => s.Status == "Available")?.Count ?? 0,
+                    InProgress = stockData.FirstOrDefault(s => s.Status != "Draft" && s.Status != "Available")?.Count ?? 0
                 };
+
+
+
+                var topSellingModels = await _context.Stocks
+                    .Where(s => s.Sale.SaleDateTime.Year == DateTime.Now.Year)
+                    .Include(c=> c.Vehicle)
+                    .ThenInclude(c=> c.Brand)
+                    .GroupBy(s => s.Vehicle.Brand.Name)
+                    .OrderByDescending(g => g.Count())
+                    .Select(g => new TopSellingModelData
+                    {
+                        Name = g.Key,
+                        UnitsSold = g.Count()
+                    })
+                    .Take(10) // Get top 5 selling models
+                    .ToListAsync();
+
+                var lastYearTopSellingModels = await _context.Stocks
+                    .Where(s => s.Sale.SaleDateTime.Year == DateTime.Now.Year - 1)
+                    .Include(c => c.Vehicle)
+                    .ThenInclude(c => c.Brand)
+                    .GroupBy(s => s.Vehicle.Brand.Name)
+                    .OrderByDescending(g => g.Count())
+                    .Select(g => new TopSellingModelData
+                    {
+                        Name = g.Key,
+                        UnitsSold = g.Count()
+                    })
+                    .Take(10) // Get top 5 selling models
+                    .ToListAsync();
+
+                dashboard = new DashboardDto
+                {
+                    LastYearSales = lastYearSales,
+                    ThisYearSales = thisYearSales,
+                    StockStatus = stockStatus,
+                    TopSellingModels = topSellingModels,
+                    LastYearTopSellingModels = lastYearTopSellingModels
+                };
+
+
+
+                //var stocks = _context.Stocks
+                //    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
+                //    .ThenInclude(c => c.StockStatus)
+                //    .ToList();
+
+                //int totalStockAvailable = stocks.Where(p => p.LatestStockStatus.StockStatus.Name == "Available").ToList().Count();
+                //int totalStockInProcess = stocks.Where(p => 
+                //        p.LatestStockStatus.StockStatus.Name != "Draft" &&
+                //        p.LatestStockStatus.StockStatus.Name != "Available" &&
+                //        p.LatestStockStatus.StockStatus.Name != "Cancelled" &&
+                //        p.LatestStockStatus.StockStatus.Name != "Sold"
+                //        ).ToList().Count();
+                //int totalTotalStockSoldThisYear = stocks.Where(p => 
+                //    p.LatestStockStatus.StockStatus.Name == "Sold" && 
+                //    p.LatestStockStatus.DateTime.Year == DateTime.Now.Year).ToList().Count();
+
+                //int totalTotalStockSoldLastYear = stocks.Where(p =>
+                //    p.LatestStockStatus.StockStatus.Name == "Sold" &&
+                //    p.LatestStockStatus.DateTime.Year == DateTime.Now.AddYears(-1).Year).ToList().Count();
+
+                //dashboard = new Dashboard
+                //{
+                //    Date = DateTime.Now.Date,
+                //    ThisYear = DateTime.Now.Year,
+                //    LastYear = DateTime.Now.Year - 1,
+                //    TotalStockAvailable = totalStockAvailable ,
+                //    TotalStockInProcess = totalStockInProcess,
+                //    TotalTotalStockSoldLastYear = totalTotalStockSoldLastYear,
+                //    TotalTotalStockSoldThisYear = totalTotalStockSoldThisYear,
+                //};
             }
             catch (Exception ex)
             {

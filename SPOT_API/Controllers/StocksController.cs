@@ -436,6 +436,7 @@ namespace SPOT_API.Controllers
                 //var loan = new Loan();
                 //_context.Loans.Add(loan);
                 var sale = new Sale();
+                sale.SaleDateTime = DateTime.Now;
                 //var loan = new Loan();
                 //sale.LoanId = loan.Id;
                 //_context.Sales.Add(sale);

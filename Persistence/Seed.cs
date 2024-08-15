@@ -13,10 +13,6 @@ namespace SPOT_API.Persistence
     {
         public static async Task SeedData(SpotDBContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
         {
-            //if (!userManager.Users.Any())
-            //{
-            //if (context.Profiles.Any())
-            //    return;
             try
             {
                 await SeedRoles(context, roleManager);
@@ -340,16 +336,202 @@ London, W1A 1AA, United Kingdom.",
         {
             if (context.Stocks.Any())
                 return;
-            var objs = new List<Stock>
-            {
-                new Stock { StockNo = "20240621-1"},
-                new Stock { StockNo = "20240621-2"},
-            };
+            //var objs = new List<Stock>
+            //{
+            //    new Stock { StockNo = "20240621-1"},
+            //    new Stock { StockNo = "20240621-2"},
+            //};
 
-            context.Stocks.AddRange(objs);
-            await context.SaveChangesAsync();
+            //context.Stocks.AddRange(objs);
+            for (int i = 1; i <= 100; i++)
+                CreateNewStock(context, i);
+
+
 
         }
+
+        public static StockStatus GetRandomStockStatus(SpotDBContext context)
+        {
+            int count = context.StockStatuses.Count();
+            if (count == 0)
+            {
+                return null; // Handle the case where there are no records
+            }
+
+            Random random = new Random();
+            int index = random.Next(0, count);
+
+            return context.StockStatuses.Skip(index).FirstOrDefault();
+        }
+
+        public static Brand GetRandomBrand(SpotDBContext context)
+        {
+            int count = context.Brands.Count();
+            if (count == 0)
+            {
+                return null; // Handle the case where there are no records
+            }
+
+            Random random = new Random();
+            int index = random.Next(0, count);
+
+            return context.Brands.Skip(index).FirstOrDefault();
+        }
+        public static Model GetRandomModel(SpotDBContext context, Guid? brandId)
+        {
+            int count = context.Models.Where(c => c.BrandId == brandId).Count();
+            if (count == 0)
+            {
+                return null; // Handle the case where there are no records
+            }
+
+            Random random = new Random();
+            int index = random.Next(0, count);
+
+            return context.Models.Where(c => c.BrandId == brandId).Skip(index).FirstOrDefault();
+        }
+
+        public static DateTime GetRandomDate(int startYear, int endYear)
+        {
+            Random random = new Random();
+
+            // Generate a random year between startYear and endYear
+            int year = random.Next(startYear, endYear + 1);
+
+            // Generate a random month (1-12)
+            int month = random.Next(1, 13);
+
+            // Generate a random day within the valid range for the generated month and year
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            int day = random.Next(1, daysInMonth + 1);
+
+            // Generate random hour, minute, second
+            int hour = random.Next(0, 24);
+            int minute = random.Next(0, 60);
+            int second = random.Next(0, 60);
+
+            return new DateTime(year, month, day, hour, minute, second);
+        }
+
+        private static void CreateNewStock(SpotDBContext context, int stockNo)
+        {
+            Random random = new Random();
+
+            Stock obj = new Stock { StockNo = "20240621-" + stockNo.ToString() };
+
+            var stockStatus = context.StockStatuses.FirstOrDefault(c => c.Name == "Draft");
+            if (obj.StockStatusHistories == null)
+                obj.StockStatusHistories = new List<StockStatusHistory>();
+
+            obj.StockStatusHistories.Add(new StockStatusHistory
+            {
+                ProfileId = context.Profiles.Where(c => c.Role == "Admin").FirstOrDefault().Id,
+                StockStatusId = stockStatus.Id,
+                StockId = obj.Id
+            });
+
+            for (int i = 0; i < 5; i++)
+                obj.StockStatusHistories.Add(new StockStatusHistory
+                {
+                    ProfileId = context.Profiles.Where(c => c.Role == "Admin").FirstOrDefault().Id,
+                    StockStatusId = GetRandomStockStatus(context).Id,
+                    StockId = obj.Id
+                });
+
+
+
+            var vehicle = new Vehicle();
+            vehicle.BrandId = GetRandomBrand(context).Id;
+            vehicle.ModelId = GetRandomModel(context, vehicle.BrandId).Id;
+            vehicle.Year = random.Next(2000, 2024).ToString();
+            vehicle.Month = random.Next(1, 12).ToString();
+
+            context.Vehicles.Add(vehicle);
+            obj.VehicleId = vehicle.Id;
+
+            var purchase = new Purchase();
+            purchase.SupplierId = context.Suppliers.Skip(random.Next(0, context.Suppliers.Count())).FirstOrDefault().Id;
+            purchase.SupplierCurrency = "USD";
+            purchase.VehiclePriceSupplierCurrency = 20000;
+            purchase.VehiclePriceLocalCurrency= 100000;
+
+            context.Purchases.Add(purchase);
+            obj.PurchaseId = purchase.Id;
+
+            var import = new Import();
+            context.Imports.Add(import);
+            obj.ImportId = import.Id;
+
+            var clearance = new Clearance();
+            context.Clearances.Add(clearance);
+            obj.ClearanceId = clearance.Id;
+
+            var pricing = new Pricing();
+            context.Pricings.Add(pricing);
+            obj.PricingId = pricing.Id;
+
+            var arrivalCheckList = new ArrivalChecklist();
+
+            if (arrivalCheckList.ArrivalChecklists == null)
+                arrivalCheckList.ArrivalChecklists = new List<ArrivalChecklistItem>();
+
+            arrivalCheckList.ArrivalChecklists.Add(new ArrivalChecklistItem
+            {
+                ArrivalChecklistId = arrivalCheckList.Id,
+                Name = "Extra Key",
+                IsAvailable = true,
+                Remarks = ""
+            });
+            context.ArrivalChecklists.Add(arrivalCheckList);
+            obj.ArrivalChecklistId = arrivalCheckList.Id;
+
+            //var sellingPrice = new SellingPricing();
+            //obj.SellingPricingId = sellingPrice.Id;
+
+            //var loan = new Loan();
+            //_context.Loans.Add(loan);
+            var sale = new Sale();
+            sale.SaleDateTime = GetRandomDate(2022, 2024);
+            sale.CustomerId = context.Customers.Skip(random.Next(0, context.Customers.Count())).FirstOrDefault().Id;
+            sale.SaleAmount = random.Next(150000, 250000);
+            sale.DepositAmount= random.Next(1000, 5000);
+            sale.TradeInAmount= random.Next(0, 50000);
+            sale.IsUseLoan = true;
+            
+
+            //var loan = new Loan();
+            //sale.LoanId = loan.Id;
+            //_context.Sales.Add(sale);
+            obj.Sale = sale;
+            obj.SaleId = sale.Id;
+
+            var loan = new Loan();
+            loan.BankId = context.Banks.Skip(random.Next(0, context.Banks.Count())).FirstOrDefault().Id;
+            context.Loans.Add(loan);
+            obj.Sale.LoanId = loan.Id;
+
+
+            var registration = new Registration();
+            context.Registrations.Add(registration);
+            //_context.Imports.Add(import);
+            obj.RegistrationId = registration.Id;
+
+
+            var expense = new Expense();
+            context.Expenses.Add(expense);
+            obj.ExpenseId = expense.Id;
+
+
+
+            var administrativeCost = new AdminitrativeCost();
+            context.AdminitrativeCosts.Add(administrativeCost);
+            obj.AdminitrativeCostId = administrativeCost.Id;
+
+            //Stocks
+            context.Stocks.Add(obj);
+            context.SaveChanges();
+        }
+
         private static async Task SeedStockStatuses(SpotDBContext context)
         {
             if (context.StockStatuses.Any())
@@ -1611,6 +1793,10 @@ London, W1A 1AA, United Kingdom.",
         }
         private static async Task SeedRolePermissionsForMainModule(SpotDBContext context)
         {
+
+            if (context.RoleSubModulePermissions.Any())
+                return;
+
             var roles = context.Roles.ToList();
             var modules = context.Modules.Include(c => c.SubModules).ToList();
             var roleModulePermissions = new List<RoleModulePermission>();
@@ -1656,7 +1842,7 @@ London, W1A 1AA, United Kingdom.",
                             //module.Name == "MasterData" ||
                             //module.Name == "Letters" ||
                             //module.Name == "Reports" ||
-                            module.Name == "Vehicle" 
+                            module.Name == "Vehicle"
                             //module.Name == "Administration" ||
                             //module.Name == "System"
                             )

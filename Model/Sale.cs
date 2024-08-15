@@ -17,6 +17,8 @@ namespace SPOT_API.Models
         public Guid? LoanId { get; set; }
         public virtual Loan Loan { get; set; }
 
+        public DateTime SaleDateTime { get; set; } = DateTime.Now.ToUniversalTime();
+
         public decimal SaleAmount { get; set; }
         public decimal DepositAmount { get; set; }
         public decimal TradeInAmount { get; set; }
