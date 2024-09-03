@@ -49,6 +49,9 @@ namespace SPOT_API.Models
 
         public virtual ICollection<VehiclePhoto> VehiclePhotoList { get; set; }
 
+        public string Description { get; set; }
+
+
     }
 
 }

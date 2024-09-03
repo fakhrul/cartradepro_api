@@ -74,5 +74,7 @@ namespace SPOT_API.Models
         public virtual AdminitrativeCost AdminitrativeCost { get; set; }
 
 
+        //public string Location { get; set; }
+        public string LocationCode { get; set; }
     }
 }

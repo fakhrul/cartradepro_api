@@ -31,7 +31,7 @@ namespace SPOT_API.Persistence
                 await SeedClearanceAgent(context);
 
 
-                await SeedStocks(context);
+                //await SeedStocks(context);
 
 
                 await context.SaveChangesAsync();

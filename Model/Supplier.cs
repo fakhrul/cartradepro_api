@@ -10,5 +10,6 @@
         public string ContactPersonName { get; set; }
         public string ContactPersonPhone { get; set; }
         public string ContactPersonEmail { get; set; }
+        public string Code { get; set; }
     }
 }

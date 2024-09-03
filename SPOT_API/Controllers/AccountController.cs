@@ -123,83 +123,28 @@ namespace SPOT_API.Controllers
                 ModelState.AddModelError("email", "Email taken");
                 return ValidationProblem();
             }
-            if (await _userManager.Users.AnyAsync(x => x.UserName == registerDto.UserName))
-            {
-                ModelState.AddModelError("username", "Username taken");
-                return ValidationProblem();
-            }
-
-            if (string.IsNullOrEmpty(registerDto.IdNo))
-            {
-                ModelState.AddModelError("idNo", "Id no cannot be empty");
-                return ValidationProblem();
-            }
-            if (string.IsNullOrEmpty(registerDto.Role))
-            {
-                ModelState.AddModelError("role", "Undefined Role");
-                return ValidationProblem();
-            }
-            if (string.IsNullOrEmpty(registerDto.TenantCode))
-            {
-                ModelState.AddModelError("tenantCode", "Unknown tenant");
-                return ValidationProblem();
-            }
-
 
             Profile profile = new Profile
             {
-                FullName = registerDto.FullName,
+                FullName = "Your Full Name",
                 Email = registerDto.Email,
-                Phone = registerDto.Phone,
-                Role = registerDto.Role,
-              
-                //StaffNo = registerDto.IdNo,
+                Role = "TenantAdmin",
             };
-
-            //if (registerDto.Role.ToLower() == "staff")
-            //{
-            //    profile.StaffNo = registerDto.IdNo;
-            //}
-            //else if (registerDto.Role.ToLower() == "visitor")
-            //{
-            //    profile.MyKad = registerDto.IdNo;
-            //}
 
             await _context.Profiles.AddAsync(profile);
 
             var user = new AppUser
             {
-                DisplayName = registerDto.FullName,
-                Email = registerDto.Email,
-                UserName = registerDto.UserName,
+                DisplayName = profile.FullName,
+                Email = profile.Email,
+                UserName = profile.Email,
                 ProfileId = profile.Id,
-
             };
 
-            //AppUser user = new AppUser
-            //{
-            //    DisplayName = "Tenant",
-            //    UserName = "tenant" + count.ToString(),
-            //    ProfileId = userAdmin.Id,
-            //    Email = "tenant" + count.ToString() + "@email.com",
-            //    TenantCode = tenant.Code,
-            //    TenantId = tenant.Id,
-            //    //Role = 
-            //};
-
-
-            var result = await _userManager.CreateAsync(user, "Qwerty@123");
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
 
             if (!result.Succeeded) return BadRequest("Problem registering user");
 
-            //var origin = Request.Headers["origin"];
-            //var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            //token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-
-            //var verifyUrl = $"{origin}/account/verifyEmail?token={token}&email={user.Email}";
-            //var message = $"<p>Please click the below link to verify your email address:</p><p><a href='{verifyUrl}'>Click to verify email</a></p>";
-
-            //await _emailSender.SendEmailAsync(user.Email, "Please verify email", message);
 
             return Ok("Registration success");
         }

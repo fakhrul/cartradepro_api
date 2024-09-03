@@ -30,27 +30,51 @@ namespace SPOT_API.Controllers
 
         // GET: api/Stocks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Stock>>> GetAll()
+        public async Task<ActionResult<IEnumerable<Stock>>> GetAll(
+            string brand = null,
+            string model = null,
+            string status = null)
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
             if (user == null)
                 return Unauthorized();
 
-            var objs = await _context.Stocks
+
+            // Start building the query
+            var query = _context.Stocks
                 .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
                 .ThenInclude(c => c.StockStatus)
-                .Include(c=> c.Vehicle)
-                .ThenInclude(c=> c.Brand)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.Brand)
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.Model)
-                .Include(c=> c.Pricing)
-                .Include(c=> c.Vehicle)
-                .ThenInclude(c=> c.VehiclePhotoList)
-                .OrderByDescending(c=> c.CreatedOn)
-                .ToListAsync();
+                .Include(c => c.Pricing)
+                .Include(c => c.Vehicle)
+                .ThenInclude(c => c.VehiclePhotoList)
+                .OrderByDescending(c => c.CreatedOn)
+                .AsQueryable();
 
+            // Apply Brand Filter (case-insensitive)
+            if (!string.IsNullOrEmpty(brand))
+            {
+                query = query.Where(s => s.Vehicle.Brand.Name.ToLower().Contains(brand.ToLower()));
+            }
 
+            // Apply Model Filter (case-insensitive)
+            if (!string.IsNullOrEmpty(model))
+            {
+                query = query.Where(s => s.Vehicle.Model.Name.ToLower().Contains(model.ToLower()));
+            }
 
+            // Apply Status Filter (case-insensitive)
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(s => s.StockStatusHistories.Any(h => h.StockStatus.Name.ToLower().Contains(status.ToLower())));
+            }
+
+            var objs = await query.ToListAsync();
+
+            // Remove circular references and other unwanted data
             foreach (var obj in objs)
             {
                 foreach (var s in obj.StockStatusHistories)
@@ -60,19 +84,64 @@ namespace SPOT_API.Controllers
 
                 if (obj.Vehicle != null && obj.Vehicle.VehiclePhotoList != null)
                 {
-                    foreach(var p in obj.Vehicle.VehiclePhotoList)
+                    foreach (var p in obj.Vehicle.VehiclePhotoList)
                     {
                         p.Vehicle = null;
                         p.Document = null;
                     }
                 }
-            } 
-
-
-
+            }
 
             return objs;
+
+
         }
+
+        //// GET: api/Stocks
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<Stock>>> GetAll()
+        //{
+        //    var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+        //    if (user == null)
+        //        return Unauthorized();
+
+        //    var objs = await _context.Stocks
+        //        .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
+        //        .ThenInclude(c => c.StockStatus)
+        //        .Include(c=> c.Vehicle)
+        //        .ThenInclude(c=> c.Brand)
+        //        .Include(c => c.Vehicle)
+        //        .ThenInclude(c => c.Model)
+        //        .Include(c=> c.Pricing)
+        //        .Include(c=> c.Vehicle)
+        //        .ThenInclude(c=> c.VehiclePhotoList)
+        //        .OrderByDescending(c=> c.CreatedOn)
+        //        .ToListAsync();
+
+
+
+        //    foreach (var obj in objs)
+        //    {
+        //        foreach (var s in obj.StockStatusHistories)
+        //            s.Stock = null;
+        //        if (obj.Vehicle != null && obj.Vehicle.Model != null)
+        //            obj.Vehicle.Model.Brand = null;
+
+        //        if (obj.Vehicle != null && obj.Vehicle.VehiclePhotoList != null)
+        //        {
+        //            foreach(var p in obj.Vehicle.VehiclePhotoList)
+        //            {
+        //                p.Vehicle = null;
+        //                p.Document = null;
+        //            }
+        //        }
+        //    } 
+
+
+
+
+        //    return objs;
+        //}
 
         [HttpGet("GetNextStockNumber")]
         public ActionResult<string> GetNextStockNumber()
@@ -118,7 +187,7 @@ namespace SPOT_API.Controllers
                 .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
                 .ThenInclude(c => c.StockStatus)
                 .Include(c => c.RemarksList)
-                .ThenInclude(c=> c.Profile)
+                .ThenInclude(c => c.Profile)
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.Brand)
                 .Include(c => c.Vehicle)
@@ -127,14 +196,14 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.VehicleType)
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.VehiclePhotoList)
-                .Include(c=> c.Purchase)
-                .ThenInclude(c=> c.Supplier)
-                .Include(c=> c.Import)
+                .Include(c => c.Purchase)
+                .ThenInclude(c => c.Supplier)
+                .Include(c => c.Import)
                 .ThenInclude(c => c.ForwardingAgent)
-                .Include(c=> c.Import)
-                .ThenInclude(c=> c.BillOfLandingDocuments)
-                .Include(c=> c.Clearance)
-                .ThenInclude(c=> c.K8Documents)
+                .Include(c => c.Import)
+                .ThenInclude(c => c.BillOfLandingDocuments)
+                .Include(c => c.Clearance)
+                .ThenInclude(c => c.K8Documents)
                 .Include(c => c.Clearance)
                 .ThenInclude(c => c.K1Documents)
                 .Include(c => c.Sale)
@@ -146,20 +215,20 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Sale)
                 .ThenInclude(c => c.Customer)
                 .Include(c => c.Pricing)
-                .Include(c=> c.ArrivalChecklist)
-                .ThenInclude(c=> c.ArrivalChecklists)
-                .Include(c=> c.Registration)
-                .ThenInclude(c=> c.JpjEHakMilikDocuments)
+                .Include(c => c.ArrivalChecklist)
+                .ThenInclude(c => c.ArrivalChecklists)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.JpjEHakMilikDocuments)
                 .Include(c => c.Registration)
                 .ThenInclude(c => c.JpjEDaftarDocuments)
                 .Include(c => c.Registration)
                 .ThenInclude(c => c.PuspakomB2SlipDocuments)
                 .Include(c => c.Registration)
                 .ThenInclude(c => c.PuspakomB7SlipDocuments)
-                .Include(c=> c.Expense)
-                .ThenInclude(c=> c.Expenses)
-                .Include(c=> c.AdminitrativeCost)
-                .ThenInclude(c=> c.AdminitrativeCostItems)
+                .Include(c => c.Expense)
+                .ThenInclude(c => c.Expenses)
+                .Include(c => c.AdminitrativeCost)
+                .ThenInclude(c => c.AdminitrativeCostItems)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
@@ -211,11 +280,11 @@ namespace SPOT_API.Controllers
                     }
             }
 
-            if(obj.Sale != null)
+            if (obj.Sale != null)
             {
-                if(obj.Sale.Loan != null)
+                if (obj.Sale.Loan != null)
                 {
-                    if(obj.Sale.Loan.LetterOfUndertakingDocuments != null)
+                    if (obj.Sale.Loan.LetterOfUndertakingDocuments != null)
                     {
                         foreach (var o in obj.Sale.Loan.LetterOfUndertakingDocuments)
                         {
@@ -228,11 +297,11 @@ namespace SPOT_API.Controllers
                 }
             }
 
-            if(obj.ArrivalChecklist != null)
+            if (obj.ArrivalChecklist != null)
             {
-                if(obj.ArrivalChecklist.ArrivalChecklists != null)
+                if (obj.ArrivalChecklist.ArrivalChecklists != null)
                 {
-                    foreach(var o in obj.ArrivalChecklist.ArrivalChecklists)
+                    foreach (var o in obj.ArrivalChecklist.ArrivalChecklists)
                     {
                         o.ArrivalChecklist = null;
                     }
@@ -241,7 +310,7 @@ namespace SPOT_API.Controllers
 
             if (obj.Registration != null)
             {
-                if (obj.Registration.JpjEHakMilikDocuments!= null)
+                if (obj.Registration.JpjEHakMilikDocuments != null)
                 {
                     foreach (var o in obj.Registration.JpjEHakMilikDocuments)
                     {
@@ -304,7 +373,7 @@ namespace SPOT_API.Controllers
                 }
             }
 
-            if(obj.Vehicle != null && obj.Vehicle.Brand != null)
+            if (obj.Vehicle != null && obj.Vehicle.Brand != null)
             {
                 obj.Vehicle.Brand.Models = null;
 
@@ -426,7 +495,7 @@ namespace SPOT_API.Controllers
                     Name = "Extra Key",
                     IsAvailable = true,
                     Remarks = ""
-                }) ;
+                });
                 _context.ArrivalChecklists.Add(arrivalCheckList);
                 obj.ArrivalChecklistId = arrivalCheckList.Id;
 
@@ -485,9 +554,9 @@ namespace SPOT_API.Controllers
 
                 foreach (var o in obj.ArrivalChecklist.ArrivalChecklists)
                     o.ArrivalChecklist = null;
-                if(obj.AdminitrativeCost.AdminitrativeCostItems != null)
-                foreach (var o in obj.AdminitrativeCost.AdminitrativeCostItems)
-                    o.AdminitrativeCost = null;
+                if (obj.AdminitrativeCost.AdminitrativeCostItems != null)
+                    foreach (var o in obj.AdminitrativeCost.AdminitrativeCostItems)
+                        o.AdminitrativeCost = null;
 
                 obj.LatestStockStatus.Stock = null;
             }
@@ -734,7 +803,7 @@ namespace SPOT_API.Controllers
 
             foreach (var obj in objs)
             {
-                _context.BillOfLandingDocuments.Add(new  BillOfLandingDocument
+                _context.BillOfLandingDocuments.Add(new BillOfLandingDocument
                 {
                     ImportId = stock.ImportId,
                     DocumentId = obj.Id
@@ -793,7 +862,7 @@ namespace SPOT_API.Controllers
 
                 var document = _context.Documents.Find(documentId);
 
-                    _context.Documents.Remove(document);
+                _context.Documents.Remove(document);
 
                 await _context.SaveChangesAsync();
 
@@ -917,7 +986,7 @@ namespace SPOT_API.Controllers
                 return Unauthorized();
 
             var stock = await _context.Stocks
-                .Include(c=> c.Sale)
+                .Include(c => c.Sale)
                 .Include(c => c.Sale.Loan)
                 .ThenInclude(c => c.LetterOfUndertakingDocuments)
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -1018,7 +1087,7 @@ namespace SPOT_API.Controllers
 
             var stock = await _context.Stocks
                 .Include(c => c.ArrivalChecklist)
-                .ThenInclude(c=> c.ArrivalChecklists)
+                .ThenInclude(c => c.ArrivalChecklists)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
 
@@ -1119,7 +1188,7 @@ namespace SPOT_API.Controllers
             {
                 _context.JpjEHakMilikDocuments.Add(new JpjEHakMilikDocument
                 {
-                    RegistrationId= stock.RegistrationId,
+                    RegistrationId = stock.RegistrationId,
                     DocumentId = obj.Id
                 });
 
@@ -1165,7 +1234,7 @@ namespace SPOT_API.Controllers
             try
             {
                 var documents = _context.JpjEHakMilikDocuments
-                    .Where(c => c.RegistrationId== registrationId)
+                    .Where(c => c.RegistrationId == registrationId)
                     .Where(c => c.DocumentId == documentId)
                     .ToList();
 
@@ -1598,7 +1667,7 @@ namespace SPOT_API.Controllers
 
             var arrivalChecklist = new AdminitrativeCostItem
             {
-                 AdminitrativeCostId = stock.AdminitrativeCostId,
+                AdminitrativeCostId = stock.AdminitrativeCostId,
                 Name = obj.Name,
                 Amount = obj.Amount,
                 Remarks = obj.Remarks,
