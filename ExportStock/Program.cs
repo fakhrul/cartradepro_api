@@ -231,7 +231,7 @@ class Program
     {
         var options = new DbContextOptionsBuilder<SpotDBContext>()
             .UseNpgsql("Host=178.128.105.21;Port=5432;Database=cartradepro;Username=postgres;Password=Qwerty@123").Options;
-            //.UseNpgsql("Host=localhost;Port=5432;Database=cartradepro;Username=postgres;Password=qwe123").Options;
+        //.UseNpgsql("Host=localhost;Port=5432;Database=cartradepro;Username=postgres;Password=qwe123").Options;
 
         using (var context = new SpotDBContext(options))
         {
@@ -323,6 +323,8 @@ class Program
                     var remarks2 = parts[13];
                     var remarks3 = parts[14];
 
+                    var externalLink = parts[19];
+
                     //continue;
                     var existingStock = context.Stocks
                         .Include(s => s.StockStatusHistories)
@@ -385,7 +387,7 @@ class Program
                         vehicle.Color = vehicleColor;
                         vehicle.Description = specification;
                         vehicle.ChasisNo = chassisNo;
-
+                        vehicle.ExternalLink = externalLink;
                         context.Vehicles.Add(vehicle);
                         obj.VehicleId = vehicle.Id;
 

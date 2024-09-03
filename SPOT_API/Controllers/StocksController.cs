@@ -50,7 +50,7 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.Model)
                 .Include(c => c.Pricing)
                 .Include(c => c.Vehicle)
-                .ThenInclude(c => c.VehiclePhotoList)
+                //.ThenInclude(c => c.VehiclePhotoList)
                 .OrderByDescending(c => c.CreatedOn)
                 .AsQueryable();
 
@@ -195,7 +195,7 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.VehicleType)
                 .Include(c => c.Vehicle)
-                .ThenInclude(c => c.VehiclePhotoList)
+                .ThenInclude(c => c.VehiclePhotoList.OrderBy(c=> c.Position))
                 .Include(c => c.Purchase)
                 .ThenInclude(c => c.Supplier)
                 .Include(c => c.Import)
@@ -386,6 +386,76 @@ namespace SPOT_API.Controllers
             return obj;
         }
 
+        // PUT: api/Stocks/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("defaultimage/{id}")]
+        public async Task<IActionResult> PutDefaultImage(Guid id, Stock obj)
+        {
+            if (id != obj.Id)
+            {
+                return BadRequest();
+            }
+            _context.Entry(obj.Vehicle).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+
+
+
+
+            return NoContent();
+        }
+
+        // PUT: api/Stocks/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("imageposition/{id}")]
+        public async Task<IActionResult> PutImagePosition(Guid id, Stock obj)
+        {
+            if (id != obj.Id)
+            {
+                return BadRequest();
+            }
+
+            var photoIds = obj.Vehicle.VehiclePhotoList.Select(u => u.Id).ToList();
+            var vehiclePhotos = await _context.VehiclePhotos // or Documents, depending on your entity
+                                        .Where(p => photoIds.Contains(p.Id))
+                                        .ToListAsync();
+
+            // Update the positions based on the incoming data
+            foreach (var update in obj.Vehicle.VehiclePhotoList)
+            {
+                var photo = vehiclePhotos.FirstOrDefault(p => p.Id == update.Id);
+                if (photo != null)
+                {
+                    photo.Position = update.Position;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Vehicle photo positions updated successfully.");
+        }
+
 
         // PUT: api/Stocks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -406,6 +476,8 @@ namespace SPOT_API.Controllers
             _context.Entry(obj.Sale.Loan).State = EntityState.Modified;
             _context.Entry(obj.Registration).State = EntityState.Modified;
             _context.Entry(obj.Pricing).State = EntityState.Modified;
+
+            //_context.Entry(obj.Vehicle.VehiclePhotoList).State = EntityState.Modified;
 
             //_context.Entry(obj.SellingPricing).State = EntityState.Modified;
 
@@ -720,6 +792,29 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+
+        [HttpDelete("image/{id}")]
+        public async Task<IActionResult> DeleteVehicleImage(Guid id)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+
+
+            var vehicleImage = await _context.VehiclePhotos
+                .FirstOrDefaultAsync(c => c.Id == id);
+            if (vehicleImage == null)
+            {
+                return NotFound();
+            }
+
+            _context.VehiclePhotos.Remove(vehicleImage);
+            await _context.SaveChangesAsync();
+
+
+            return NoContent();
+        }
 
 
         [HttpPut("UpdateVehicleImages/{id}")]

@@ -440,43 +440,49 @@ namespace SPOT_API.Controllers
             }
         }
 
-
         [HttpPost("UploadImage"), DisableRequestSizeLimit]
         public async Task<ActionResult<IEnumerable<DocumentDto>>> UploadImage()
         {
             try
             {
-                //var folderName = "Uploads";
-                //              var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
-                //            if (!Directory.Exists(pathToSave))
-                //              Directory.CreateDirectory(pathToSave);
-
                 List<DocumentDto> documentUrls = new List<DocumentDto>();
 
                 foreach (var file in Request.Form.Files)
                 {
-
                     if (file.Length > 0)
                     {
                         var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
                         var extension = Path.GetExtension(fileName).Replace(".", "");
 
-                        Document doc = new Document();
-                        doc.FileName = fileName;
-                        doc.Extension = extension;
-                        doc.Driver = "db";
+                        Document doc = new Document
+                        {
+                            FileName = fileName,
+                            Extension = extension,
+                            Driver = "db"
+                        };
 
+                        // Determine content type
                         var provider = new FileExtensionContentTypeProvider();
-                        string contentType;
-                        if (!provider.TryGetContentType(fileName, out contentType))
+                        if (!provider.TryGetContentType(fileName, out string contentType))
                         {
                             contentType = "application/octet-stream";
                         }
                         doc.ContentType = contentType;
 
+                        // Progress handler for tracking upload progress
+                        var progressHandler = new Progress<long>(progress =>
+                        {
+                            // Calculate progress percentage
+                            var percentage = (double)progress / file.Length * 100;
+                            Console.WriteLine($"Progress: {percentage}%"); // Log progress
+                                                                           // Optionally, implement SignalR or another mechanism to send real-time progress updates to the client
+                        });
+
                         using (var stream = new MemoryStream())
                         {
-                            file.CopyTo(stream);
+                            // Copy to memory stream with progress
+                            await CopyToMemoryStreamWithProgressAsync(file, stream, progressHandler);
+
                             doc.Content = stream.ToArray();
                         }
 
@@ -489,43 +495,120 @@ namespace SPOT_API.Controllers
                             Url = "/Documents/File/" + doc.Id.ToString(),
                             FileName = doc.FileName,
                         });
-                        //levelObj.DocumentMapId = fileId;
-
-
-                        //Guid fileId = Guid.NewGuid();
-                        //var fullPath = Path.Combine(pathToSave, fileId + "." + extension);
-                        //using (var stream = new FileStream(fullPath, FileMode.Create))
-                        //{
-                        //    file.CopyTo(stream);
-                        //}
-
-                        //Document doc = new Document
-                        //{
-                        //    Id = fileId,
-                        //    Path = fullPath,
-                        //    Driver = "local"
-                        //};
-                        //_context.Documents.Add(doc);
-
-                        //documentUrls.Add(new DocumentDto
-                        //{
-                        //    Id = fileId,
-                        //    Url = _config["ApiUrl"] + "/Documents/File/" + fileId.ToString()
-                        //});
-                        ////levelObj.DocumentMapId = fileId;
-                        //await _context.SaveChangesAsync();
-                        //}
                     }
                 }
 
                 return documentUrls;
-
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex}");
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        // Helper method to copy file content to MemoryStream with progress tracking
+        private async Task CopyToMemoryStreamWithProgressAsync(IFormFile file, MemoryStream stream, IProgress<long> progress)
+        {
+            byte[] buffer = new byte[81920]; // 80 KB buffer size
+            long totalRead = 0;
+            int bytesRead;
+            using (var inputStream = file.OpenReadStream())
+            {
+                while ((bytesRead = await inputStream.ReadAsync(buffer, 0, buffer.Length)) != 0)
+                {
+                    await stream.WriteAsync(buffer, 0, bytesRead);
+                    totalRead += bytesRead;
+                    progress?.Report(totalRead); // Report progress
+                }
+            }
+        }
+
+
+        //[HttpPost("UploadImage"), DisableRequestSizeLimit]
+        //public async Task<ActionResult<IEnumerable<DocumentDto>>> UploadImage()
+        //{
+        //    try
+        //    {
+        //        //var folderName = "Uploads";
+        //        //              var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+        //        //            if (!Directory.Exists(pathToSave))
+        //        //              Directory.CreateDirectory(pathToSave);
+
+        //        List<DocumentDto> documentUrls = new List<DocumentDto>();
+
+        //        foreach (var file in Request.Form.Files)
+        //        {
+
+        //            if (file.Length > 0)
+        //            {
+        //                var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.Trim('"');
+        //                var extension = Path.GetExtension(fileName).Replace(".", "");
+
+        //                Document doc = new Document();
+        //                doc.FileName = fileName;
+        //                doc.Extension = extension;
+        //                doc.Driver = "db";
+
+        //                var provider = new FileExtensionContentTypeProvider();
+        //                string contentType;
+        //                if (!provider.TryGetContentType(fileName, out contentType))
+        //                {
+        //                    contentType = "application/octet-stream";
+        //                }
+        //                doc.ContentType = contentType;
+
+        //                using (var stream = new MemoryStream())
+        //                {
+        //                    file.CopyTo(stream);
+        //                    doc.Content = stream.ToArray();
+        //                }
+
+        //                _context.Documents.Add(doc);
+        //                await _context.SaveChangesAsync();
+
+        //                documentUrls.Add(new DocumentDto
+        //                {
+        //                    Id = doc.Id,
+        //                    Url = "/Documents/File/" + doc.Id.ToString(),
+        //                    FileName = doc.FileName,
+        //                });
+        //                //levelObj.DocumentMapId = fileId;
+
+
+        //                //Guid fileId = Guid.NewGuid();
+        //                //var fullPath = Path.Combine(pathToSave, fileId + "." + extension);
+        //                //using (var stream = new FileStream(fullPath, FileMode.Create))
+        //                //{
+        //                //    file.CopyTo(stream);
+        //                //}
+
+        //                //Document doc = new Document
+        //                //{
+        //                //    Id = fileId,
+        //                //    Path = fullPath,
+        //                //    Driver = "local"
+        //                //};
+        //                //_context.Documents.Add(doc);
+
+        //                //documentUrls.Add(new DocumentDto
+        //                //{
+        //                //    Id = fileId,
+        //                //    Url = _config["ApiUrl"] + "/Documents/File/" + fileId.ToString()
+        //                //});
+        //                ////levelObj.DocumentMapId = fileId;
+        //                //await _context.SaveChangesAsync();
+        //                //}
+        //            }
+        //        }
+
+        //        return documentUrls;
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Internal server error: {ex}");
+        //    }
+        //}
 
     }
 }

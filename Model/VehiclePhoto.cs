@@ -12,5 +12,7 @@ namespace SPOT_API.Models
         [ForeignKey("Document")]
         public Guid DocumentId { get; set; }
         public virtual Document Document { get; set; }
+
+        public int Position { get; set; }
     }
 }

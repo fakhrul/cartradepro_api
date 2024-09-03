@@ -51,6 +51,11 @@ namespace SPOT_API.Models
 
         public string Description { get; set; }
 
+        public string DefaultImageUrl { get; set; }
+
+        public string ExternalLink { get; set; }
+
+
 
     }
 
