@@ -195,7 +195,7 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Vehicle)
                 .ThenInclude(c => c.VehicleType)
                 .Include(c => c.Vehicle)
-                .ThenInclude(c => c.VehiclePhotoList.OrderBy(c=> c.Position))
+                .ThenInclude(c => c.VehiclePhotoList.OrderBy(c => c.Position))
                 .Include(c => c.Purchase)
                 .ThenInclude(c => c.Supplier)
                 .Include(c => c.Import)
@@ -516,128 +516,251 @@ namespace SPOT_API.Controllers
         [HttpPost]
         public async Task<ActionResult<Stock>> Post(Stock obj)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-                if (user == null)
-                    return Unauthorized();
-
-                if (obj.StockStatusHistories == null)
-                    obj.StockStatusHistories = new List<StockStatusHistory>();
-
-                var stockStatus = _context.StockStatuses.FirstOrDefault(c => c.Name == "Draft");
-
-                obj.StockStatusHistories.Add(new StockStatusHistory
+                try
                 {
-                    ProfileId = (Guid)user.ProfileId,
-                    StockStatusId = stockStatus.Id,
-                    //Name = "Draft",
-                    StockId = obj.Id
-                });
+                    var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                    if (user == null)
+                        return Unauthorized();
 
+                    // Initialize stock status history
+                    if (obj.StockStatusHistories == null)
+                        obj.StockStatusHistories = new List<StockStatusHistory>();
 
-                var vehicle = new Vehicle();
-                //_context.Vehicles.Add(vehicle);
-                obj.VehicleId = vehicle.Id;
+                    var stockStatus = await _context.StockStatuses.FirstOrDefaultAsync(c => c.Name == "Draft");
+                    obj.StockStatusHistories.Add(new StockStatusHistory
+                    {
+                        ProfileId = (Guid)user.ProfileId,
+                        StockStatusId = stockStatus.Id,
+                        StockId = obj.Id
+                    });
 
-                var purchase = new Purchase();
-                //_context.Purchases.Add(purchase);
-                obj.PurchaseId = purchase.Id;
+                    // Initialize other entities
+                    var vehicle = new Vehicle();
+                    obj.VehicleId = vehicle.Id;
 
-                var import = new Import();
-                //_context.Imports.Add(import);
-                obj.ImportId = import.Id;
+                    var purchase = new Purchase();
+                    obj.PurchaseId = purchase.Id;
 
-                var clearance = new Clearance();
-                //_context.Clearances.Add(clearance);
-                obj.ClearanceId = clearance.Id;
+                    var import = new Import();
+                    obj.ImportId = import.Id;
 
-                var pricing = new Pricing();
-                _context.Pricings.Add(pricing);
-                obj.PricingId = pricing.Id;
+                    var clearance = new Clearance();
+                    obj.ClearanceId = clearance.Id;
 
-                var arrivalCheckList = new ArrivalChecklist();
+                    var pricing = new Pricing();
+                    await _context.Pricings.AddAsync(pricing);
+                    obj.PricingId = pricing.Id;
 
-                if (arrivalCheckList.ArrivalChecklists == null)
-                    arrivalCheckList.ArrivalChecklists = new List<ArrivalChecklistItem>();
-
-                arrivalCheckList.ArrivalChecklists.Add(new ArrivalChecklistItem
+                    // Arrival checklist
+                    var arrivalCheckList = new ArrivalChecklist();
+                    arrivalCheckList.ArrivalChecklists = new List<ArrivalChecklistItem>
+            {
+                new ArrivalChecklistItem
                 {
                     ArrivalChecklistId = arrivalCheckList.Id,
                     Name = "Extra Key",
                     IsAvailable = true,
                     Remarks = ""
-                });
-                _context.ArrivalChecklists.Add(arrivalCheckList);
-                obj.ArrivalChecklistId = arrivalCheckList.Id;
+                }
+            };
+                    await _context.ArrivalChecklists.AddAsync(arrivalCheckList);
+                    obj.ArrivalChecklistId = arrivalCheckList.Id;
 
-                //var sellingPrice = new SellingPricing();
-                //obj.SellingPricingId = sellingPrice.Id;
+                    // Sale & Loan
+                    var sale = new Sale { SaleDateTime = DateTime.Now };
+                    var loan = new Loan();
+                    sale.LoanId = loan.Id;
+                    obj.Sale = sale;
+                    obj.SaleId = sale.Id;
+                    await _context.Loans.AddAsync(loan);
 
-                //var loan = new Loan();
-                //_context.Loans.Add(loan);
-                var sale = new Sale();
-                sale.SaleDateTime = DateTime.Now;
-                //var loan = new Loan();
-                //sale.LoanId = loan.Id;
-                //_context.Sales.Add(sale);
-                obj.Sale = sale;
-                obj.SaleId = sale.Id;
+                    // Registration
+                    var registration = new Registration();
+                    await _context.Registrations.AddAsync(registration);
+                    obj.RegistrationId = registration.Id;
 
-                var loan = new Loan();
-                _context.Loans.Add(loan);
-                obj.Sale.LoanId = loan.Id;
+                    // Expense
+                    var expense = new Expense();
+                    await _context.Expenses.AddAsync(expense);
+                    obj.ExpenseId = expense.Id;
 
+                    // Administrative cost
+                    var administrativeCost = new AdminitrativeCost();
+                    await _context.AdminitrativeCosts.AddAsync(administrativeCost);
+                    obj.AdminitrativeCostId = administrativeCost.Id;
 
-                var registration = new Registration();
-                _context.Registrations.Add(registration);
-                //_context.Imports.Add(import);
-                obj.RegistrationId = registration.Id;
+                    // Add stock object
+                    await _context.Stocks.AddAsync(obj);
+                    await _context.SaveChangesAsync();
 
+                    await transaction.CommitAsync();
 
-                var expense = new Expense();
-                _context.Expenses.Add(expense);
-                obj.ExpenseId = expense.Id;
+                    // Nullify circular references for clean JSON response
+                    foreach (var stockStatusHistory in obj.StockStatusHistories)
+                        stockStatusHistory.Stock = null;
 
+                    foreach (var item in obj.ArrivalChecklist.ArrivalChecklists)
+                        item.ArrivalChecklist = null;
 
+                    if (obj.AdminitrativeCost.AdminitrativeCostItems != null)
+                        foreach (var item in obj.AdminitrativeCost.AdminitrativeCostItems)
+                            item.AdminitrativeCost = null;
 
-                var administrativeCost = new AdminitrativeCost();
-                _context.AdminitrativeCosts.Add(administrativeCost);
-                obj.AdminitrativeCostId = administrativeCost.Id;
+                    obj.LatestStockStatus.Stock = null;
 
-                //Stocks
-                _context.Stocks.Add(obj);
+                    return CreatedAtAction("Get", new { id = obj.Id }, obj);
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    // Rollback transaction in case of failure
+                    await transaction.RollbackAsync();
 
+                    // Check for the inner exception for more details
+                    if (dbEx.InnerException != null)
+                    {
+                        var sqlException = dbEx.InnerException; // Could be SqlException or another type based on the database provider
+                        return BadRequest($"A database error occurred: {sqlException.Message}");
+                    }
 
-                await _context.SaveChangesAsync();
-
-
-                //var loan = new Loan();
-                //_context.Loans.Add(loan);
-                //sale.LoanId = loan.Id;
-
-                //_context.Entry(sale).State = EntityState.Modified;
-                //await _context.SaveChangesAsync();
-                //var loan = new Loan();
-                //sale.LoanId = loan.Id;
-
-                foreach (var stockStatusHistory in obj.StockStatusHistories)
-                    stockStatusHistory.Stock = null;
-
-                foreach (var o in obj.ArrivalChecklist.ArrivalChecklists)
-                    o.ArrivalChecklist = null;
-                if (obj.AdminitrativeCost.AdminitrativeCostItems != null)
-                    foreach (var o in obj.AdminitrativeCost.AdminitrativeCostItems)
-                        o.AdminitrativeCost = null;
-
-                obj.LatestStockStatus.Stock = null;
+                    return BadRequest("An error occurred while saving the entity changes.");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(ex.Message); // General exception fallback
+                }
             }
-            catch (Exception ex)
-            {
-            }
-
-            return CreatedAtAction("Get", new { id = obj.Id }, obj);
         }
+
+        //[HttpPost]
+        //public async Task<ActionResult<Stock>> Post(Stock obj)
+        //{
+        //    try
+        //    {
+        //        var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+        //        if (user == null)
+        //            return Unauthorized();
+
+        //        if (obj.StockStatusHistories == null)
+        //            obj.StockStatusHistories = new List<StockStatusHistory>();
+
+        //        var stockStatus = _context.StockStatuses.FirstOrDefault(c => c.Name == "Draft");
+
+        //        obj.StockStatusHistories.Add(new StockStatusHistory
+        //        {
+        //            ProfileId = (Guid)user.ProfileId,
+        //            StockStatusId = stockStatus.Id,
+        //            //Name = "Draft",
+        //            StockId = obj.Id
+        //        });
+
+
+        //        var vehicle = new Vehicle();
+        //        //_context.Vehicles.Add(vehicle);
+        //        obj.VehicleId = vehicle.Id;
+
+        //        var purchase = new Purchase();
+        //        //_context.Purchases.Add(purchase);
+        //        obj.PurchaseId = purchase.Id;
+
+        //        var import = new Import();
+        //        //_context.Imports.Add(import);
+        //        obj.ImportId = import.Id;
+
+        //        var clearance = new Clearance();
+        //        //_context.Clearances.Add(clearance);
+        //        obj.ClearanceId = clearance.Id;
+
+        //        var pricing = new Pricing();
+        //        _context.Pricings.Add(pricing);
+        //        obj.PricingId = pricing.Id;
+
+        //        var arrivalCheckList = new ArrivalChecklist();
+
+        //        if (arrivalCheckList.ArrivalChecklists == null)
+        //            arrivalCheckList.ArrivalChecklists = new List<ArrivalChecklistItem>();
+
+        //        arrivalCheckList.ArrivalChecklists.Add(new ArrivalChecklistItem
+        //        {
+        //            ArrivalChecklistId = arrivalCheckList.Id,
+        //            Name = "Extra Key",
+        //            IsAvailable = true,
+        //            Remarks = ""
+        //        });
+        //        _context.ArrivalChecklists.Add(arrivalCheckList);
+        //        obj.ArrivalChecklistId = arrivalCheckList.Id;
+
+        //        //var sellingPrice = new SellingPricing();
+        //        //obj.SellingPricingId = sellingPrice.Id;
+
+        //        //var loan = new Loan();
+        //        //_context.Loans.Add(loan);
+        //        var sale = new Sale();
+        //        sale.SaleDateTime = DateTime.Now;
+        //        //var loan = new Loan();
+        //        //sale.LoanId = loan.Id;
+        //        //_context.Sales.Add(sale);
+        //        obj.Sale = sale;
+        //        obj.SaleId = sale.Id;
+
+        //        var loan = new Loan();
+        //        _context.Loans.Add(loan);
+        //        obj.Sale.LoanId = loan.Id;
+
+
+        //        var registration = new Registration();
+        //        _context.Registrations.Add(registration);
+        //        //_context.Imports.Add(import);
+        //        obj.RegistrationId = registration.Id;
+
+
+        //        var expense = new Expense();
+        //        _context.Expenses.Add(expense);
+        //        obj.ExpenseId = expense.Id;
+
+
+
+        //        var administrativeCost = new AdminitrativeCost();
+        //        _context.AdminitrativeCosts.Add(administrativeCost);
+        //        obj.AdminitrativeCostId = administrativeCost.Id;
+
+        //        //Stocks
+        //        _context.Stocks.Add(obj);
+
+
+        //        await _context.SaveChangesAsync();
+
+
+        //        //var loan = new Loan();
+        //        //_context.Loans.Add(loan);
+        //        //sale.LoanId = loan.Id;
+
+        //        //_context.Entry(sale).State = EntityState.Modified;
+        //        //await _context.SaveChangesAsync();
+        //        //var loan = new Loan();
+        //        //sale.LoanId = loan.Id;
+
+        //        foreach (var stockStatusHistory in obj.StockStatusHistories)
+        //            stockStatusHistory.Stock = null;
+
+        //        foreach (var o in obj.ArrivalChecklist.ArrivalChecklists)
+        //            o.ArrivalChecklist = null;
+        //        if (obj.AdminitrativeCost.AdminitrativeCostItems != null)
+        //            foreach (var o in obj.AdminitrativeCost.AdminitrativeCostItems)
+        //                o.AdminitrativeCost = null;
+
+        //        obj.LatestStockStatus.Stock = null;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(ex.Message);
+        //        //throw ex;
+        //    }
+
+        //    return CreatedAtAction("Get", new { id = obj.Id }, obj);
+        //}
 
         // DELETE: api/Stocks/5
         [HttpDelete("{id}")]

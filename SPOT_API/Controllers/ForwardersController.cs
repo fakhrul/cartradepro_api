@@ -37,6 +37,7 @@ namespace SPOT_API.Controllers
                 return Unauthorized();
 
             var objs = await _context.ClearanceAgents
+                .OrderBy(c=> c.Name)
                 .ToListAsync();
 
             return objs;
