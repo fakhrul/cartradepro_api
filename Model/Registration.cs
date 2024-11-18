@@ -19,6 +19,8 @@ namespace SPOT_API.Models
         public virtual ICollection<PuspakomB2SlipDocument> PuspakomB2SlipDocuments { get; set; }
         public virtual ICollection<PuspakomB7SlipDocument> PuspakomB7SlipDocuments { get; set; }
 
+        public virtual ICollection<JpjGeranDocument> JpjGeranDocuments { get; set; }
+
 
         //[ForeignKey("JpjEHakMilikDocument")]
         //public Guid? JpjEHakMilikDocumentId { get; set; }

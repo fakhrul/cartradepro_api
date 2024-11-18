@@ -97,6 +97,96 @@ namespace SPOT_API.Controllers
 
         }
 
+        [HttpGet("forSale")]
+        public async Task<ActionResult<IEnumerable<Stock>>> GetAllForSale()
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+
+            try
+            {
+                var query = _context.Stocks
+    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
+    .ThenInclude(c => c.StockStatus)
+    .Include(c => c.Vehicle)
+    .ThenInclude(c => c.Brand)
+    .Include(c => c.Vehicle)
+    .ThenInclude(c => c.Model)
+    .Include(c => c.Pricing)
+    .Include(c => c.Vehicle)
+    .OrderByDescending(c => c.CreatedOn)
+    .Include(c => c.Clearance)
+    .ThenInclude(c => c.K8Documents)
+    .ThenInclude(c=> c.Document)
+    .AsQueryable();
+
+
+                var objs = await query.ToListAsync();
+
+                // Remove circular references and other unwanted data
+                foreach (var obj in objs)
+                {
+                    foreach (var s in obj.StockStatusHistories)
+                        s.Stock = null;
+                    if (obj.Vehicle != null && obj.Vehicle.Model != null)
+                        obj.Vehicle.Model.Brand = null;
+
+                    if (obj.Vehicle != null && obj.Vehicle.VehiclePhotoList != null)
+                    {
+                        foreach (var p in obj.Vehicle.VehiclePhotoList)
+                        {
+                            p.Vehicle = null;
+                            p.Document = null;
+                        }
+                    }
+
+                    if(obj.Clearance != null && obj.Clearance.K8Documents != null && obj.Clearance.K8Documents.Count > 0)
+                    {
+                        foreach(var doc in obj.Clearance.K8Documents)
+                        {
+                            doc.Clearance = null;
+                        }
+                    }
+                }
+
+               
+                    objs = objs.ToList();
+
+                    //objs = objs.Where(x =>
+                    //        x.LatestStockStatus != null &&
+                    //        x.LatestStockStatus.StockStatus != null &&
+                    //        (
+                    //            (x.LatestStockStatus.StockStatus.Name.ToLower() != "draft") &&
+                    //            (x.LatestStockStatus.StockStatus.Name.ToLower() != "sold")
+                    //        )
+                    //    ).ToList();
+
+
+                    //var filteredList = objs.Where(x =>
+                    //x.LatestStockStatus.StockStatus.Name == "Draft" ||
+                    //x.LatestStockStatus.StockStatus.Name.ToLower() != "sold" ||
+                    //x.LatestStockStatus.StockStatus.Name.ToLower() != "booked"
+
+                    //).ToList();
+
+               
+
+
+                return objs;
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+            // Start building the query
+
+
+
+        }
+
         //// GET: api/Stocks
         //[HttpGet]
         //public async Task<ActionResult<IEnumerable<Stock>>> GetAll()
@@ -220,6 +310,8 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Registration)
                 .ThenInclude(c => c.JpjEHakMilikDocuments)
                 .Include(c => c.Registration)
+                .ThenInclude(c => c.JpjGeranDocuments)
+                .Include(c => c.Registration)
                 .ThenInclude(c => c.JpjEDaftarDocuments)
                 .Include(c => c.Registration)
                 .ThenInclude(c => c.PuspakomB2SlipDocuments)
@@ -319,6 +411,17 @@ namespace SPOT_API.Controllers
                         o.Document.Content = null;
                     }
                 }
+
+                if (obj.Registration.JpjGeranDocuments != null)
+                {
+                    foreach (var o in obj.Registration.JpjGeranDocuments)
+                    {
+                        o.Registration = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
+                }
+
 
                 if (obj.Registration.JpjEDaftarDocuments != null)
                 {
@@ -1194,6 +1297,106 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+
+        //
+        [HttpPut("UpdateK1Documents/{id}")]
+        public async Task<IActionResult> PutUpdateK1Documents(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Clearance)
+                .ThenInclude(c => c.K1Documents)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.K1Documents.Add(new K1Document
+                {
+                    ClearanceId = stock.ClearanceId,
+                    DocumentId = obj.Id
+                });
+
+            }
+
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Clearance).State = EntityState.Modified;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+            return NoContent();
+        }
+
+
+        [HttpPut("RemoveK1Document/{clearanceId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveK1Document(Guid clearanceId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.K1Documents
+                    .Where(c => c.ClearanceId == clearanceId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.K1Documents.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+
+            return NoContent();
+        }
+        //
+
         [HttpPut("UpdateLouDocuments/{id}")]
         public async Task<IActionResult> PutUpdateLouDocuments(Guid id, List<VehicleImageDto> objs)
         {
@@ -1479,7 +1682,104 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+        //
+        [HttpPut("UpdateJpjGeranDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateJpjGeranDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
 
+            var stock = await _context.Stocks
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.JpjGeranDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.JpjGeranDocuments.Add(new JpjGeranDocument
+                {
+                    RegistrationId = stock.RegistrationId,
+                    DocumentId = obj.Id
+                });
+
+            }
+
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Registration).State = EntityState.Modified;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+            return NoContent();
+        }
+
+
+        [HttpPut("RemoveJpjGeranDocument/{registrationId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveJpjGeranDocument(Guid registrationId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.JpjGeranDocuments
+                    .Where(c => c.RegistrationId == registrationId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.JpjGeranDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+
+            return NoContent();
+        }
+        //
         //
 
         [HttpPut("UpdateJpjDaftarDocuments/{id}")]
@@ -1946,6 +2246,17 @@ namespace SPOT_API.Controllers
 
 
             return NoContent();
+        }
+
+        [HttpGet("arrival-states")]
+        public IActionResult GetStockArrivalStates()
+        {
+            var states = Enum.GetValues(typeof(ArrivalState))
+                             .Cast<ArrivalState>()
+                             .Select(e => new { Id = (int)e, Name = e.ToString() })
+                             .ToList();
+
+            return Ok(states);
         }
     }
 }

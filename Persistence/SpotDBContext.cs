@@ -45,6 +45,7 @@ namespace SPOT_API.Persistence
         public DbSet<Registration> Registrations { get; set; }
 
         public DbSet<JpjEHakMilikDocument> JpjEHakMilikDocuments { get; set; }
+        public DbSet<JpjGeranDocument> JpjGeranDocuments { get; set; }
         public DbSet<JpjEDaftarDocument> JpjEDaftarDocuments { get; set; }
         public DbSet<PuspakomB2SlipDocument> PuspakomB2SlipDocuments { get; set; }
         public DbSet<PuspakomB7SlipDocument> PuspakomB7SlipDocuments { get; set; }

@@ -19,7 +19,11 @@ namespace SPOT_API.Models
         public string SupplierCurrency { get; set; }
         public float VehiclePriceSupplierCurrency { get; set; }
         public float VehiclePriceLocalCurrency { get; set; }
+
+
+        public float ApAmount { get; set; }
+
     }
-    
+
 
 }

@@ -9,6 +9,7 @@ namespace SPOT_API.Models
 {
     public class Stock : BaseModel
     {
+    
         public string StockNo { get; set; }
 
         public virtual ICollection<Remarks> RemarksList { get; set; }
@@ -76,5 +77,29 @@ namespace SPOT_API.Models
 
         //public string Location { get; set; }
         public string LocationCode { get; set; }
+
+        public ArrivalState ArrivalState { get; set; } = ArrivalState.Incoming;
+
+        [NotMapped]
+        public string ArrivalStateDescription
+        {
+            get { return ArrivalState.ToString(); }
+        }
+
+        public bool IsOpen { get; set; } = false;
+        public bool IsBooked { get; set; } = false;
+        public bool IsLou { get; set; } = false;
+        public bool IsSold { get; set; } = false;
+        public bool IsCancelled { get; set; } = false;
+
     }
+
+
+    public enum ArrivalState
+    {
+        Incoming,
+        Received
+    }
+
+
 }

@@ -391,46 +391,7 @@ namespace SPOT_API.Controllers
             {
                 var profile = profileDto.Profile;
                 if (string.IsNullOrEmpty(profile.Role))
-                    profile.Role = "agent";
-
-                if (profile.Role == "agent")
-                {
-                    var packages = await _context.Packages
-                        .ToListAsync();
-
-                    foreach (var package in packages)
-                    {
-                        var profilePackage = new ProfilePackage
-                        {
-                            PackageId = package.Id,
-                            ProfileId = profile.Id,
-                            //CommisionAmount = package.CommisionAmount,
-                        };
-
-
-                        if (profile.LeaderId.HasValue)
-                        {
-                            var leaderPackage = await _context.ProfilePackages
-                                .Where(c => c.ProfileId == profile.LeaderId)
-                                .Where(c => c.PackageId == package.Id)
-                                .FirstOrDefaultAsync();
-                            if (leaderPackage != null)
-                            {
-                                profilePackage.CommisionPercentage = profileDto.DefaultCommisionPercentage;
-                                profilePackage.CommisionType = "By Percentage";
-                                profilePackage.CommisionAmount = leaderPackage.CommisionAmount * profileDto.DefaultCommisionPercentage/100;
-                            }
-                        }
-                        else
-                        {
-                            profilePackage.CommisionPercentage = profileDto.DefaultCommisionPercentage;
-                            profilePackage.CommisionType = "By Percentage";
-                            profilePackage.CommisionAmount = package.CommisionAmount * profileDto.DefaultCommisionPercentage / 100;
-                        }
-
-                        profile.ProfilePackages.Add(profilePackage);
-                    }
-                }
+                    profile.Role = "Sales";
 
                 _context.Profiles.Add(profile);
                 await _context.SaveChangesAsync();
@@ -441,16 +402,11 @@ namespace SPOT_API.Controllers
                     UserName = profile.Email,
                     ProfileId = profile.Id,
                     Email = profile.Email,
-
                     //IsSuperAdmin = true,
                     Role = profile.Role,
-
-
                 };
 
                 await _userManager.CreateAsync(newAppUser, profileDto.PlainPassword);
-
-
 
 
                 if (profile.AppUser != null && profile.AppUser.Profile != null)
@@ -480,18 +436,18 @@ namespace SPOT_API.Controllers
             {
                 await _context.SaveChangesAsync();
 
-                var packageProfiles = await _context.ProfilePackages.Where(c => c.ProfileId == profileDto.Profile.Id).ToListAsync();
-                _context.ProfilePackages.RemoveRange(packageProfiles);
-                await _context.SaveChangesAsync();
+                //var packageProfiles = await _context.ProfilePackages.Where(c => c.ProfileId == profileDto.Profile.Id).ToListAsync();
+                //_context.ProfilePackages.RemoveRange(packageProfiles);
+                //await _context.SaveChangesAsync();
 
-                foreach (var profilePackage in profileDto.Profile.ProfilePackages)
-                {
-                    profilePackage.ProfileId = profileDto.Profile.Id;
-                    _context.ProfilePackages.Add(profilePackage);
-                }
+                //foreach (var profilePackage in profileDto.Profile.ProfilePackages)
+                //{
+                //    profilePackage.ProfileId = profileDto.Profile.Id;
+                //    _context.ProfilePackages.Add(profilePackage);
+                //}
 
 
-                await _context.SaveChangesAsync();
+                //await _context.SaveChangesAsync();
 
             }
             catch (DbUpdateConcurrencyException)
@@ -512,6 +468,17 @@ namespace SPOT_API.Controllers
                 user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, profileDto.PlainPassword);
                 var result = await _userManager.UpdateAsync(user);
             }
+
+            var user2 = await _userManager.FindByEmailAsync(profileDto.Profile.Email);
+            if(user2 != null)
+            {
+                if(user2.Role != profileDto.Profile.Role)
+                {
+                    user2.Role = profileDto.Profile.Role;
+                    var result = await _userManager.UpdateAsync(user2);
+                }
+            }
+
             return NoContent();
         }
 

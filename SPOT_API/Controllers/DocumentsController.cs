@@ -280,16 +280,46 @@ namespace SPOT_API.Controllers
             {
                 return NotFound();
             }
+
+            // Set default content type if not set
             if (string.IsNullOrEmpty(document.ContentType))
                 document.ContentType = "application/octet-stream";
 
-            using (MemoryStream ms = new MemoryStream(document.Content))
+            if (document.Content != null)
             {
-                 return File(ms.ToArray(), document.ContentType, document.FileName);
-                //return ms.ToArray();
+                using (MemoryStream ms = new MemoryStream(document.Content))
+                {
+                    // Check if the content type is PDF to serve inline
+                    if (document.ContentType == "application/pdf")
+                    {
+                        Response.Headers.Add("Content-Disposition", $"inline; filename={document.FileName}");
+                    }
+                    else
+                    {
+                        Response.Headers.Add("Content-Disposition", $"attachment; filename={document.FileName}");
+                    }
+
+                    return File(ms.ToArray(), document.ContentType);
+                }
             }
 
             return NotFound();
+
+            //var document = await _context.Documents.FindAsync(id);
+            //if (document == null)
+            //{
+            //    return NotFound();
+            //}
+            //if (string.IsNullOrEmpty(document.ContentType))
+            //    document.ContentType = "application/octet-stream";
+
+            //using (MemoryStream ms = new MemoryStream(document.Content))
+            //{
+            //     return File(ms.ToArray(), document.ContentType, document.FileName);
+            //    //return ms.ToArray();
+            //}
+
+            //return NotFound();
 
         }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241018084904_chage-movement-state-to-arrival")]
+    partial class chagemovementstatetoarrival
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1035,35 +1037,6 @@ namespace Persistence.Migrations
                     b.ToTable("JpjEHakMilikDocuments");
                 });
 
-            modelBuilder.Entity("SPOT_API.Models.JpjGeranDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("RegistrationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentId");
-
-                    b.HasIndex("RegistrationId");
-
-                    b.ToTable("JpjGeranDocuments");
-                });
-
             modelBuilder.Entity("SPOT_API.Models.K1Document", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1480,9 +1453,6 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<float>("ApAmount")
-                        .HasColumnType("real");
-
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
@@ -1835,21 +1805,6 @@ namespace Persistence.Migrations
 
                     b.Property<Guid>("ImportId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("IsBooked")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsCancelled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsLou")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsOpen")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsSold")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("LocationCode")
                         .HasColumnType("text");
@@ -2364,25 +2319,6 @@ namespace Persistence.Migrations
                     b.Navigation("Registration");
                 });
 
-            modelBuilder.Entity("SPOT_API.Models.JpjGeranDocument", b =>
-                {
-                    b.HasOne("SPOT_API.Models.Document", "Document")
-                        .WithMany()
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SPOT_API.Models.Registration", "Registration")
-                        .WithMany("JpjGeranDocuments")
-                        .HasForeignKey("RegistrationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Document");
-
-                    b.Navigation("Registration");
-                });
-
             modelBuilder.Entity("SPOT_API.Models.K1Document", b =>
                 {
                     b.HasOne("SPOT_API.Models.Clearance", "Clearance")
@@ -2886,8 +2822,6 @@ namespace Persistence.Migrations
                     b.Navigation("JpjEDaftarDocuments");
 
                     b.Navigation("JpjEHakMilikDocuments");
-
-                    b.Navigation("JpjGeranDocuments");
 
                     b.Navigation("PuspakomB2SlipDocuments");
 

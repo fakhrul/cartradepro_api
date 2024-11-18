@@ -37,6 +37,7 @@ namespace SPOT_API.Controllers
                 return Unauthorized();
 
             var objs = await _context.Customers
+                .OrderBy(c=> c.Name)
                 .ToListAsync();
 
             return objs;
@@ -128,24 +129,42 @@ namespace SPOT_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-            if (user == null)
-                return Unauthorized();
-
-
-
-            var category = await _context.Customers
-                .FirstOrDefaultAsync(c => c.Id == id);
-            if (category == null)
+            try
             {
-                return NotFound();
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                if (user == null)
+                    return Unauthorized();
+
+
+
+                var category = await _context.Customers
+                    .FirstOrDefaultAsync(c => c.Id == id);
+                if (category == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Customers.Remove(category);
+
+                var sales = await _context.Sales
+                    .Where(c => c.CustomerId == id)
+                    .ToListAsync();
+
+                foreach(var sale in sales)
+                {
+                    sale.CustomerId = null;
+                    sale.Customer = null;
+                }
+                await _context.SaveChangesAsync();
+
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
 
-            _context.Customers.Remove(category);
-            await _context.SaveChangesAsync();
-
-
-            return NoContent();
         }
 
         private bool IsExists(Guid id)
