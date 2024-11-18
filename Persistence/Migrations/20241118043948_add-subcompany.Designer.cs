@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241118043948_add-subcompany")]
+    partial class addsubcompany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -598,6 +600,9 @@ namespace Persistence.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("text");
 
+                    b.Property<string>("Country")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
@@ -605,7 +610,7 @@ namespace Persistence.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("SubCompanyId")
+                    b.Property<Guid?>("SubCompanyId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedOn")
@@ -2048,12 +2053,21 @@ namespace Persistence.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("text");
 
+                    b.Property<string>("ContactPersonEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactPersonName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactPersonPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LogoUrl")
-                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -2061,15 +2075,12 @@ namespace Persistence.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
-                    b.Property<string>("RegNo")
-                        .HasColumnType("text");
-
-                    b.Property<string>("TagLine")
-                        .HasColumnType("text");
-
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -2403,13 +2414,9 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("SPOT_API.Models.BankAccount", b =>
                 {
-                    b.HasOne("SPOT_API.Models.SubCompany", "SubCompany")
+                    b.HasOne("SPOT_API.Models.SubCompany", null)
                         .WithMany("BankAccounts")
-                        .HasForeignKey("SubCompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SubCompany");
+                        .HasForeignKey("SubCompanyId");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.BillOfLandingDocument", b =>

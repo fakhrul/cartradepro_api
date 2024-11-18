@@ -30,6 +30,9 @@ namespace SPOT_API.Persistence
                 await SeedCompany(context);
                 await SeedClearanceAgent(context);
 
+                await SeedSubCompany(context);
+
+
 
                 //await SeedStocks(context);
 
@@ -98,6 +101,138 @@ Taman Desa, 58100 Kuala Lumpur",
             await context.SaveChangesAsync();
 
             Console.WriteLine("Customers seeded successfully.");
+        }
+
+
+
+
+        private static async Task SeedSubCompany(SpotDBContext context)
+        {
+            if (context.SubCompanies.Any())
+            {
+                Console.WriteLine("SubCompanies already exist in the database. Skipping seeding.");
+                return;
+            }
+
+            var subCompanies = new List<SubCompany>
+            {
+                new SubCompany
+                {
+                    Name = "MyCar Imports Sdn Bhd",
+                    RegNo = "MCI001",
+                    TagLine = "Your Trusted Used Car Importer",
+                    Address = "12 Jalan Tun Razak, Kuala Lumpur",
+                    Phone = "03-2161 1234",
+                    LogoUrl = "https://example.com/mycar_logo.png",
+                    BankAccounts = new List<BankAccount>
+                    {
+                        new BankAccount
+                        {
+                            Name = "Maybank",
+                            Address = "Menara Maybank, Kuala Lumpur",
+                            AccountName = "MyCar Imports Operational",
+                            AccountNo = "100001",
+                            AccountType = "Current"
+                        },
+                        new BankAccount
+                        {
+                            Name = "Public Bank",
+                            Address = "Menara Public Bank, Kuala Lumpur",
+                            AccountName = "MyCar Imports Client Fund",
+                            AccountNo = "100002",
+                            AccountType = "Savings"
+                        },
+                        new BankAccount
+                        {
+                            Name = "RHB Bank",
+                            Address = "RHB Centre, Kuala Lumpur",
+                            AccountName = "MyCar Imports Vendor Payments",
+                            AccountNo = "100003",
+                            AccountType = "Current"
+                        }
+                    }
+                },
+                new SubCompany
+                {
+                    Name = "AutoGateway Imports Sdn Bhd",
+                    RegNo = "AGI002",
+                    TagLine = "Seamless Car Import Solutions",
+                    Address = "45 Jalan Ampang, Kuala Lumpur",
+                    Phone = "03-4251 5678",
+                    LogoUrl = "https://example.com/autogateway_logo.png",
+                    BankAccounts = new List<BankAccount>
+                    {
+                        new BankAccount
+                        {
+                            Name = "CIMB Bank",
+                            Address = "Menara CIMB, Kuala Lumpur",
+                            AccountName = "AutoGateway Imports Main",
+                            AccountNo = "200001",
+                            AccountType = "Current"
+                        },
+                        new BankAccount
+                        {
+                            Name = "Hong Leong Bank",
+                            Address = "Menara Hong Leong, Kuala Lumpur",
+                            AccountName = "AutoGateway Imports Finance",
+                            AccountNo = "200002",
+                            AccountType = "Savings"
+                        },
+                        new BankAccount
+                        {
+                            Name = "Ambank",
+                            Address = "Menara AmBank, Kuala Lumpur",
+                            AccountName = "AutoGateway Imports Payroll",
+                            AccountNo = "200003",
+                            AccountType = "Current"
+                        }
+                    }
+                },
+                new SubCompany
+                {
+                    Name = "Prestige Auto Exports Sdn Bhd",
+                    RegNo = "PAE003",
+                    TagLine = "Premium Used Cars from Abroad",
+                    Address = "20 Jalan Damansara, Petaling Jaya",
+                    Phone = "03-7721 8900",
+                    LogoUrl = "https://example.com/prestige_logo.png",
+                    BankAccounts = new List<BankAccount>
+                    {
+                        new BankAccount
+                        {
+                            Name = "Bank Islam",
+                            Address = "Menara Bank Islam, Kuala Lumpur",
+                            AccountName = "Prestige Auto Exports Main",
+                            AccountNo = "300001",
+                            AccountType = "Savings"
+                        },
+                        new BankAccount
+                        {
+                            Name = "HSBC Bank",
+                            Address = "Menara HSBC, Kuala Lumpur",
+                            AccountName = "Prestige Auto Exports Investments",
+                            AccountNo = "300002",
+                            AccountType = "Current"
+                        },
+                        new BankAccount
+                        {
+                            Name = "OCBC Bank",
+                            Address = "Menara OCBC, Kuala Lumpur",
+                            AccountName = "Prestige Auto Exports Payroll",
+                            AccountNo = "300003",
+                            AccountType = "Savings"
+                        }
+                    }
+                }
+                // Add more SubCompanies here as needed
+            };
+
+            // Add SubCompanies and related BankAccounts
+            await context.SubCompanies.AddRangeAsync(subCompanies);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine("SubCompanies and their associated BankAccounts seeded successfully.");
+
         }
 
 

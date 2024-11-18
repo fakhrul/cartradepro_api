@@ -24,6 +24,8 @@ namespace SPOT_API.Persistence
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
         public DbSet<ForwardingAgent> ClearanceAgents { get; set; }
+        public DbSet<SubCompany> SubCompanies { get; set; }
+        public DbSet<BankAccount> BankAccounts { get; set; }
 
         public DbSet<Import> Imports { get; set; }
         public DbSet<BillOfLandingDocument> BillOfLandingDocuments { get; set; }
@@ -53,6 +55,7 @@ namespace SPOT_API.Persistence
         public DbSet<Completion> Completions { get; set; }
 
         public DbSet<AdminitrativeCost> AdminitrativeCosts { get; set; }
+        public DbSet<ApCompany> ApCompanies { get; set; }
         public DbSet<AdminitrativeCostItem> AdminitrativeCostItems { get; set; }
 
         ///
@@ -117,6 +120,27 @@ namespace SPOT_API.Persistence
                 .HasMany(b => b.Models)
                 .WithOne(m => m.Brand)
                 .HasForeignKey(m => m.BrandId);
+
+
+            modelBuilder.Entity<Stock>()
+            .Property(s => s.ApCompanyId)
+            .IsRequired(false); // Optional: Allow NULL
+
+            // Configure SubCompany-BankAccount relationship
+            //modelBuilder.Entity<SubCompany>()
+            //    .HasMany(s => s.BankAccounts)
+            //    .WithOne()
+            //    .HasForeignKey("SubCompanyId") // Add shadow property for FK
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure the relationship between SubCompany and BankAccount
+            modelBuilder.Entity<SubCompany>()
+                .HasMany(sc => sc.BankAccounts)
+                .WithOne(ba => ba.SubCompany)
+                .HasForeignKey(ba => ba.SubCompanyId)
+                .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete
+
+
 
             base.OnModelCreating(modelBuilder);
 

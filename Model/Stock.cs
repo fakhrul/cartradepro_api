@@ -75,6 +75,10 @@ namespace SPOT_API.Models
         public virtual AdminitrativeCost AdminitrativeCost { get; set; }
 
 
+        [ForeignKey("ApCompany")]
+        public Guid? ApCompanyId { get; set; }
+        public virtual ApCompany ApCompany { get; set; }
+
         //public string Location { get; set; }
         public string LocationCode { get; set; }
 

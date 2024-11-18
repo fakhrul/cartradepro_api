@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241118054041_update-subcompany-relation-to-bankaccount")]
+    partial class updatesubcompanyrelationtobankaccount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -605,7 +607,7 @@ namespace Persistence.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("SubCompanyId")
+                    b.Property<Guid?>("SubCompanyId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedOn")
@@ -2403,13 +2405,10 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("SPOT_API.Models.BankAccount", b =>
                 {
-                    b.HasOne("SPOT_API.Models.SubCompany", "SubCompany")
+                    b.HasOne("SPOT_API.Models.SubCompany", null)
                         .WithMany("BankAccounts")
                         .HasForeignKey("SubCompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SubCompany");
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("SPOT_API.Models.BillOfLandingDocument", b =>

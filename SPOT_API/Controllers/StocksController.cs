@@ -321,12 +321,18 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.Expenses)
                 .Include(c => c.AdminitrativeCost)
                 .ThenInclude(c => c.AdminitrativeCostItems)
+                .Include(c=> c.ApCompany)
+                .ThenInclude(c=> c.SubCompany)
+                .Include(c => c.ApCompany)
+                .ThenInclude(c => c.BankAccount)
+
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
             {
                 return NotFound();
             }
+
 
             if (obj.RemarksList != null)
                 foreach (var s in obj.RemarksList)
@@ -486,6 +492,13 @@ namespace SPOT_API.Controllers
                 obj.Vehicle.Model.Brand = null;
             }
 
+            if(obj.ApCompany != null)
+            {
+                if (obj.ApCompany.SubCompany != null)
+                    obj.ApCompany.SubCompany.BankAccounts = null;
+                if(obj.ApCompany.BankAccount != null)
+                    obj.ApCompany.BankAccount.SubCompany = null;
+            }
             return obj;
         }
 
@@ -579,6 +592,7 @@ namespace SPOT_API.Controllers
             _context.Entry(obj.Sale.Loan).State = EntityState.Modified;
             _context.Entry(obj.Registration).State = EntityState.Modified;
             _context.Entry(obj.Pricing).State = EntityState.Modified;
+            _context.Entry(obj.ApCompany).State = EntityState.Modified;
 
             //_context.Entry(obj.Vehicle.VehiclePhotoList).State = EntityState.Modified;
 
@@ -693,6 +707,11 @@ namespace SPOT_API.Controllers
                     var administrativeCost = new AdminitrativeCost();
                     await _context.AdminitrativeCosts.AddAsync(administrativeCost);
                     obj.AdminitrativeCostId = administrativeCost.Id;
+
+
+                    var apCompany = new ApCompany();
+                    await _context.ApCompanies.AddAsync(apCompany);
+                    obj.ApCompanyId = apCompany.Id;
 
                     // Add stock object
                     await _context.Stocks.AddAsync(obj);
