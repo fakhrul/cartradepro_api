@@ -43,7 +43,7 @@ namespace SPOT_API.Controllers
                 .ThenInclude(rmp => rmp.Module)
                 .ToListAsync();
 
-            foreach(var obj in objs)
+            foreach (var obj in objs)
                 if (obj.RoleModulePermissions != null)
                     foreach (var v in obj.RoleModulePermissions)
                     {
@@ -58,30 +58,83 @@ namespace SPOT_API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Role>> Get(Guid id)
         {
+
             var obj = await _context.Roles
                 .Include(r => r.RoleModulePermissions)
                 .ThenInclude(rmp => rmp.Module)
-                .ThenInclude(c=> c.SubModules)
-                .Include(c => c.RoleSubModulePermissions)
+                //.ThenInclude(c => c.SubModules)
+                //.Include(c => c.RoleSubModulePermissions)
                 .FirstOrDefaultAsync(r => r.Id == id);
+
+            var modules = await _context.Modules.ToListAsync();
+
+            foreach (var module in modules)
+            {
+                bool moduleAlreadyAvailable = false;
+                foreach (var roleModulePermission in obj.RoleModulePermissions)
+                {
+                    if(roleModulePermission.ModuleId == module.Id)
+                    {
+                        moduleAlreadyAvailable = true;
+                        continue;
+                    }
+                }
+
+                if(!moduleAlreadyAvailable)
+                {
+                    obj.RoleModulePermissions.Add(new RoleModulePermission
+                    {
+                         Module = module,
+                         Role =  obj
+                    });
+                    _context.SaveChanges();
+                }
+            }
+
+
+
+
+
+            foreach (var roleModule in obj.RoleModulePermissions)
+            {
+
+            }
 
             if (obj == null)
             {
                 return NotFound();
             }
-            if(obj.RoleModulePermissions != null)
-            foreach(var v in obj.RoleModulePermissions)
-            {
+            if (obj.RoleModulePermissions != null)
+                foreach (var v in obj.RoleModulePermissions)
+                {
                     v.Role = null;
-                    if(v.Module != null)
+                    if (v.Module != null)
                     {
-                        foreach(var subModule in v.Module.SubModules)
-                        {
-                            subModule.Module = null;
-                        }
+                        if (v.Module.SubModules != null) 
+                            foreach (var subModule in v.Module.SubModules)
+                            {
+                                subModule.Module = null;
+                            }
                     }
                     //v.Module.RoleModulePermissions = null;
-            }
+                }
+
+
+
+            //if (obj.RoleSubModulePermissions != null)
+            //    foreach (var v in obj.RoleSubModulePermissions)
+            //    {
+            //        v.Role = null;
+            //        if (v.SubModule != null)
+            //        {
+            //            //foreach (var subModule in v.Module.SubModules)
+            //            //{
+            //            //    subModule.Module = null;
+            //            //}
+            //        }
+            //        //v.Module.RoleModulePermissions = null;
+            //    }
+
             return obj;
         }
 

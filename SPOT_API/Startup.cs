@@ -51,7 +51,8 @@ namespace SPOT_API
                         "https://v2.thefibreguy.com",
                         "http://localhost:3000",
                         "http://178.128.105.21:8102",
-                        "http://cartradepro.safa.com.my"
+                        "http://cartradepro.safa.com.my",
+                        "https://cartradepro.safa.com.my"
 
                         );
                 });

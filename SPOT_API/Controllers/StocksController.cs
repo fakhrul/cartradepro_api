@@ -725,6 +725,7 @@ namespace SPOT_API.Controllers
             _context.Entry(obj.Registration).State = EntityState.Modified;
             _context.Entry(obj.Pricing).State = EntityState.Modified;
 
+            _context.Entry(obj.ApCompany).State = EntityState.Modified;
 
             _context.Entry(obj.AdminitrativeCost).State = EntityState.Modified;
 

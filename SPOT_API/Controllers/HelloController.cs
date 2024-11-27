@@ -14,7 +14,7 @@ namespace SPOT_API.Controllers
             //   var timeZones = TimeZoneInfo.GetSystemTimeZones();
             //return new ApiException("asdas");
 
-            return Content("API v1.0.0.10 - Server Date Time is " + DateTime.Now );
+            return Content("API v1.0.0.11 - Server Date Time is " + DateTime.Now );
             //return View();
         }
     }
