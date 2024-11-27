@@ -31,9 +31,17 @@ namespace SPOT_API.Controllers
         // GET: api/Stocks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Stock>>> GetAll(
-            string brand = null,
-            string model = null,
-            string status = null)
+           [FromQuery] int page = 1,
+            [FromQuery] int itemsPerPage = 10,
+            [FromQuery] string sortColumn = "StockNo",
+            [FromQuery] bool sortAsc = true,
+            [FromQuery] string search = null,
+            [FromQuery] string priceMin = null,
+            [FromQuery] string priceMax = null,
+            [FromQuery] bool isOpen = false,
+
+            [FromQuery] Dictionary<string, string> filters = null)
+
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
             if (user == null)
@@ -50,32 +58,138 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.Model)
                 .Include(c => c.Pricing)
                 .Include(c => c.Vehicle)
-                //.ThenInclude(c => c.VehiclePhotoList)
+                .Include(c => c.Registration)
+                .Include(c => c.AdminitrativeCost)
+                .Include(_ => _.Sale)
+                .ThenInclude(_ => _.Customer)
+                .Include(c => c.Purchase)
+                .Include(c => c.Sale)
+                .ThenInclude(c => c.Loan)
+                .ThenInclude(c => c.Bank)
+                .Include(c => c.Clearance)
+                .ThenInclude(c => c.K8Documents)
+                .ThenInclude(c => c.Document)
                 .OrderByDescending(c => c.CreatedOn)
                 .AsQueryable();
 
             // Apply Brand Filter (case-insensitive)
-            if (!string.IsNullOrEmpty(brand))
+            if (!string.IsNullOrEmpty(priceMin))
             {
-                query = query.Where(s => s.Vehicle.Brand.Name.ToLower().Contains(brand.ToLower()));
+                try
+                {
+                    query = query.Where(s => s.Pricing.RecommendedSalePrice >= decimal.Parse(priceMin));
+
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            if (!string.IsNullOrEmpty(priceMax))
+            {
+                try
+                {
+                    query = query.Where(s => s.Pricing.RecommendedSalePrice <= decimal.Parse(priceMax));
+
+                }
+                catch (Exception ex)
+                {
+                }
             }
 
             // Apply Model Filter (case-insensitive)
-            if (!string.IsNullOrEmpty(model))
-            {
-                query = query.Where(s => s.Vehicle.Model.Name.ToLower().Contains(model.ToLower()));
-            }
+            //if (!string.IsNullOrEmpty(model))
+            //{
+            //    query = query.Where(s => s.Vehicle.Model.Name.ToLower().Contains(model.ToLower()));
+            //}
 
             // Apply Status Filter (case-insensitive)
-            if (!string.IsNullOrEmpty(status))
+            //if (!string.IsNullOrEmpty(status))
+            //{
+            //    query = query.Where(s => s.StockStatusHistories.Any(h => h.StockStatus.Name.ToLower().Contains(status.ToLower())));
+            //}
+            // Apply filters
+            if (filters != null)
             {
-                query = query.Where(s => s.StockStatusHistories.Any(h => h.StockStatus.Name.ToLower().Contains(status.ToLower())));
+                foreach (var filter in filters)
+                {
+                    if (filter.Key == "stockNo" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.StockNo.ToLower().Contains(filter.Value.ToLower()));
+                    }
+
+                    if (filter.Key == "yearMonth" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Vehicle.Year.Contains(filter.Value));
+                    }
+
+                    if (filter.Key == "vehicleDescription" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Vehicle.Description.ToLower().Contains(filter.Value.ToLower()));
+                    }
+
+
+                    if (filter.Key == "brandModelName" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Vehicle.Brand.Name.ToLower().Contains(filter.Value.ToLower()) || c.Vehicle.Model.Name.ToLower().Contains(filter.Value.ToLower()));
+                    }
+
+                    if (filter.Key == "arrivalStatus" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        if (filter.Value.ToLower() == "i")
+                            query = query.Where(c => c.ArrivalState == ArrivalState.Incoming);
+                        if (filter.Value.ToLower() == "r")
+                            query = query.Where(c => c.ArrivalState == ArrivalState.Received);
+                    }
+                    if (filter.Key == "stockStatus" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        if (filter.Value.ToLower().Contains("open"))
+                            query = query.Where(c => c.IsOpen == true);
+                        if (filter.Value.ToLower().Contains("lou"))
+                            query = query.Where(c => c.IsLou == true);
+                        if (filter.Value.ToLower().Contains("sold"))
+                            query = query.Where(c => c.IsSold == true);
+                        if (filter.Value.ToLower().Contains("cancelled"))
+                            query = query.Where(c => c.IsCancelled == true);
+                        if (filter.Value.ToLower().Contains("booking"))
+                            query = query.Where(c => c.IsBooked == true);
+
+                    }
+
+                    //if (filter.Key == "phone" && !string.IsNullOrEmpty(filter.Value))
+                    //{
+                    //    query = query.Where(c => c.Phone.Contains(filter.Value));
+                    //}
+                    // Add more filters as needed
+                }
             }
 
-            var objs = await query.ToListAsync();
+            if(isOpen)
+            {
+                query = query.Where(c => c.IsOpen == true);
+            }
+
+            // Apply sorting
+            if (!string.IsNullOrEmpty(sortColumn))
+            {
+                query = sortAsc
+                    ? query.OrderByDynamic(sortColumn)
+                    : query.OrderByDescendingDynamic(sortColumn);
+            }
+
+            // Get total count before applying pagination
+            var totalItems = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .Skip((page - 1) * itemsPerPage)
+                .Take(itemsPerPage)
+                .ToListAsync();
+
+            //var items = await query.ToListAsync();
 
             // Remove circular references and other unwanted data
-            foreach (var obj in objs)
+            foreach (var obj in items)
             {
                 foreach (var s in obj.StockStatusHistories)
                     s.Stock = null;
@@ -92,7 +206,11 @@ namespace SPOT_API.Controllers
                 }
             }
 
-            return objs;
+            return Ok(new
+            {
+                items,
+                totalItems
+            });
 
 
         }
@@ -119,7 +237,7 @@ namespace SPOT_API.Controllers
     .OrderByDescending(c => c.CreatedOn)
     .Include(c => c.Clearance)
     .ThenInclude(c => c.K8Documents)
-    .ThenInclude(c=> c.Document)
+    .ThenInclude(c => c.Document)
     .AsQueryable();
 
 
@@ -142,36 +260,36 @@ namespace SPOT_API.Controllers
                         }
                     }
 
-                    if(obj.Clearance != null && obj.Clearance.K8Documents != null && obj.Clearance.K8Documents.Count > 0)
+                    if (obj.Clearance != null && obj.Clearance.K8Documents != null && obj.Clearance.K8Documents.Count > 0)
                     {
-                        foreach(var doc in obj.Clearance.K8Documents)
+                        foreach (var doc in obj.Clearance.K8Documents)
                         {
                             doc.Clearance = null;
                         }
                     }
                 }
 
-               
-                    objs = objs.ToList();
 
-                    //objs = objs.Where(x =>
-                    //        x.LatestStockStatus != null &&
-                    //        x.LatestStockStatus.StockStatus != null &&
-                    //        (
-                    //            (x.LatestStockStatus.StockStatus.Name.ToLower() != "draft") &&
-                    //            (x.LatestStockStatus.StockStatus.Name.ToLower() != "sold")
-                    //        )
-                    //    ).ToList();
+                objs = objs.ToList();
+
+                //objs = objs.Where(x =>
+                //        x.LatestStockStatus != null &&
+                //        x.LatestStockStatus.StockStatus != null &&
+                //        (
+                //            (x.LatestStockStatus.StockStatus.Name.ToLower() != "draft") &&
+                //            (x.LatestStockStatus.StockStatus.Name.ToLower() != "sold")
+                //        )
+                //    ).ToList();
 
 
-                    //var filteredList = objs.Where(x =>
-                    //x.LatestStockStatus.StockStatus.Name == "Draft" ||
-                    //x.LatestStockStatus.StockStatus.Name.ToLower() != "sold" ||
-                    //x.LatestStockStatus.StockStatus.Name.ToLower() != "booked"
+                //var filteredList = objs.Where(x =>
+                //x.LatestStockStatus.StockStatus.Name == "Draft" ||
+                //x.LatestStockStatus.StockStatus.Name.ToLower() != "sold" ||
+                //x.LatestStockStatus.StockStatus.Name.ToLower() != "booked"
 
-                    //).ToList();
+                //).ToList();
 
-               
+
 
 
                 return objs;
@@ -321,8 +439,8 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.Expenses)
                 .Include(c => c.AdminitrativeCost)
                 .ThenInclude(c => c.AdminitrativeCostItems)
-                .Include(c=> c.ApCompany)
-                .ThenInclude(c=> c.SubCompany)
+                .Include(c => c.ApCompany)
+                .ThenInclude(c => c.SubCompany)
                 .Include(c => c.ApCompany)
                 .ThenInclude(c => c.BankAccount)
 
@@ -331,6 +449,15 @@ namespace SPOT_API.Controllers
             if (obj == null)
             {
                 return NotFound();
+            }
+
+            if (obj.ApCompany == null)
+            {
+                obj.ApCompany = new ApCompany();
+                _context.ApCompanies.Add(obj.ApCompany);
+                obj.ApCompanyId = obj.ApCompany.Id;
+                _context.SaveChanges();
+
             }
 
 
@@ -492,11 +619,11 @@ namespace SPOT_API.Controllers
                 obj.Vehicle.Model.Brand = null;
             }
 
-            if(obj.ApCompany != null)
+            if (obj.ApCompany != null)
             {
                 if (obj.ApCompany.SubCompany != null)
                     obj.ApCompany.SubCompany.BankAccounts = null;
-                if(obj.ApCompany.BankAccount != null)
+                if (obj.ApCompany.BankAccount != null)
                     obj.ApCompany.BankAccount.SubCompany = null;
             }
             return obj;
@@ -588,11 +715,18 @@ namespace SPOT_API.Controllers
             _context.Entry(obj.Purchase).State = EntityState.Modified;
             _context.Entry(obj.Import).State = EntityState.Modified;
             _context.Entry(obj.Clearance).State = EntityState.Modified;
+            //var saleAmount = Math.Round(obj.Sale.SaleAmount, 2);
+            //obj.Sale.SaleAmount = (float)saleAmount;
+
             _context.Entry(obj.Sale).State = EntityState.Modified;
+
+
             _context.Entry(obj.Sale.Loan).State = EntityState.Modified;
             _context.Entry(obj.Registration).State = EntityState.Modified;
             _context.Entry(obj.Pricing).State = EntityState.Modified;
-            _context.Entry(obj.ApCompany).State = EntityState.Modified;
+
+
+            _context.Entry(obj.AdminitrativeCost).State = EntityState.Modified;
 
             //_context.Entry(obj.Vehicle.VehiclePhotoList).State = EntityState.Modified;
 
@@ -1603,6 +1737,54 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+        [HttpPut("UpdateArrivalItem/{id}")]
+        public async Task<IActionResult> PutUpdateArrivalItem(Guid id, ArrivalChecklistItem obj)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+
+            if (user == null)
+                return Unauthorized();
+
+            var ba = _context.ArrivalChecklistItems.Find(obj.Id);
+
+            if (ba == null)
+            {
+                return NotFound("Not found.");
+            }
+
+            ba.Name = obj.Name;
+            ba.IsAvailable = obj.IsAvailable;
+            ba.Remarks = obj.Remarks;
+
+            _context.Entry(ba).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+            return NoContent();
+        }
+
 
         [HttpPut("UpdateJpjHakMilikDocuments/{id}")]
         public async Task<IActionResult> PutUpdateJpjHakMilikDocuments(Guid id, List<VehicleImageDto> objs)
@@ -2181,6 +2363,55 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+        [HttpPut("UpdateExpenseItem/{id}")]
+        public async Task<IActionResult> PutUpdateExpenseItem(Guid id, ExpenseItem obj)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+
+            if (user == null)
+                return Unauthorized();
+
+            var ba = _context.ExpenseItems.Find(obj.Id);
+
+            if (ba == null)
+            {
+                return NotFound("Not found.");
+            }
+
+            ba.Name = obj.Name;
+            ba.Amount = obj.Amount;
+            ba.Remarks = obj.Remarks;
+
+            _context.Entry(ba).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+            return NoContent();
+        }
+
+
 
         [HttpPut("AddAdministrativeCostItem/{id}")]
         public async Task<IActionResult> PutAddAdministrativeCostItem(Guid id, ExpenseItemDto obj)
@@ -2266,6 +2497,55 @@ namespace SPOT_API.Controllers
 
             return NoContent();
         }
+
+        [HttpPut("UpdateAdministrativeCostItem/{id}")]
+        public async Task<IActionResult> PutUpdateAdministrativeCostItem(Guid id, AdminitrativeCostItem obj)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+
+            if (user == null)
+                return Unauthorized();
+
+            var ba = _context.AdminitrativeCostItems.Find(obj.Id);
+
+            if (ba == null)
+            {
+                return NotFound("Not found.");
+            }
+
+            ba.Name = obj.Name;
+            ba.Amount = obj.Amount;
+            ba.Remarks = obj.Remarks;
+
+            _context.Entry(ba).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+
+            return NoContent();
+        }
+
 
         [HttpGet("arrival-states")]
         public IActionResult GetStockArrivalStates()

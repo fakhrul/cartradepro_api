@@ -5,8 +5,8 @@ namespace SPOT_API.Models
 {
     public class Pricing : BaseModel
     {
-        public float RecommendedSalePrice { get; set; }
-        public float MinimumSalePrice { get; set; }
+        public decimal RecommendedSalePrice { get; set; }
+        public decimal MinimumSalePrice { get; set; }
 
     }
 

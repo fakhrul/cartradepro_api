@@ -61,6 +61,8 @@ namespace SPOT_API.Controllers
             var obj = await _context.Roles
                 .Include(r => r.RoleModulePermissions)
                 .ThenInclude(rmp => rmp.Module)
+                .ThenInclude(c=> c.SubModules)
+                .Include(c => c.RoleSubModulePermissions)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (obj == null)
@@ -71,6 +73,13 @@ namespace SPOT_API.Controllers
             foreach(var v in obj.RoleModulePermissions)
             {
                     v.Role = null;
+                    if(v.Module != null)
+                    {
+                        foreach(var subModule in v.Module.SubModules)
+                        {
+                            subModule.Module = null;
+                        }
+                    }
                     //v.Module.RoleModulePermissions = null;
             }
             return obj;

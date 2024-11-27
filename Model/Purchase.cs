@@ -17,11 +17,12 @@ namespace SPOT_API.Models
         public Guid? SupplierId { get; set; }
         public virtual Supplier Supplier { get; set; }
         public string SupplierCurrency { get; set; }
-        public float VehiclePriceSupplierCurrency { get; set; }
-        public float VehiclePriceLocalCurrency { get; set; }
+        public decimal VehiclePriceSupplierCurrency { get; set; }
+        public decimal VehiclePriceLocalCurrency { get; set; }
 
+        public decimal BodyPriceLocalCurrency { get; set; }
 
-        public float ApAmount { get; set; }
+        //public float ApAmount { get; set; }
 
     }
 

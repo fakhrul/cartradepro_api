@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241125100142_add-insurance")]
+    partial class addinsurance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -179,7 +181,22 @@ namespace Persistence.Migrations
                     b.Property<decimal>("IntFsCostAmount")
                         .HasColumnType("numeric");
 
+                    b.Property<decimal>("InteriorCostAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("PaintCostAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<decimal>("PuspakomRegRoadTax")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("RentalCostAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("ServiceEzCareCostAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TyreCostAmount")
                         .HasColumnType("numeric");
 
                     b.Property<DateTime?>("UpdatedOn")
@@ -941,21 +958,6 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("InteriorCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PaintCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("RentalCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("ServiceEzCareCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TyreCostAmount")
-                        .HasColumnType("numeric");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()

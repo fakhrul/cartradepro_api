@@ -19,7 +19,7 @@ namespace SPOT_API.Models
         public string CommisionType { get; set; }
         public int CommisionPercentage { get; set; }
 
-        public float CommisionAmount { get; set; }
+        public decimal CommisionAmount { get; set; }
 
         //[NotMapped]
         //public decimal LeaderCommision

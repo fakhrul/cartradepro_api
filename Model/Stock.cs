@@ -9,7 +9,9 @@ namespace SPOT_API.Models
 {
     public class Stock : BaseModel
     {
-    
+
+        public DateTime RegistrationDate { get; set; } = DateTime.Now.ToUniversalTime();
+
         public string StockNo { get; set; }
 
         public virtual ICollection<Remarks> RemarksList { get; set; }

@@ -682,7 +682,7 @@ London, W1A 1AA, United Kingdom.",
             {
                 AdminitrativeCostId = administrativeCost.Id,
                 Name = "Insurance",
-                Amount = 1676.66F,
+                Amount = 1676.66m,
             });
 
 

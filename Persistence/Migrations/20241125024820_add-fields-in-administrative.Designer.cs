@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241125024820_add-fields-in-administrative")]
+    partial class addfieldsinadministrative
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,27 +162,36 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("ApCostAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("ApCostAmount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("DutyCostAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("DutyCostAmount")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("ForwardingCostAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("ForwardingCostAmount")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("InsuranceAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("IntFsCostAmount")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("IntFsCostAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("InteriorCostAmount")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("PuspakomRegRoadTax")
-                        .HasColumnType("numeric");
+                    b.Property<float>("PaintCostAmount")
+                        .HasColumnType("real");
+
+                    b.Property<float>("RentalCostAmount")
+                        .HasColumnType("real");
+
+                    b.Property<float>("ServiceEzCareCostAmount")
+                        .HasColumnType("real");
+
+                    b.Property<float>("TyreCostAmount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
@@ -200,8 +211,8 @@ namespace Persistence.Migrations
                     b.Property<Guid>("AdminitrativeCostId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -942,21 +953,6 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("InteriorCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PaintCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("RentalCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("ServiceEzCareCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("TyreCostAmount")
-                        .HasColumnType("numeric");
-
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
@@ -972,8 +968,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1258,8 +1254,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("ApprovedLoanAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("ApprovedLoanAmount")
+                        .HasColumnType("real");
 
                     b.Property<Guid?>("BankId")
                         .HasColumnType("uuid");
@@ -1268,17 +1264,17 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("DepositAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("DepositAmount")
+                        .HasColumnType("real");
 
                     b.Property<string>("LoanTenure")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("RequestedLoanAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("RequestedLoanAmount")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("UnpaidBalanceAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("UnpaidBalanceAmount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
@@ -1358,8 +1354,8 @@ namespace Persistence.Migrations
                     b.Property<string>("Code")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("CommisionAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("CommisionAmount")
+                        .HasColumnType("real");
 
                     b.Property<string>("ConsumerType")
                         .HasColumnType("text");
@@ -1388,8 +1384,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1428,11 +1424,11 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("MinimumSalePrice")
-                        .HasColumnType("numeric");
+                    b.Property<float>("MinimumSalePrice")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("RecommendedSalePrice")
-                        .HasColumnType("numeric");
+                    b.Property<float>("RecommendedSalePrice")
+                        .HasColumnType("real");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
@@ -1508,8 +1504,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("CommissionAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("CommissionAmount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1543,8 +1539,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("CommisionAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("CommisionAmount")
+                        .HasColumnType("real");
 
                     b.Property<int>("CommisionPercentage")
                         .HasColumnType("integer");
@@ -1581,8 +1577,8 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("BodyPriceLocalCurrency")
-                        .HasColumnType("numeric");
+                    b.Property<float>("BodyPriceLocalCurrency")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1598,11 +1594,11 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("VehiclePriceLocalCurrency")
-                        .HasColumnType("numeric");
+                    b.Property<float>("VehiclePriceLocalCurrency")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("VehiclePriceSupplierCurrency")
-                        .HasColumnType("numeric");
+                    b.Property<float>("VehiclePriceSupplierCurrency")
+                        .HasColumnType("real");
 
                     b.HasKey("Id");
 
@@ -1875,14 +1871,11 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("DepositAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("DepositAmount")
+                        .HasColumnType("real");
 
-                    b.Property<decimal>("EoeAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("HpAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("EoeAmount")
+                        .HasColumnType("real");
 
                     b.Property<bool>("IsUseLoan")
                         .HasColumnType("boolean");
@@ -1890,23 +1883,17 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("LoanId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("PromotionDiscountAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("SaleAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("SaleAmount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime>("SaleDateTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("SalesmanCommisionAmount")
-                        .HasColumnType("numeric");
-
                     b.Property<string>("SalesmanName")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("TradeInAmount")
-                        .HasColumnType("numeric");
+                    b.Property<float>("TradeInAmount")
+                        .HasColumnType("real");
 
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()

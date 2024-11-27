@@ -9,6 +9,8 @@ namespace SPOT_API.Models
         //public Guid StockId { get; set; }
         //public virtual Stock Stock { get; set; }
 
+        public string SalesmanName { get; set; }
+
         [ForeignKey("Customer")]
         public Guid? CustomerId { get; set; }
         public virtual Customer Customer { get; set; }
@@ -19,14 +21,18 @@ namespace SPOT_API.Models
 
         public DateTime SaleDateTime { get; set; } = DateTime.Now.ToUniversalTime();
 
-        public float SaleAmount { get; set; }
-        public float DepositAmount { get; set; }
-        public float TradeInAmount { get; set; }
+        public decimal SaleAmount { get; set; }
+        public decimal DepositAmount { get; set; }
+        public decimal TradeInAmount { get; set; }
 
-        public float EoeAmount { get; set; }
-        
+        public decimal EoeAmount { get; set; }
+        public decimal HpAmount { get; set; }
+
         public bool IsUseLoan { get; set; }
 
+
+        public decimal SalesmanCommisionAmount { get; set; }
+        public decimal PromotionDiscountAmount{ get; set; }
 
     }
 

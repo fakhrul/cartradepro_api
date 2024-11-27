@@ -29,19 +29,86 @@ namespace SPOT_API.Controllers
         }
 
         // GET: api/Customers
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<Customer>>> GetAll()
+        //{
+        //    var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+        //    if (user == null)
+        //        return Unauthorized();
+
+        //    var objs = await _context.Customers
+        //        .OrderBy(c=> c.Name)
+        //        .ToListAsync();
+
+        //    return objs;
+        //}
+
+        // GET: api/Customers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetAll()
+        public async Task<ActionResult> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int itemsPerPage = 10,
+            [FromQuery] string sortColumn = "Name",
+            [FromQuery] bool sortAsc = true,
+            [FromQuery] string search = null,
+            [FromQuery] Dictionary<string, string> filters = null)
         {
+            // Retrieve the current user
             var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
             if (user == null)
                 return Unauthorized();
 
-            var objs = await _context.Customers
-                .OrderBy(c=> c.Name)
+            // Base query
+            var query = _context.Customers.AsQueryable();
+
+            // Apply search
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(c => c.Name.Contains(search) || c.Email.Contains(search));
+            }
+
+            // Apply filters
+            if (filters != null)
+            {
+                foreach (var filter in filters)
+                {
+                    if (filter.Key == "icNumber" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.IcNumber.Contains(filter.Value));
+                    }
+                    if (filter.Key == "phone" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Phone.Contains(filter.Value));
+                    }
+                    // Add more filters as needed
+                }
+            }
+
+            // Apply sorting
+            if (!string.IsNullOrEmpty(sortColumn))
+            {
+                query = sortAsc
+                    ? query.OrderByDynamic(sortColumn)
+                    : query.OrderByDescendingDynamic(sortColumn);
+            }
+
+            // Get total count before applying pagination
+            var totalItems = await query.CountAsync();
+
+            // Apply pagination
+            var items = await query
+                .Skip((page - 1) * itemsPerPage)
+                .Take(itemsPerPage)
                 .ToListAsync();
 
-            return objs;
+            // Return paginated result
+            return Ok(new
+            {
+                items,
+                totalItems
+            });
         }
+
 
 
         // GET: api/Customers/5

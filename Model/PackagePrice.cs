@@ -12,7 +12,7 @@ namespace SPOT_API.Models
         [ForeignKey("Package")]
         public Guid PackageId { get; set; }
         public virtual Package Package { get; set; }
-        public float Amount { get; set; }
+        public decimal Amount { get; set; }
         public DateTime StartTime { get; set; }
         public bool IsEnable { get; set; }
 

@@ -11,7 +11,7 @@ namespace SPOT_API.Models
 
         public string Name { get; set; }
         public string Remarks { get; set; }
-        public float Amount { get; set; }
+        public decimal Amount { get; set; }
 
 
     }

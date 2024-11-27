@@ -230,8 +230,8 @@ class Program
     private static void InsertToDatabase(IList<string> fullLineInfoList, DateTime fileDateTime)
     {
         var options = new DbContextOptionsBuilder<SpotDBContext>()
-            .UseNpgsql("Host=178.128.105.21;Port=5432;Database=cartradepro;Username=postgres;Password=Qwerty@123").Options;
-        //.UseNpgsql("Host=localhost;Port=5432;Database=cartradepro;Username=postgres;Password=qwe123").Options;
+            //.UseNpgsql("Host=178.128.105.21;Port=5432;Database=cartradepro;Username=postgres;Password=Qwerty@123").Options;
+        .UseNpgsql("Host=localhost;Port=5432;Database=cartradepro;Username=postgres;Password=qwe123").Options;
 
         using (var context = new SpotDBContext(options))
         {
@@ -324,6 +324,12 @@ class Program
                     var remarks3 = parts[14];
 
                     var externalLink = parts[19];
+
+                    if (stockNo.Contains('\u00A0'))
+                    {
+                        stockNo = stockNo.Replace('\u00A0', ' ');
+                       
+                    }
 
                     //continue;
                     var existingStock = context.Stocks
@@ -433,8 +439,8 @@ class Program
 
 
                         var pricing = new Pricing();
-                        pricing.RecommendedSalePrice = (float)sellingPriceValue;
-                        pricing.MinimumSalePrice = (float)sellingPriceValue;
+                        pricing.RecommendedSalePrice = sellingPriceValue;
+                        pricing.MinimumSalePrice = sellingPriceValue;
 
                         context.Pricings.Add(pricing);
                         obj.PricingId = pricing.Id;
@@ -836,7 +842,7 @@ class Program
         {
             new AdminitrativeCostItem { Name = "Vehicle Regn. Fee", Amount = 200 },
             new AdminitrativeCostItem { Name = "Road Tax", Amount = 20 },
-            new AdminitrativeCostItem { Name = "Insurance", Amount = 1676.66F }
+            new AdminitrativeCostItem { Name = "Insurance", Amount = 1676.66m }
         };
         context.AdminitrativeCosts.Add(administrativeCost);
         obj.AdminitrativeCostId = administrativeCost.Id;
