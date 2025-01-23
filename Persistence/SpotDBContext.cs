@@ -22,6 +22,7 @@ namespace SPOT_API.Persistence
         ///
 
         public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<ShowRoom> ShowRooms { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
         public DbSet<ForwardingAgent> ClearanceAgents { get; set; }
         public DbSet<SubCompany> SubCompanies { get; set; }

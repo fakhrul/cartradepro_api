@@ -98,6 +98,12 @@ namespace SPOT_API.Models
         public bool IsSold { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
 
+
+
+        [ForeignKey("ShowRoom")]
+        public Guid? ShowRoomId { get; set; }
+        public virtual ShowRoom ShowRoom { get; set; }
+
     }
 
 

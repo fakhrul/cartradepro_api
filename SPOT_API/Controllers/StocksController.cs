@@ -204,6 +204,16 @@ namespace SPOT_API.Controllers
                         p.Document = null;
                     }
                 }
+
+                if(obj.Clearance != null)
+                {
+                    if(obj.Clearance.K8Documents != null)
+                        foreach(var k in obj.Clearance.K8Documents)
+                        {
+                            k.Document = null;
+                            k.Clearance = null;
+                        }
+                }
             }
 
             return Ok(new

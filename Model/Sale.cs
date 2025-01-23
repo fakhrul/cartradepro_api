@@ -11,6 +11,12 @@ namespace SPOT_API.Models
 
         public string SalesmanName { get; set; }
 
+
+        [ForeignKey("SalesManId")]
+        public Guid? SalesManId { get; set; }
+        public virtual Profile SalesMan { get; set; }
+
+
         [ForeignKey("Customer")]
         public Guid? CustomerId { get; set; }
         public virtual Customer Customer { get; set; }
