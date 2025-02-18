@@ -69,6 +69,11 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Clearance)
                 .ThenInclude(c => c.K8Documents)
                 .ThenInclude(c => c.Document)
+
+                                .Include(c => c.Import)
+                .ThenInclude(c => c.BillOfLandingDocuments)
+                .ThenInclude(c => c.Document)
+
                 .OrderByDescending(c => c.CreatedOn)
                 .AsQueryable();
 
@@ -210,10 +215,25 @@ namespace SPOT_API.Controllers
                     if(obj.Clearance.K8Documents != null)
                         foreach(var k in obj.Clearance.K8Documents)
                         {
-                            k.Document = null;
+                            //k.Document = null;
+                            if(k.Document != null)
+                                k.Document.Content = null;
                             k.Clearance = null;
                         }
                 }
+
+                if (obj.Import != null)
+                {
+                    if (obj.Import.BillOfLandingDocuments!= null)
+                        foreach (var k in obj.Import.BillOfLandingDocuments)
+                        {
+                            //k.Document = null;
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Import = null;
+                        }
+                }
+
             }
 
             return Ok(new
@@ -432,6 +452,8 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.Loan.Bank)
                 .Include(c => c.Sale)
                 .ThenInclude(c => c.Customer)
+                .Include(c=>c.Sale)
+                .ThenInclude(c=> c.SalesMan)
                 .Include(c => c.Pricing)
                 .Include(c => c.ArrivalChecklist)
                 .ThenInclude(c => c.ArrivalChecklists)
