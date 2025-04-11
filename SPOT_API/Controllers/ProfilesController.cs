@@ -535,6 +535,27 @@ namespace SPOT_API.Controllers
             //return await _context.Profiles.Where(c=>c.Role.ToLower() == role.ToLower()).ToListAsync();
         }
 
+        [HttpGet("Sales")]
+        public async Task<ActionResult<IEnumerable<Profile>>> GetSalesProfiles()
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var salesProfiles = await _context.Profiles
+                .Where(c => c.Role.ToLower() == "sales")
+                .OrderBy(c => c.FullName)
+                .ToListAsync();
+
+            foreach (var profile in salesProfiles)
+            {
+                if (profile.AppUser != null && profile.AppUser.Profile != null)
+                    profile.AppUser.Profile = null;
+            }
+
+            return salesProfiles;
+        }
+
 
         //[HttpPost("BySystemUser")]
         //public async Task<ActionResult<Profile>> PostProfileBySystemUser(ProfileDto profileDto)

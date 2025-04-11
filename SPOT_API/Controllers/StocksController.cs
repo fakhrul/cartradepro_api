@@ -215,9 +215,7 @@ namespace SPOT_API.Controllers
                     if(obj.Clearance.K8Documents != null)
                         foreach(var k in obj.Clearance.K8Documents)
                         {
-                            //k.Document = null;
-                            if(k.Document != null)
-                                k.Document.Content = null;
+                            k.Document = null;
                             k.Clearance = null;
                         }
                 }
@@ -256,19 +254,19 @@ namespace SPOT_API.Controllers
             try
             {
                 var query = _context.Stocks
-    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
-    .ThenInclude(c => c.StockStatus)
-    .Include(c => c.Vehicle)
-    .ThenInclude(c => c.Brand)
-    .Include(c => c.Vehicle)
-    .ThenInclude(c => c.Model)
-    .Include(c => c.Pricing)
-    .Include(c => c.Vehicle)
-    .OrderByDescending(c => c.CreatedOn)
-    .Include(c => c.Clearance)
-    .ThenInclude(c => c.K8Documents)
-    .ThenInclude(c => c.Document)
-    .AsQueryable();
+                    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
+                    .ThenInclude(c => c.StockStatus)
+                    .Include(c => c.Vehicle)
+                    .ThenInclude(c => c.Brand)
+                    .Include(c => c.Vehicle)
+                    .ThenInclude(c => c.Model)
+                    .Include(c => c.Pricing)
+                    .Include(c => c.Vehicle)
+                    .OrderByDescending(c => c.CreatedOn)
+                    .Include(c => c.Clearance)
+                    .ThenInclude(c => c.K8Documents)
+                    .ThenInclude(c => c.Document)
+                    .AsQueryable();
 
 
                 var objs = await query.ToListAsync();
@@ -440,6 +438,7 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.ForwardingAgent)
                 .Include(c => c.Import)
                 .ThenInclude(c => c.BillOfLandingDocuments)
+                //.ThenInclude(c => c.Document)
                 .Include(c => c.Clearance)
                 .ThenInclude(c => c.K8Documents)
                 .Include(c => c.Clearance)
