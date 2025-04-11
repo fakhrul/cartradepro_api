@@ -215,7 +215,8 @@ namespace SPOT_API.Controllers
                     if(obj.Clearance.K8Documents != null)
                         foreach(var k in obj.Clearance.K8Documents)
                         {
-                            k.Document = null;
+                            if (k.Document != null)
+                                k.Document.Content = null;
                             k.Clearance = null;
                         }
                 }
@@ -474,7 +475,7 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.SubCompany)
                 .Include(c => c.ApCompany)
                 .ThenInclude(c => c.BankAccount)
-
+                .Include(c=> c.ShowRoom)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
