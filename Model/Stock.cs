@@ -104,6 +104,11 @@ namespace SPOT_API.Models
         public Guid? ShowRoomId { get; set; }
         public virtual ShowRoom ShowRoom { get; set; }
 
+
+        [ForeignKey("Advertisement")]
+        public Guid? AdvertisementId { get; set; }
+        public virtual Advertisement Advertisement { get; set; }
+
     }
 
 

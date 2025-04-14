@@ -542,6 +542,9 @@ class Program
                         context.Expenses.Add(expense);
                         obj.ExpenseId = expense.Id;
 
+                        var advertisement = new   Advertisement();
+                        context.Advertisements.Add(advertisement);
+                        obj.AdvertisementId = advertisement.Id;
 
 
                         var administrativeCost = new AdminitrativeCost();

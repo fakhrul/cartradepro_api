@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250411045004_add_stock_to_buy")]
+    partial class add_stock_to_buy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,52 +224,6 @@ namespace Persistence.Migrations
                     b.HasIndex("AdminitrativeCostId");
 
                     b.ToTable("AdminitrativeCostItems");
-                });
-
-            modelBuilder.Entity("SPOT_API.Models.Advertisement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CarListEndDate")
-                        .HasColumnType("date");
-
-                    b.Property<bool>("CarListHadAdviertized")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CarListStartDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime>("CariCarzEndDate")
-                        .HasColumnType("date");
-
-                    b.Property<bool>("CariCarzHadAdviertized")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CariCarzStartDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("MudahEndDate")
-                        .HasColumnType("date");
-
-                    b.Property<bool>("MudahHadAdviertized")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("MudahStartDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Advertisements");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.ApCompany", b =>
@@ -2030,9 +1986,6 @@ namespace Persistence.Migrations
                     b.Property<Guid>("AdminitrativeCostId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AdvertisementId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("ApCompanyId")
                         .HasColumnType("uuid");
 
@@ -2104,8 +2057,6 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdminitrativeCostId");
-
-                    b.HasIndex("AdvertisementId");
 
                     b.HasIndex("ApCompanyId");
 
@@ -2203,6 +2154,9 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ApCompanyId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("BodyPriceLocalCurrency")
                         .HasColumnType("numeric");
 
@@ -2213,9 +2167,6 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DefaultImageUrl")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
@@ -2224,9 +2175,6 @@ namespace Persistence.Migrations
 
                     b.Property<string>("StockNo")
                         .HasColumnType("text");
-
-                    b.Property<Guid?>("SubCompanyId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("SupplierCurrency")
                         .HasColumnType("text");
@@ -2246,43 +2194,11 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubCompanyId");
+                    b.HasIndex("ApCompanyId");
 
                     b.HasIndex("SupplierId");
 
                     b.ToTable("StockToBuys");
-                });
-
-            modelBuilder.Entity("SPOT_API.Models.StockToBuyPhoto", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("StockToBuyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentId");
-
-                    b.HasIndex("StockToBuyId");
-
-                    b.ToTable("StockToBuyPhotos");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.SubCompany", b =>
@@ -2478,6 +2394,9 @@ namespace Persistence.Migrations
                     b.Property<int>("Position")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("StockToBuyId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
@@ -2488,6 +2407,8 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DocumentId");
+
+                    b.HasIndex("StockToBuyId");
 
                     b.HasIndex("VehicleId");
 
@@ -3061,10 +2982,6 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SPOT_API.Models.Advertisement", "Advertisement")
-                        .WithMany()
-                        .HasForeignKey("AdvertisementId");
-
                     b.HasOne("SPOT_API.Models.ApCompany", "ApCompany")
                         .WithMany()
                         .HasForeignKey("ApCompanyId");
@@ -3129,8 +3046,6 @@ namespace Persistence.Migrations
 
                     b.Navigation("AdminitrativeCost");
 
-                    b.Navigation("Advertisement");
-
                     b.Navigation("ApCompany");
 
                     b.Navigation("ArrivalChecklist");
@@ -3183,36 +3098,17 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("SPOT_API.Models.StockToBuy", b =>
                 {
-                    b.HasOne("SPOT_API.Models.SubCompany", "SubCompany")
+                    b.HasOne("SPOT_API.Models.ApCompany", "ApCompany")
                         .WithMany()
-                        .HasForeignKey("SubCompanyId");
+                        .HasForeignKey("ApCompanyId");
 
                     b.HasOne("SPOT_API.Models.Supplier", "Supplier")
                         .WithMany()
                         .HasForeignKey("SupplierId");
 
-                    b.Navigation("SubCompany");
+                    b.Navigation("ApCompany");
 
                     b.Navigation("Supplier");
-                });
-
-            modelBuilder.Entity("SPOT_API.Models.StockToBuyPhoto", b =>
-                {
-                    b.HasOne("SPOT_API.Models.Document", "Document")
-                        .WithMany()
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SPOT_API.Models.StockToBuy", "StockToBuy")
-                        .WithMany("VehiclePhotoList")
-                        .HasForeignKey("StockToBuyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Document");
-
-                    b.Navigation("StockToBuy");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.SubModule", b =>
@@ -3254,6 +3150,10 @@ namespace Persistence.Migrations
                         .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("SPOT_API.Models.StockToBuy", null)
+                        .WithMany("VehiclePhotoList")
+                        .HasForeignKey("StockToBuyId");
 
                     b.HasOne("SPOT_API.Models.Vehicle", "Vehicle")
                         .WithMany("VehiclePhotoList")

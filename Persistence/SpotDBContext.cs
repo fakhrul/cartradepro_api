@@ -18,6 +18,7 @@ namespace SPOT_API.Persistence
         public DbSet<Model> Models { get; set; }
 
         public DbSet<VehiclePhoto> VehiclePhotos { get; set; }
+        public DbSet<StockToBuyPhoto> StockToBuyPhotos { get; set; }
 
         ///
 
@@ -37,6 +38,7 @@ namespace SPOT_API.Persistence
         public DbSet<K1Document> K1Documents { get; set; }
         public DbSet<CustomerType> CustomerTypes { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<StockToBuy> StockToBuys { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<Loan> Loans { get; set; }
         public DbSet<Bank> Banks { get; set; }
@@ -77,6 +79,8 @@ namespace SPOT_API.Persistence
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<ExpenseItem> ExpenseItems { get; set; }
 
+        public DbSet<Advertisement> Advertisements { get; set; }
+        
         public DbSet<StockStatusHistory> StockStatusHistories { get; set; }
         public DbSet<Company> Companies  { get; set; }
 
@@ -141,6 +145,18 @@ namespace SPOT_API.Persistence
                 .HasForeignKey(ba => ba.SubCompanyId)
                 .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete
 
+
+            modelBuilder.Entity<Advertisement>(entity =>
+            {
+                entity.Property(e => e.MudahStartDate).HasColumnType("date");
+                entity.Property(e => e.MudahEndDate).HasColumnType("date");
+
+                entity.Property(e => e.CarListStartDate).HasColumnType("date");
+                entity.Property(e => e.CarListEndDate).HasColumnType("date");
+
+                entity.Property(e => e.CariCarzStartDate).HasColumnType("date");
+                entity.Property(e => e.CariCarzEndDate).HasColumnType("date");
+            });
 
 
             base.OnModelCreating(modelBuilder);

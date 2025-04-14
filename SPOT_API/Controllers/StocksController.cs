@@ -69,11 +69,11 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Clearance)
                 .ThenInclude(c => c.K8Documents)
                 .ThenInclude(c => c.Document)
-
+                .Include(c=> c.ShowRoom)
                                 .Include(c => c.Import)
                 .ThenInclude(c => c.BillOfLandingDocuments)
                 .ThenInclude(c => c.Document)
-
+                .Include(c=> c.Advertisement)
                 .OrderByDescending(c => c.CreatedOn)
                 .AsQueryable();
 
@@ -476,6 +476,7 @@ namespace SPOT_API.Controllers
                 .Include(c => c.ApCompany)
                 .ThenInclude(c => c.BankAccount)
                 .Include(c=> c.ShowRoom)
+                .Include(c=> c.Advertisement)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (obj == null)
@@ -741,6 +742,27 @@ namespace SPOT_API.Controllers
             {
                 return BadRequest();
             }
+            //obj.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate.Date;
+            // Ensure that the dates are converted to UTC
+            //obj.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate.Date; // Removes the time part (00:00:00)
+                                                                                      // Assign 12:00 noon UTC instead of midnight
+            obj.Advertisement.MudahStartDate = DateTime.SpecifyKind(obj.Advertisement.MudahStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Advertisement.MudahEndDate = DateTime.SpecifyKind(obj.Advertisement.MudahEndDate.Date.AddHours(12), DateTimeKind.Utc);
+
+            obj.Advertisement.CarListStartDate = DateTime.SpecifyKind(obj.Advertisement.CarListStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Advertisement.CarListEndDate = DateTime.SpecifyKind(obj.Advertisement.CarListEndDate.Date.AddHours(12), DateTimeKind.Utc);
+
+            obj.Advertisement.CariCarzStartDate= DateTime.SpecifyKind(obj.Advertisement.CariCarzStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Advertisement.CariCarzEndDate = DateTime.SpecifyKind(obj.Advertisement.CariCarzEndDate.Date.AddHours(12), DateTimeKind.Utc);
+
+            //obj.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate.ToUniversalTime();
+            //obj.Advertisement.MudahEndDate = obj.Advertisement.MudahEndDate.ToUniversalTime();
+            //obj.Advertisement.CarListStartDate = obj.Advertisement.CarListStartDate.ToUniversalTime();
+            //obj.Advertisement.CarListEndDate = obj.Advertisement.CarListEndDate.ToUniversalTime();
+            //obj.Advertisement.CariCarzStartDate = obj.Advertisement.CariCarzStartDate.ToUniversalTime();
+            //obj.Advertisement.CariCarzEndDate = obj.Advertisement.CariCarzEndDate.ToUniversalTime();
+
+
 
             _context.Entry(obj).State = EntityState.Modified;
             _context.Entry(obj.Vehicle).State = EntityState.Modified;
@@ -761,6 +783,7 @@ namespace SPOT_API.Controllers
 
             _context.Entry(obj.AdminitrativeCost).State = EntityState.Modified;
             _context.Entry(obj.Expense).State = EntityState.Modified;
+            _context.Entry(obj.Advertisement).State = EntityState.Modified;
 
             //_context.Entry(obj.Vehicle.VehiclePhotoList).State = EntityState.Modified;
 
@@ -870,6 +893,10 @@ namespace SPOT_API.Controllers
                     var expense = new Expense();
                     await _context.Expenses.AddAsync(expense);
                     obj.ExpenseId = expense.Id;
+
+                    var ads = new Advertisement();
+                    await _context.Advertisements.AddAsync(ads);
+                    obj.AdvertisementId = ads.Id;
 
                     // Administrative cost
                     var administrativeCost = new AdminitrativeCost();
@@ -2446,6 +2473,83 @@ namespace SPOT_API.Controllers
         }
 
 
+        
+ [HttpPut("adsinfo/{id}")]
+        public async Task<IActionResult> PutAddAdministrativeCostItem(Guid id, Stock obj)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Vehicle)
+                .Include(c => c.Advertisement)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            obj.Advertisement.MudahStartDate = DateTime.SpecifyKind(obj.Advertisement.MudahStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Advertisement.MudahEndDate = DateTime.SpecifyKind(obj.Advertisement.MudahEndDate.Date.AddHours(12), DateTimeKind.Utc);
+
+            obj.Advertisement.CarListStartDate = DateTime.SpecifyKind(obj.Advertisement.CarListStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Advertisement.CarListEndDate = DateTime.SpecifyKind(obj.Advertisement.CarListEndDate.Date.AddHours(12), DateTimeKind.Utc);
+
+            obj.Advertisement.CariCarzStartDate = DateTime.SpecifyKind(obj.Advertisement.CariCarzStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Advertisement.CariCarzEndDate = DateTime.SpecifyKind(obj.Advertisement.CariCarzEndDate.Date.AddHours(12), DateTimeKind.Utc);
+
+
+            stock.Vehicle.IsLocalImageAvailable = obj.Vehicle.IsLocalImageAvailable;
+            stock.Vehicle.IsSupplierImageAvailable = obj.Vehicle.IsSupplierImageAvailable;
+
+            stock.Advertisement.CariCarzStartDate = obj.Advertisement.CariCarzStartDate;
+            stock.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate;
+            stock.Advertisement.CarListStartDate = obj.Advertisement.CarListStartDate;
+
+            stock.Advertisement.CarListEndDate = obj.Advertisement.CarListEndDate;
+            stock.Advertisement.MudahEndDate = obj.Advertisement.MudahEndDate;
+            stock.Advertisement.CariCarzEndDate = obj.Advertisement.CariCarzEndDate;
+
+            stock.Advertisement.CariCarzHadAdviertized = obj.Advertisement.CariCarzHadAdviertized;
+            stock.Advertisement.MudahHadAdviertized = obj.Advertisement.MudahHadAdviertized;
+            stock.Advertisement.CarListHadAdviertized = obj.Advertisement.CarListHadAdviertized;
+
+
+
+
+
+            _context.Entry(stock.Vehicle).State = EntityState.Modified;
+            _context.Entry(stock.Advertisement).State = EntityState.Modified;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                throw ex;
+
+            }
+            return NoContent();
+        }
 
         [HttpPut("AddAdministrativeCostItem/{id}")]
         public async Task<IActionResult> PutAddAdministrativeCostItem(Guid id, ExpenseItemDto obj)
