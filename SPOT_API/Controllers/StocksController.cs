@@ -745,8 +745,10 @@ namespace SPOT_API.Controllers
             //obj.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate.Date;
             // Ensure that the dates are converted to UTC
             //obj.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate.Date; // Removes the time part (00:00:00)
-                                                                                      // Assign 12:00 noon UTC instead of midnight
-            obj.Advertisement.MudahStartDate = DateTime.SpecifyKind(obj.Advertisement.MudahStartDate.Date.AddHours(12), DateTimeKind.Utc);
+            // Assign 12:00 noon UTC instead of midnight
+            try
+            {
+                obj.Advertisement.MudahStartDate = DateTime.SpecifyKind(obj.Advertisement.MudahStartDate.Date.AddHours(12), DateTimeKind.Utc);
             obj.Advertisement.MudahEndDate = DateTime.SpecifyKind(obj.Advertisement.MudahEndDate.Date.AddHours(12), DateTimeKind.Utc);
 
             obj.Advertisement.CarListStartDate = DateTime.SpecifyKind(obj.Advertisement.CarListStartDate.Date.AddHours(12), DateTimeKind.Utc);
@@ -755,6 +757,9 @@ namespace SPOT_API.Controllers
             obj.Advertisement.CariCarzStartDate= DateTime.SpecifyKind(obj.Advertisement.CariCarzStartDate.Date.AddHours(12), DateTimeKind.Utc);
             obj.Advertisement.CariCarzEndDate = DateTime.SpecifyKind(obj.Advertisement.CariCarzEndDate.Date.AddHours(12), DateTimeKind.Utc);
 
+            obj.Sale.BookingDate= DateTime.SpecifyKind(obj.Sale.BookingDate.Date.AddHours(12), DateTimeKind.Utc);
+            obj.Sale.BookingExpiryDate = DateTime.SpecifyKind(obj.Sale.BookingExpiryDate.Date.AddHours(12), DateTimeKind.Utc);
+
             //obj.Advertisement.MudahStartDate = obj.Advertisement.MudahStartDate.ToUniversalTime();
             //obj.Advertisement.MudahEndDate = obj.Advertisement.MudahEndDate.ToUniversalTime();
             //obj.Advertisement.CarListStartDate = obj.Advertisement.CarListStartDate.ToUniversalTime();
@@ -762,7 +767,13 @@ namespace SPOT_API.Controllers
             //obj.Advertisement.CariCarzStartDate = obj.Advertisement.CariCarzStartDate.ToUniversalTime();
             //obj.Advertisement.CariCarzEndDate = obj.Advertisement.CariCarzEndDate.ToUniversalTime();
 
+          
+                var prevObj = _context.Stocks.Include(c => c.Pricing).AsNoTracking().FirstOrDefault(c => c.Id == id);
+                if (prevObj != null)
+                    if (obj.Pricing.RecommendedSalePrice != prevObj.Pricing.RecommendedSalePrice)
+                        obj.Pricing.LastPriceChange = DateTime.UtcNow;
 
+         
 
             _context.Entry(obj).State = EntityState.Modified;
             _context.Entry(obj.Vehicle).State = EntityState.Modified;
@@ -790,8 +801,7 @@ namespace SPOT_API.Controllers
             //_context.Entry(obj.SellingPricing).State = EntityState.Modified;
 
 
-            try
-            {
+          
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)

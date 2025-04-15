@@ -8,6 +8,7 @@ namespace SPOT_API.Models
         public decimal RecommendedSalePrice { get; set; }
         public decimal MinimumSalePrice { get; set; }
 
+        public DateTime LastPriceChange { get; set; } = DateTime.Now.ToUniversalTime();
     }
 
 

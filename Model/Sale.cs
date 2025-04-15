@@ -37,6 +37,10 @@ namespace SPOT_API.Models
         public bool IsUseLoan { get; set; }
 
 
+        public DateTime BookingDate { get; set; } = DateTime.Now.ToUniversalTime();
+
+        public DateTime BookingExpiryDate { get; set; } = DateTime.Now.ToUniversalTime();
+
         public decimal SalesmanCommisionAmount { get; set; }
         public decimal PromotionDiscountAmount{ get; set; }
 
