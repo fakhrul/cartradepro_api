@@ -2705,5 +2705,58 @@ namespace SPOT_API.Controllers
 
             return Ok(states);
         }
+
+
+        [HttpPut("UpdateStockNo/{id}")]
+        public async Task<IActionResult> PutUpdateStockNo(Guid id, UpdateStockNoDto newStockNo)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                // Check if the stock exists
+                var stock = await _context.Stocks.FirstOrDefaultAsync(c => c.Id == id);
+                if (stock == null)
+                {
+                    return NotFound("Stock not found.");
+                }
+
+                // Check for duplicate stock number (excluding current stock)
+                var duplicateExists = await _context.Stocks
+                    .AnyAsync(s => s.StockNo.ToLower() == newStockNo.NewStockNo.ToLower() && s.Id != id);
+
+                if (duplicateExists)
+                {
+                    return BadRequest($"Stock number '{newStockNo.NewStockNo}' already exists. Please choose a different stock number.");
+                }
+
+                // Update the stock number
+                stock.StockNo = newStockNo.NewStockNo;
+                stock.UpdatedOn = DateTime.UtcNow;
+
+                _context.Entry(stock).State = EntityState.Modified;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Stock number updated successfully.", stockId = id, newStockNo = newStockNo.NewStockNo });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"An error occurred while updating the stock number: {ex.Message}");
+            }
+        }
     }
 }
