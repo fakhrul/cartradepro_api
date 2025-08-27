@@ -72,6 +72,14 @@ namespace SPOT_API.Controllers
             {
                 foreach (var filter in filters)
                 {
+                    if (filter.Key == "name" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Name.ToLower().Contains(filter.Value.ToLower()));
+                    }
+                    if (filter.Key == "fullName" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Name.ToLower().Contains(filter.Value.ToLower()));
+                    }
                     if (filter.Key == "icNumber" && !string.IsNullOrEmpty(filter.Value))
                     {
                         query = query.Where(c => c.IcNumber.Contains(filter.Value));
@@ -79,6 +87,10 @@ namespace SPOT_API.Controllers
                     if (filter.Key == "phone" && !string.IsNullOrEmpty(filter.Value))
                     {
                         query = query.Where(c => c.Phone.Contains(filter.Value));
+                    }
+                    if (filter.Key == "email" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.Email.ToLower().Contains(filter.Value.ToLower()));
                     }
                     // Add more filters as needed
                 }
