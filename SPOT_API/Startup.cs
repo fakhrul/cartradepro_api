@@ -43,17 +43,18 @@ namespace SPOT_API
                         .AllowAnyHeader()
                         .AllowCredentials()
                         .WithExposedHeaders("WWW-Authenticate", "Pagination")
-                        .WithOrigins("http://localhost:8080",
-                        "http://128.199.166.113",
-                        "http://localhost:8081",
-                        "http://192.168.0.180:8080",
-                        "http://v2.thefibreguy.com",
-                        "https://v2.thefibreguy.com",
-                        "http://localhost:3000",
-                        "http://178.128.105.21:8102",
-                        "http://cartradepro.safa.com.my",
-                        "https://cartradepro.safa.com.my"
-
+                        .WithOrigins(
+                            "http://localhost:8080",
+                            "http://localhost:8081", 
+                            "http://localhost:3000",
+                            "https://localhost:44305",
+                            "http://128.199.166.113",
+                            "http://192.168.0.180:8080",
+                            "http://v2.thefibreguy.com",
+                            "https://v2.thefibreguy.com",
+                            "http://178.128.105.21:8102",
+                            "http://cartradepro.safa.com.my",
+                            "https://cartradepro.safa.com.my"
                         );
                 });
             });
