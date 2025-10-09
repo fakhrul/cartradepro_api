@@ -69,6 +69,24 @@ namespace SPOT_API.Controllers
                 .Include(c => c.Clearance)
                 .ThenInclude(c => c.K8Documents)
                 .ThenInclude(c => c.Document)
+                .Include(c => c.Clearance)
+                .ThenInclude(c => c.ExportCertificateDocuments)
+                .ThenInclude(c => c.Document)
+                .Include(c => c.Sale)
+                .ThenInclude(c => c.CustomerIcDocuments)
+                .ThenInclude(c => c.Document)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.InsuranceDocuments)
+                .ThenInclude(c => c.Document)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.RoadTaxDocuments)
+                .ThenInclude(c => c.Document)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.ReceiptEDaftarDocuments)
+                .ThenInclude(c => c.Document)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.ReceiptKastamDocuments)
+                .ThenInclude(c => c.Document)
                 .Include(c=> c.ShowRoom)
                                 .Include(c => c.Import)
                 .ThenInclude(c => c.BillOfLandingDocuments)
@@ -467,6 +485,18 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.PuspakomB2SlipDocuments)
                 .Include(c => c.Registration)
                 .ThenInclude(c => c.PuspakomB7SlipDocuments)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.InsuranceDocuments)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.RoadTaxDocuments)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.ReceiptEDaftarDocuments)
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.ReceiptKastamDocuments)
+                .Include(c => c.Clearance)
+                .ThenInclude(c => c.ExportCertificateDocuments)
+                .Include(c => c.Sale)
+                .ThenInclude(c => c.CustomerIcDocuments)
                 .Include(c => c.Expense)
                 .ThenInclude(c => c.Expenses)
                 .Include(c => c.AdminitrativeCost)
@@ -536,6 +566,14 @@ namespace SPOT_API.Controllers
                         o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
                         o.Document.Content = null;
                     }
+
+                if (obj.Clearance.ExportCertificateDocuments != null)
+                    foreach (var o in obj.Clearance.ExportCertificateDocuments)
+                    {
+                        o.Clearance = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
             }
 
             if (obj.Sale != null)
@@ -551,6 +589,16 @@ namespace SPOT_API.Controllers
                             o.Document.Content = null;
                         }
 
+                    }
+                }
+
+                if (obj.Sale.CustomerIcDocuments != null)
+                {
+                    foreach (var o in obj.Sale.CustomerIcDocuments)
+                    {
+                        o.Sale = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
                     }
                 }
             }
@@ -612,6 +660,46 @@ namespace SPOT_API.Controllers
                 if (obj.Registration.PuspakomB7SlipDocuments != null)
                 {
                     foreach (var o in obj.Registration.PuspakomB7SlipDocuments)
+                    {
+                        o.Registration = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
+                }
+
+                if (obj.Registration.InsuranceDocuments != null)
+                {
+                    foreach (var o in obj.Registration.InsuranceDocuments)
+                    {
+                        o.Registration = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
+                }
+
+                if (obj.Registration.RoadTaxDocuments != null)
+                {
+                    foreach (var o in obj.Registration.RoadTaxDocuments)
+                    {
+                        o.Registration = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
+                }
+
+                if (obj.Registration.ReceiptEDaftarDocuments != null)
+                {
+                    foreach (var o in obj.Registration.ReceiptEDaftarDocuments)
+                    {
+                        o.Registration = null;
+                        o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
+                        o.Document.Content = null;
+                    }
+                }
+
+                if (obj.Registration.ReceiptKastamDocuments != null)
+                {
+                    foreach (var o in obj.Registration.ReceiptKastamDocuments)
                     {
                         o.Registration = null;
                         o.Document = _context.Documents.FirstOrDefault(c => c.Id == o.DocumentId);
@@ -2347,6 +2435,521 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+        // Insurance Documents
+        [HttpPut("UpdateInsuranceDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateInsuranceDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.InsuranceDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.InsuranceDocuments.Add(new InsuranceDocument
+                {
+                    RegistrationId = stock.RegistrationId,
+                    DocumentId = obj.Id
+                });
+            }
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Registration).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return NoContent();
+        }
+
+        [HttpPut("RemoveInsuranceDocument/{registrationId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveInsuranceDocument(Guid registrationId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.InsuranceDocuments
+                    .Where(c => c.RegistrationId == registrationId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.InsuranceDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return NoContent();
+        }
+
+        // RoadTax Documents
+        [HttpPut("UpdateRoadTaxDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateRoadTaxDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.RoadTaxDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.RoadTaxDocuments.Add(new RoadTaxDocument
+                {
+                    RegistrationId = stock.RegistrationId,
+                    DocumentId = obj.Id
+                });
+            }
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Registration).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return NoContent();
+        }
+
+        [HttpPut("RemoveRoadTaxDocument/{registrationId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveRoadTaxDocument(Guid registrationId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.RoadTaxDocuments
+                    .Where(c => c.RegistrationId == registrationId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.RoadTaxDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return NoContent();
+        }
+
+        // ReceiptEDaftar Documents
+        [HttpPut("UpdateReceiptEDaftarDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateReceiptEDaftarDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.ReceiptEDaftarDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.ReceiptEDaftarDocuments.Add(new ReceiptEDaftarDocument
+                {
+                    RegistrationId = stock.RegistrationId,
+                    DocumentId = obj.Id
+                });
+            }
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Registration).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return NoContent();
+        }
+
+        [HttpPut("RemoveReceiptEDaftarDocument/{registrationId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveReceiptEDaftarDocument(Guid registrationId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.ReceiptEDaftarDocuments
+                    .Where(c => c.RegistrationId == registrationId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.ReceiptEDaftarDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return NoContent();
+        }
+
+        // ReceiptKastam Documents
+        [HttpPut("UpdateReceiptKastamDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateReceiptKastamDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Registration)
+                .ThenInclude(c => c.ReceiptKastamDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.ReceiptKastamDocuments.Add(new ReceiptKastamDocument
+                {
+                    RegistrationId = stock.RegistrationId,
+                    DocumentId = obj.Id
+                });
+            }
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Registration).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return NoContent();
+        }
+
+        [HttpPut("RemoveReceiptKastamDocument/{registrationId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveReceiptKastamDocument(Guid registrationId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.ReceiptKastamDocuments
+                    .Where(c => c.RegistrationId == registrationId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.ReceiptKastamDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return NoContent();
+        }
+
+        // ExportCertificate Documents
+        [HttpPut("UpdateExportCertificateDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateExportCertificateDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Clearance)
+                .ThenInclude(c => c.ExportCertificateDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.ExportCertificateDocuments.Add(new ExportCertificateDocument
+                {
+                    ClearanceId = stock.ClearanceId,
+                    DocumentId = obj.Id
+                });
+            }
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Clearance).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return NoContent();
+        }
+
+        [HttpPut("RemoveExportCertificateDocument/{clearanceId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveExportCertificateDocument(Guid clearanceId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.ExportCertificateDocuments
+                    .Where(c => c.ClearanceId == clearanceId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.ExportCertificateDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return NoContent();
+        }
+
+        // CustomerIc Documents
+        [HttpPut("UpdateCustomerIcDocuments/{id}")]
+        public async Task<IActionResult> PutUpdateCustomerIcDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var stock = await _context.Stocks
+                .Include(c => c.Sale)
+                .ThenInclude(c => c.CustomerIcDocuments)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (stock == null)
+            {
+                return BadRequest();
+            }
+
+            foreach (var obj in objs)
+            {
+                _context.CustomerIcDocuments.Add(new CustomerIcDocument
+                {
+                    SaleId = stock.SaleId,
+                    DocumentId = obj.Id
+                });
+            }
+
+            _context.Entry(stock).State = EntityState.Modified;
+            _context.Entry(stock.Sale).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                if (!IsExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return NoContent();
+        }
+
+        [HttpPut("RemoveCustomerIcDocument/{saleId}/{documentId}")]
+        public async Task<IActionResult> PutRemoveCustomerIcDocument(Guid saleId, Guid documentId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                var documents = _context.CustomerIcDocuments
+                    .Where(c => c.SaleId == saleId)
+                    .Where(c => c.DocumentId == documentId)
+                    .ToList();
+
+                foreach (var inDataBase in documents)
+                {
+                    _context.CustomerIcDocuments.Remove(inDataBase);
+                }
+
+                var document = _context.Documents.Find(documentId);
+                _context.Documents.Remove(document);
+
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return NoContent();
+        }
 
 
         [HttpPut("AddExpenseItem/{id}")]

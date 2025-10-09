@@ -21,6 +21,11 @@ namespace SPOT_API.Models
 
         public virtual ICollection<JpjGeranDocument> JpjGeranDocuments { get; set; }
 
+        public virtual ICollection<InsuranceDocument> InsuranceDocuments { get; set; }
+        public virtual ICollection<RoadTaxDocument> RoadTaxDocuments { get; set; }
+        public virtual ICollection<ReceiptEDaftarDocument> ReceiptEDaftarDocuments { get; set; }
+        public virtual ICollection<ReceiptKastamDocument> ReceiptKastamDocuments { get; set; }
+
 
         //[ForeignKey("JpjEHakMilikDocument")]
         //public Guid? JpjEHakMilikDocumentId { get; set; }

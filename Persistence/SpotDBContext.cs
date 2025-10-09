@@ -36,12 +36,14 @@ namespace SPOT_API.Persistence
         public DbSet<Clearance> Clearances { get; set; }
         public DbSet<K8Document> K8Documents { get; set; }
         public DbSet<K1Document> K1Documents { get; set; }
+        public DbSet<ExportCertificateDocument> ExportCertificateDocuments { get; set; }
         public DbSet<CustomerType> CustomerTypes { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<StockToBuy> StockToBuys { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<Loan> Loans { get; set; }
         public DbSet<Bank> Banks { get; set; }
+        public DbSet<CustomerIcDocument> CustomerIcDocuments { get; set; }
         public DbSet<Pricing> Pricings { get; set; }
         public DbSet<ArrivalChecklist> ArrivalChecklists { get; set; }
 
@@ -54,6 +56,10 @@ namespace SPOT_API.Persistence
         public DbSet<JpjEDaftarDocument> JpjEDaftarDocuments { get; set; }
         public DbSet<PuspakomB2SlipDocument> PuspakomB2SlipDocuments { get; set; }
         public DbSet<PuspakomB7SlipDocument> PuspakomB7SlipDocuments { get; set; }
+        public DbSet<InsuranceDocument> InsuranceDocuments { get; set; }
+        public DbSet<RoadTaxDocument> RoadTaxDocuments { get; set; }
+        public DbSet<ReceiptEDaftarDocument> ReceiptEDaftarDocuments { get; set; }
+        public DbSet<ReceiptKastamDocument> ReceiptKastamDocuments { get; set; }
 
         public DbSet<Completion> Completions { get; set; }
 

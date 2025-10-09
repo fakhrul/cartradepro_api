@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SPOT_API.Models
@@ -43,6 +44,8 @@ namespace SPOT_API.Models
 
         public decimal SalesmanCommisionAmount { get; set; }
         public decimal PromotionDiscountAmount{ get; set; }
+
+        public virtual ICollection<CustomerIcDocument> CustomerIcDocuments { get; set; }
 
     }
 

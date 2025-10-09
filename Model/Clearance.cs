@@ -18,6 +18,7 @@ namespace SPOT_API.Models
 
         public virtual ICollection<K8Document> K8Documents { get; set; }
         public virtual ICollection<K1Document> K1Documents { get; set; }
+        public virtual ICollection<ExportCertificateDocument> ExportCertificateDocuments { get; set; }
 
     }
 
