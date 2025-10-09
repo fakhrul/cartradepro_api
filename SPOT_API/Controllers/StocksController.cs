@@ -141,6 +141,13 @@ namespace SPOT_API.Controllers
                         query = query.Where(c => c.StockNo.ToLower().Contains(filter.Value.ToLower()));
                     }
 
+                    if (filter.Key == "lotNo" && !string.IsNullOrEmpty(filter.Value))
+                    {
+                        query = query.Where(c => c.ShowRoom != null &&
+                                                 c.ShowRoom.LotNo != null &&
+                                                 c.ShowRoom.LotNo.ToLower().Contains(filter.Value.ToLower()));
+                    }
+
                     if (filter.Key == "yearMonth" && !string.IsNullOrEmpty(filter.Value))
                     {
                         query = query.Where(c => c.Vehicle.Year.Contains(filter.Value));
@@ -248,6 +255,83 @@ namespace SPOT_API.Controllers
                             if (k.Document != null)
                                 k.Document.Content = null;
                             k.Import = null;
+                        }
+                }
+
+                if (obj.Clearance != null)
+                {
+                    if (obj.Clearance.K8Documents != null)
+                        foreach (var k in obj.Clearance.K8Documents)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Clearance = null;
+                        }
+
+                    if (obj.Clearance.ExportCertificateDocuments != null)
+                        foreach (var k in obj.Clearance.ExportCertificateDocuments)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Clearance = null;
+                        }
+                }
+
+                if (obj.Import != null)
+                {
+                    if (obj.Import.BillOfLandingDocuments != null)
+                        foreach (var k in obj.Import.BillOfLandingDocuments)
+                        {
+                            //k.Document = null;
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Import = null;
+                        }
+                }
+
+                if (obj.Sale != null)
+                {
+                    if (obj.Sale.CustomerIcDocuments != null)
+                        foreach (var k in obj.Sale.CustomerIcDocuments)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Sale = null;
+                        }
+                }
+
+                if (obj.Registration != null)
+                {
+                    if (obj.Registration.InsuranceDocuments != null)
+                        foreach (var k in obj.Registration.InsuranceDocuments)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Registration = null;
+                        }
+
+                    if (obj.Registration.RoadTaxDocuments != null)
+                        foreach (var k in obj.Registration.RoadTaxDocuments)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Registration = null;
+                        }
+
+                    if (obj.Registration.ReceiptEDaftarDocuments != null)
+                        foreach (var k in obj.Registration.ReceiptEDaftarDocuments)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Registration = null;
+                        }
+
+                    if (obj.Registration.ReceiptKastamDocuments != null)
+                        foreach (var k in obj.Registration.ReceiptKastamDocuments)
+                        {
+                            if (k.Document != null)
+                                k.Document.Content = null;
+                            k.Registration = null;
                         }
                 }
 

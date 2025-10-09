@@ -8,6 +8,7 @@ namespace SPOT_API.Models
         public string CustomerType { get; set; }
         public string Name { get; set; }
         public string IcNumber { get; set; }
+        public string TinNumber { get; set; }
 
         public string Address { get; set; }
         public string Email { get; set; }

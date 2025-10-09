@@ -7,6 +7,8 @@
     <IsPackable>false</IsPackable>
     <UserSecretsId>94c11659-5f40-4d5e-ae75-3bded0380669</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
   <ItemGroup>

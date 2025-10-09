@@ -384,7 +384,7 @@ return BadRequest(ex.Message);
                 }
 
                 _context.StockToBuys.Remove(category);
-
+                await _context.SaveChangesAsync();
 
                 return NoContent();
             }

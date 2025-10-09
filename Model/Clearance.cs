@@ -12,6 +12,7 @@ namespace SPOT_API.Models
         //public virtual ForwardingAgent ForwardingAgent { get; set; }
 
         public string ApprovedPermitNo { get; set; }
+        public string LotNo { get; set; }
         public string K8DocumentNo { get; set; }
         public string K1DocumentNo { get; set; }
 
