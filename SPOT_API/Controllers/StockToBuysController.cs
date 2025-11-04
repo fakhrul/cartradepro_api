@@ -67,28 +67,95 @@ namespace SPOT_API.Controllers
                     .Where(c=> c.IsActive)
                     .AsQueryable();
 
-                // Apply search
-                //if (!string.IsNullOrEmpty(search))
-                //{
-                //    query = query.Where(c => c.Name.Contains(search) || c.Email.Contains(search));
-                //}
+                // Apply search (global search across multiple fields - case insensitive)
+                if (!string.IsNullOrEmpty(search))
+                {
+                    var searchLower = search.ToLower();
+                    query = query.Where(c =>
+                        c.StockNo.ToLower().Contains(searchLower) ||
+                        c.Description.ToLower().Contains(searchLower) ||
+                        c.Color.ToLower().Contains(searchLower));
+                }
 
-                //// Apply filters
-                //if (filters != null)
-                //{
-                //    foreach (var filter in filters)
-                //    {
-                //        if (filter.Key == "icNumber" && !string.IsNullOrEmpty(filter.Value))
-                //        {
-                //            query = query.Where(c => c.IcNumber.Contains(filter.Value));
-                //        }
-                //        if (filter.Key == "phone" && !string.IsNullOrEmpty(filter.Value))
-                //        {
-                //            query = query.Where(c => c.Phone.Contains(filter.Value));
-                //        }
-                //        // Add more filters as needed
-                //    }
-                //}
+                // Apply column filters (case insensitive)
+                if (filters != null)
+                {
+                    foreach (var filter in filters)
+                    {
+                        if (filter.Key == "stockNo" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            var filterLower = filter.Value.ToLower();
+                            query = query.Where(c => c.StockNo.ToLower().Contains(filterLower));
+                        }
+                        if (filter.Key == "vehicleDescription" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            var filterLower = filter.Value.ToLower();
+                            query = query.Where(c => c.Description.ToLower().Contains(filterLower));
+                        }
+                        if (filter.Key == "color" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            var filterLower = filter.Value.ToLower();
+                            query = query.Where(c => c.Color.ToLower().Contains(filterLower));
+                        }
+                        if (filter.Key == "subCompanyName" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            var filterLower = filter.Value.ToLower();
+                            query = query.Where(c => c.SubCompany != null && c.SubCompany.Name.ToLower().Contains(filterLower));
+                        }
+                        if (filter.Key == "supplierName" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            var filterLower = filter.Value.ToLower();
+                            query = query.Where(c => c.Supplier != null && c.Supplier.Name.ToLower().Contains(filterLower));
+                        }
+                        // Price filters - Local Price (MYR)
+                        if (filter.Key == "localPriceMin" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (decimal.TryParse(filter.Value, out decimal minPrice))
+                            {
+                                query = query.Where(c => c.VehiclePriceLocalCurrency >= minPrice);
+                            }
+                        }
+                        if (filter.Key == "localPriceMax" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (decimal.TryParse(filter.Value, out decimal maxPrice))
+                            {
+                                query = query.Where(c => c.VehiclePriceLocalCurrency <= maxPrice);
+                            }
+                        }
+
+                        // Price filters - Foreign Price
+                        if (filter.Key == "foreignPriceMin" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (decimal.TryParse(filter.Value, out decimal minPrice))
+                            {
+                                query = query.Where(c => c.VehiclePriceSupplierCurrency >= minPrice);
+                            }
+                        }
+                        if (filter.Key == "foreignPriceMax" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (decimal.TryParse(filter.Value, out decimal maxPrice))
+                            {
+                                query = query.Where(c => c.VehiclePriceSupplierCurrency <= maxPrice);
+                            }
+                        }
+
+                        // Price filters - Body Price (MYR)
+                        if (filter.Key == "bodyPriceMin" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (decimal.TryParse(filter.Value, out decimal minPrice))
+                            {
+                                query = query.Where(c => c.BodyPriceLocalCurrency >= minPrice);
+                            }
+                        }
+                        if (filter.Key == "bodyPriceMax" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (decimal.TryParse(filter.Value, out decimal maxPrice))
+                            {
+                                query = query.Where(c => c.BodyPriceLocalCurrency <= maxPrice);
+                            }
+                        }
+                    }
+                }
 
                 // Apply sorting
                 if (!string.IsNullOrEmpty(sortColumn))
