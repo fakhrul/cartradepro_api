@@ -33,315 +33,403 @@ namespace SPOT_API.Controllers
         public async Task<ActionResult<IEnumerable<Stock>>> GetAll(
            [FromQuery] int page = 1,
             [FromQuery] int itemsPerPage = 10,
-            [FromQuery] string sortColumn = "StockNo",
-            [FromQuery] bool sortAsc = true,
+            [FromQuery] string sortColumn = "MovedToStockAt",
+            [FromQuery] bool sortAsc = false,
             [FromQuery] string search = null,
             [FromQuery] string priceMin = null,
             [FromQuery] string priceMax = null,
             [FromQuery] bool isOpen = false,
-
+            [FromQuery] string monthFrom = null,
+            [FromQuery] string yearFrom = null,
+            [FromQuery] string monthTo = null,
+            [FromQuery] string yearTo = null,
             [FromQuery] Dictionary<string, string> filters = null)
 
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-            if (user == null)
-                return Unauthorized();
-
-
-            // Start building the query
-            var query = _context.Stocks
-                .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
-                .ThenInclude(c => c.StockStatus)
-                .Include(c => c.Vehicle)
-                .ThenInclude(c => c.Brand)
-                .Include(c => c.Vehicle)
-                .ThenInclude(c => c.Model)
-                .Include(c => c.Pricing)
-                .Include(c => c.Vehicle)
-                .Include(c => c.Registration)
-                .Include(c => c.AdminitrativeCost)
-                .Include(_ => _.Sale)
-                .ThenInclude(_ => _.Customer)
-                .Include(c => c.Purchase)
-                .Include(c => c.Sale)
-                .ThenInclude(c => c.Loan)
-                .ThenInclude(c => c.Bank)
-                .Include(c => c.Clearance)
-                .ThenInclude(c => c.K8Documents)
-                .ThenInclude(c => c.Document)
-                .Include(c => c.Clearance)
-                .ThenInclude(c => c.ExportCertificateDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c => c.Sale)
-                .ThenInclude(c => c.CustomerIcDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c => c.Registration)
-                .ThenInclude(c => c.InsuranceDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c => c.Registration)
-                .ThenInclude(c => c.RoadTaxDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c => c.Registration)
-                .ThenInclude(c => c.ReceiptEDaftarDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c => c.Registration)
-                .ThenInclude(c => c.ReceiptKastamDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c=> c.ShowRoom)
-                                .Include(c => c.Import)
-                .ThenInclude(c => c.BillOfLandingDocuments)
-                .ThenInclude(c => c.Document)
-                .Include(c=> c.Advertisement)
-                .OrderByDescending(c => c.CreatedOn)
-                .AsQueryable();
-
-            // Apply Brand Filter (case-insensitive)
-            if (!string.IsNullOrEmpty(priceMin))
+            try
             {
-                try
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                if (user == null)
+                    return Unauthorized();
+
+
+                // Start building the query
+                var query = _context.Stocks
+                    .Include(c => c.StockStatusHistories.OrderByDescending(c => c.DateTime))
+                    .ThenInclude(c => c.StockStatus)
+                    .Include(c => c.Vehicle)
+                    .ThenInclude(c => c.Brand)
+                    .Include(c => c.Vehicle)
+                    .ThenInclude(c => c.Model)
+                    .Include(c => c.Pricing)
+                    .Include(c => c.Vehicle)
+                    .Include(c => c.Registration)
+                    .Include(c => c.AdminitrativeCost)
+                    .Include(_ => _.Sale)
+                    .ThenInclude(_ => _.Customer)
+                    .Include(c => c.Purchase)
+                    .Include(c => c.Sale)
+                    .ThenInclude(c => c.Loan)
+                    .ThenInclude(c => c.Bank)
+                    .Include(c => c.Clearance)
+                    .ThenInclude(c => c.K8Documents)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Clearance)
+                    .ThenInclude(c => c.ExportCertificateDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Sale)
+                    .ThenInclude(c => c.CustomerIcDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Registration)
+                    .ThenInclude(c => c.InsuranceDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Registration)
+                    .ThenInclude(c => c.RoadTaxDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Registration)
+                    .ThenInclude(c => c.ReceiptEDaftarDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Registration)
+                    .ThenInclude(c => c.ReceiptKastamDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.ShowRoom)
+                                    .Include(c => c.Import)
+                    .ThenInclude(c => c.BillOfLandingDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Advertisement)
+                    .OrderBy(c => c.MovedToStockAt)
+                    .AsQueryable();
+
+                // Apply Brand Filter (case-insensitive)
+                if (!string.IsNullOrEmpty(priceMin))
                 {
-                    query = query.Where(s => s.Pricing.RecommendedSalePrice >= decimal.Parse(priceMin));
+                    try
+                    {
+                        query = query.Where(s => s.Pricing.RecommendedSalePrice >= decimal.Parse(priceMin));
+
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(priceMax))
+                {
+                    try
+                    {
+                        query = query.Where(s => s.Pricing.RecommendedSalePrice <= decimal.Parse(priceMax));
+
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+
+                // Apply Month/Year Range Filter (From Date)
+                // If year is specified but month is not, default to January (1)
+                if (!string.IsNullOrEmpty(yearFrom))
+                {
+                    try
+                    {
+                        // Default to January if month not specified
+                        string effectiveMonthFrom = string.IsNullOrEmpty(monthFrom) ? "1" : monthFrom;
+
+                        // Parse and pad values for string comparison
+                        string fromYearPadded = yearFrom.PadLeft(4, '0');
+                        string fromMonthPadded = effectiveMonthFrom.PadLeft(2, '0');
+                        string fromDateString = fromYearPadded + fromMonthPadded; // e.g., "202001"
+
+                        query = query.Where(s =>
+                            s.Vehicle != null &&
+                            !string.IsNullOrEmpty(s.Vehicle.Year) &&
+                            !string.IsNullOrEmpty(s.Vehicle.Month) &&
+                            (s.Vehicle.Year.PadLeft(4, '0') + s.Vehicle.Month.PadLeft(2, '0')).CompareTo(fromDateString) >= 0
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log or handle invalid month/year input
+                    }
+                }
+
+                // Apply Month/Year Range Filter (To Date)
+                // If year is specified but month is not, default to December (12)
+                if (!string.IsNullOrEmpty(yearTo))
+                {
+                    try
+                    {
+                        // Default to December if month not specified
+                        string effectiveMonthTo = string.IsNullOrEmpty(monthTo) ? "12" : monthTo;
+
+                        // Parse and pad values for string comparison
+                        string toYearPadded = yearTo.PadLeft(4, '0');
+                        string toMonthPadded = effectiveMonthTo.PadLeft(2, '0');
+                        string toDateString = toYearPadded + toMonthPadded; // e.g., "202412"
+
+                        query = query.Where(s =>
+                            s.Vehicle != null &&
+                            !string.IsNullOrEmpty(s.Vehicle.Year) &&
+                            !string.IsNullOrEmpty(s.Vehicle.Month) &&
+                            (s.Vehicle.Year.PadLeft(4, '0') + s.Vehicle.Month.PadLeft(2, '0')).CompareTo(toDateString) <= 0
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log or handle invalid month/year input
+                    }
+                }
+
+                // Apply Model Filter (case-insensitive)
+                //if (!string.IsNullOrEmpty(model))
+                //{
+                //    query = query.Where(s => s.Vehicle.Model.Name.ToLower().Contains(model.ToLower()));
+                //}
+
+                // Apply Status Filter (case-insensitive)
+                //if (!string.IsNullOrEmpty(status))
+                //{
+                //    query = query.Where(s => s.StockStatusHistories.Any(h => h.StockStatus.Name.ToLower().Contains(status.ToLower())));
+                //}
+                // Apply filters
+                if (filters != null)
+                {
+                    foreach (var filter in filters)
+                    {
+                        if (filter.Key == "stockNo" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            query = query.Where(c => c.StockNo.ToLower().Contains(filter.Value.ToLower()));
+                        }
+
+                        if (filter.Key == "lotNo" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            query = query.Where(c => c.ShowRoom != null &&
+                                                     c.ShowRoom.LotNo != null &&
+                                                     c.ShowRoom.LotNo.ToLower().Contains(filter.Value.ToLower()));
+                        }
+
+                        if (filter.Key == "yearMonth" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            query = query.Where(c => c.Vehicle.Year.Contains(filter.Value));
+                        }
+
+                        if (filter.Key == "vehicleDescription" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            query = query.Where(c => c.Vehicle.Description.ToLower().Contains(filter.Value.ToLower()));
+                        }
+
+
+                        if (filter.Key == "brandModelName" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            query = query.Where(c => c.Vehicle.Brand.Name.ToLower().Contains(filter.Value.ToLower()) || c.Vehicle.Model.Name.ToLower().Contains(filter.Value.ToLower()));
+                        }
+
+                        if (filter.Key == "arrivalStatus" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (filter.Value.ToLower() == "i")
+                                query = query.Where(c => c.ArrivalState == ArrivalState.Incoming);
+                            if (filter.Value.ToLower() == "r")
+                                query = query.Where(c => c.ArrivalState == ArrivalState.Received);
+                        }
+                        if (filter.Key == "stockStatus" && !string.IsNullOrEmpty(filter.Value))
+                        {
+                            if (filter.Value.ToLower().Contains("open"))
+                                query = query.Where(c => c.IsOpen == true);
+                            if (filter.Value.ToLower().Contains("lou"))
+                                query = query.Where(c => c.IsLou == true);
+                            if (filter.Value.ToLower().Contains("sold"))
+                                query = query.Where(c => c.IsSold == true);
+                            if (filter.Value.ToLower().Contains("cancelled"))
+                                query = query.Where(c => c.IsCancelled == true);
+                            if (filter.Value.ToLower().Contains("booking"))
+                                query = query.Where(c => c.IsBooked == true);
+
+                        }
+
+                        //if (filter.Key == "phone" && !string.IsNullOrEmpty(filter.Value))
+                        //{
+                        //    query = query.Where(c => c.Phone.Contains(filter.Value));
+                        //}
+                        // Add more filters as needed
+                    }
+                }
+
+                if (isOpen)
+                {
+                    query = query.Where(c => c.IsOpen == true);
+                }
+
+                // Apply sorting with special handling for MovedToStockAt nulls and brandModelName
+                if (!string.IsNullOrEmpty(sortColumn))
+                {
+                    if (sortColumn == "MovedToStockAt")
+                    {
+                        // Custom sorting for MovedToStockAt to handle nulls properly
+                        query = sortAsc
+                            ? query.OrderBy(c => c.MovedToStockAt == null ? DateTime.MaxValue : c.MovedToStockAt)
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => c.MovedToStockAt == null ? DateTime.MinValue : c.MovedToStockAt)
+                                   .ThenBy(c => c.StockNo);
+                    }
+                    else if (sortColumn == "brandModelName")
+                    {
+                        // Custom sorting for brandModelName (Vehicle.Brand.Name + Vehicle.Model.Name)
+                        query = sortAsc
+                            ? query.OrderBy(c => c.Vehicle.Brand.Name)
+                                   .ThenBy(c => c.Vehicle.Model.Name)
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => c.Vehicle.Brand.Name)
+                                   .ThenByDescending(c => c.Vehicle.Model.Name)
+                                   .ThenBy(c => c.StockNo);
+                    }
+                    else
+                    {
+                        query = sortAsc
+                            ? query.OrderByDynamic(sortColumn)
+                            : query.OrderByDescendingDynamic(sortColumn);
+                    }
+                }
+
+                // Get total count before applying pagination
+                var totalItems = await query.CountAsync();
+
+                // Apply pagination
+                var items = await query
+                    .Skip((page - 1) * itemsPerPage)
+                    .Take(itemsPerPage)
+                    .ToListAsync();
+
+                //var items = await query.ToListAsync();
+
+                // Remove circular references and other unwanted data
+                foreach (var obj in items)
+                {
+                    foreach (var s in obj.StockStatusHistories)
+                        s.Stock = null;
+                    if (obj.Vehicle != null && obj.Vehicle.Model != null)
+                        obj.Vehicle.Model.Brand = null;
+
+                    if (obj.Vehicle != null && obj.Vehicle.VehiclePhotoList != null)
+                    {
+                        foreach (var p in obj.Vehicle.VehiclePhotoList)
+                        {
+                            p.Vehicle = null;
+                            p.Document = null;
+                        }
+                    }
+
+                    if (obj.Clearance != null)
+                    {
+                        if (obj.Clearance.K8Documents != null)
+                            foreach (var k in obj.Clearance.K8Documents)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Clearance = null;
+                            }
+                    }
+
+                    if (obj.Import != null)
+                    {
+                        if (obj.Import.BillOfLandingDocuments != null)
+                            foreach (var k in obj.Import.BillOfLandingDocuments)
+                            {
+                                //k.Document = null;
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Import = null;
+                            }
+                    }
+
+                    if (obj.Clearance != null)
+                    {
+                        if (obj.Clearance.K8Documents != null)
+                            foreach (var k in obj.Clearance.K8Documents)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Clearance = null;
+                            }
+
+                        if (obj.Clearance.ExportCertificateDocuments != null)
+                            foreach (var k in obj.Clearance.ExportCertificateDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Clearance = null;
+                            }
+                    }
+
+                    if (obj.Import != null)
+                    {
+                        if (obj.Import.BillOfLandingDocuments != null)
+                            foreach (var k in obj.Import.BillOfLandingDocuments)
+                            {
+                                //k.Document = null;
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Import = null;
+                            }
+                    }
+
+                    if (obj.Sale != null)
+                    {
+                        if (obj.Sale.CustomerIcDocuments != null)
+                            foreach (var k in obj.Sale.CustomerIcDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Sale = null;
+                            }
+                    }
+
+                    if (obj.Registration != null)
+                    {
+                        if (obj.Registration.InsuranceDocuments != null)
+                            foreach (var k in obj.Registration.InsuranceDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Registration = null;
+                            }
+
+                        if (obj.Registration.RoadTaxDocuments != null)
+                            foreach (var k in obj.Registration.RoadTaxDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Registration = null;
+                            }
+
+                        if (obj.Registration.ReceiptEDaftarDocuments != null)
+                            foreach (var k in obj.Registration.ReceiptEDaftarDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Registration = null;
+                            }
+
+                        if (obj.Registration.ReceiptKastamDocuments != null)
+                            foreach (var k in obj.Registration.ReceiptKastamDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Registration = null;
+                            }
+                    }
 
                 }
-                catch (Exception ex)
+
+                return Ok(new
                 {
-                }
+                    items,
+                    totalItems
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
             }
 
-            if (!string.IsNullOrEmpty(priceMax))
-            {
-                try
-                {
-                    query = query.Where(s => s.Pricing.RecommendedSalePrice <= decimal.Parse(priceMax));
-
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-
-            // Apply Model Filter (case-insensitive)
-            //if (!string.IsNullOrEmpty(model))
-            //{
-            //    query = query.Where(s => s.Vehicle.Model.Name.ToLower().Contains(model.ToLower()));
-            //}
-
-            // Apply Status Filter (case-insensitive)
-            //if (!string.IsNullOrEmpty(status))
-            //{
-            //    query = query.Where(s => s.StockStatusHistories.Any(h => h.StockStatus.Name.ToLower().Contains(status.ToLower())));
-            //}
-            // Apply filters
-            if (filters != null)
-            {
-                foreach (var filter in filters)
-                {
-                    if (filter.Key == "stockNo" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        query = query.Where(c => c.StockNo.ToLower().Contains(filter.Value.ToLower()));
-                    }
-
-                    if (filter.Key == "lotNo" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        query = query.Where(c => c.ShowRoom != null &&
-                                                 c.ShowRoom.LotNo != null &&
-                                                 c.ShowRoom.LotNo.ToLower().Contains(filter.Value.ToLower()));
-                    }
-
-                    if (filter.Key == "yearMonth" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        query = query.Where(c => c.Vehicle.Year.Contains(filter.Value));
-                    }
-
-                    if (filter.Key == "vehicleDescription" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        query = query.Where(c => c.Vehicle.Description.ToLower().Contains(filter.Value.ToLower()));
-                    }
-
-
-                    if (filter.Key == "brandModelName" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        query = query.Where(c => c.Vehicle.Brand.Name.ToLower().Contains(filter.Value.ToLower()) || c.Vehicle.Model.Name.ToLower().Contains(filter.Value.ToLower()));
-                    }
-
-                    if (filter.Key == "arrivalStatus" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        if (filter.Value.ToLower() == "i")
-                            query = query.Where(c => c.ArrivalState == ArrivalState.Incoming);
-                        if (filter.Value.ToLower() == "r")
-                            query = query.Where(c => c.ArrivalState == ArrivalState.Received);
-                    }
-                    if (filter.Key == "stockStatus" && !string.IsNullOrEmpty(filter.Value))
-                    {
-                        if (filter.Value.ToLower().Contains("open"))
-                            query = query.Where(c => c.IsOpen == true);
-                        if (filter.Value.ToLower().Contains("lou"))
-                            query = query.Where(c => c.IsLou == true);
-                        if (filter.Value.ToLower().Contains("sold"))
-                            query = query.Where(c => c.IsSold == true);
-                        if (filter.Value.ToLower().Contains("cancelled"))
-                            query = query.Where(c => c.IsCancelled == true);
-                        if (filter.Value.ToLower().Contains("booking"))
-                            query = query.Where(c => c.IsBooked == true);
-
-                    }
-
-                    //if (filter.Key == "phone" && !string.IsNullOrEmpty(filter.Value))
-                    //{
-                    //    query = query.Where(c => c.Phone.Contains(filter.Value));
-                    //}
-                    // Add more filters as needed
-                }
-            }
-
-            if(isOpen)
-            {
-                query = query.Where(c => c.IsOpen == true);
-            }
-
-            // Apply sorting
-            if (!string.IsNullOrEmpty(sortColumn))
-            {
-                query = sortAsc
-                    ? query.OrderByDynamic(sortColumn)
-                    : query.OrderByDescendingDynamic(sortColumn);
-            }
-
-            // Get total count before applying pagination
-            var totalItems = await query.CountAsync();
-
-            // Apply pagination
-            var items = await query
-                .Skip((page - 1) * itemsPerPage)
-                .Take(itemsPerPage)
-                .ToListAsync();
-
-            //var items = await query.ToListAsync();
-
-            // Remove circular references and other unwanted data
-            foreach (var obj in items)
-            {
-                foreach (var s in obj.StockStatusHistories)
-                    s.Stock = null;
-                if (obj.Vehicle != null && obj.Vehicle.Model != null)
-                    obj.Vehicle.Model.Brand = null;
-
-                if (obj.Vehicle != null && obj.Vehicle.VehiclePhotoList != null)
-                {
-                    foreach (var p in obj.Vehicle.VehiclePhotoList)
-                    {
-                        p.Vehicle = null;
-                        p.Document = null;
-                    }
-                }
-
-                if(obj.Clearance != null)
-                {
-                    if(obj.Clearance.K8Documents != null)
-                        foreach(var k in obj.Clearance.K8Documents)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Clearance = null;
-                        }
-                }
-
-                if (obj.Import != null)
-                {
-                    if (obj.Import.BillOfLandingDocuments!= null)
-                        foreach (var k in obj.Import.BillOfLandingDocuments)
-                        {
-                            //k.Document = null;
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Import = null;
-                        }
-                }
-
-                if (obj.Clearance != null)
-                {
-                    if (obj.Clearance.K8Documents != null)
-                        foreach (var k in obj.Clearance.K8Documents)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Clearance = null;
-                        }
-
-                    if (obj.Clearance.ExportCertificateDocuments != null)
-                        foreach (var k in obj.Clearance.ExportCertificateDocuments)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Clearance = null;
-                        }
-                }
-
-                if (obj.Import != null)
-                {
-                    if (obj.Import.BillOfLandingDocuments != null)
-                        foreach (var k in obj.Import.BillOfLandingDocuments)
-                        {
-                            //k.Document = null;
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Import = null;
-                        }
-                }
-
-                if (obj.Sale != null)
-                {
-                    if (obj.Sale.CustomerIcDocuments != null)
-                        foreach (var k in obj.Sale.CustomerIcDocuments)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Sale = null;
-                        }
-                }
-
-                if (obj.Registration != null)
-                {
-                    if (obj.Registration.InsuranceDocuments != null)
-                        foreach (var k in obj.Registration.InsuranceDocuments)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Registration = null;
-                        }
-
-                    if (obj.Registration.RoadTaxDocuments != null)
-                        foreach (var k in obj.Registration.RoadTaxDocuments)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Registration = null;
-                        }
-
-                    if (obj.Registration.ReceiptEDaftarDocuments != null)
-                        foreach (var k in obj.Registration.ReceiptEDaftarDocuments)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Registration = null;
-                        }
-
-                    if (obj.Registration.ReceiptKastamDocuments != null)
-                        foreach (var k in obj.Registration.ReceiptKastamDocuments)
-                        {
-                            if (k.Document != null)
-                                k.Document.Content = null;
-                            k.Registration = null;
-                        }
-                }
-
-            }
-
-            return Ok(new
-            {
-                items,
-                totalItems
-            });
 
 
         }
@@ -945,7 +1033,17 @@ namespace SPOT_API.Controllers
                     if (obj.Pricing.RecommendedSalePrice != prevObj.Pricing.RecommendedSalePrice)
                         obj.Pricing.LastPriceChange = DateTime.UtcNow;
 
-         
+                // Check for duplicate ChasisNo (only if ChasisNo is not null or empty)
+                if (!string.IsNullOrWhiteSpace(obj.Vehicle.ChasisNo))
+                {
+                    var duplicateChasisExists = await _context.Vehicles
+                        .AnyAsync(v => v.ChasisNo.ToLower() == obj.Vehicle.ChasisNo.ToLower() && v.Id != obj.VehicleId);
+
+                    if (duplicateChasisExists)
+                    {
+                        return BadRequest($"Chasis No '{obj.Vehicle.ChasisNo}' already exists for another vehicle. Please use a different Chasis No.");
+                    }
+                }
 
             _context.Entry(obj).State = EntityState.Modified;
             _context.Entry(obj.Vehicle).State = EntityState.Modified;
@@ -1089,6 +1187,18 @@ namespace SPOT_API.Controllers
                     var apCompany = new ApCompany();
                     await _context.ApCompanies.AddAsync(apCompany);
                     obj.ApCompanyId = apCompany.Id;
+
+                    // Check for duplicate ChasisNo (only if ChasisNo is not null or empty)
+                    if (obj.Vehicle != null && !string.IsNullOrWhiteSpace(obj.Vehicle.ChasisNo))
+                    {
+                        var duplicateChasisExists = await _context.Vehicles
+                            .AnyAsync(v => v.ChasisNo.ToLower() == obj.Vehicle.ChasisNo.ToLower());
+
+                        if (duplicateChasisExists)
+                        {
+                            return BadRequest($"Chasis No '{obj.Vehicle.ChasisNo}' already exists for another vehicle. Please use a different Chasis No.");
+                        }
+                    }
 
                     // Add stock object
                     await _context.Stocks.AddAsync(obj);

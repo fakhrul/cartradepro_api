@@ -117,6 +117,10 @@ namespace SPOT_API.Persistence
                 .HasIndex(p => p.StockNo)
                 .IsUnique();
 
+            modelBuilder.Entity<Vehicle>()
+                .HasIndex(v => v.ChasisNo)
+                .IsUnique();
+
             // Define composite key for RoleModulePermission
             modelBuilder.Entity<RoleModulePermission>()
                 .HasKey(rmp => new { rmp.RoleId, rmp.ModuleId });
