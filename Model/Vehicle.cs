@@ -33,6 +33,7 @@ namespace SPOT_API.Models
         /// </summary>
         //public string ModelShortName { get; set; }
         public string ChasisNo { get; set; }
+        public string CodeModel { get; set; }
         public string EngineNo { get; set; }
         public string EngineCapacity { get; set; }
         /// <summary>
