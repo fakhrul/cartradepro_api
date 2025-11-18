@@ -42,6 +42,10 @@ namespace SPOT_API.Models
 
         public DateTime BookingExpiryDate { get; set; } = DateTime.Now.ToUniversalTime();
 
+        public DateTime LouDate { get; set; } = DateTime.Now.ToUniversalTime();
+
+        public DateTime LouExpiryDate { get; set; } = DateTime.Now.ToUniversalTime();
+
         public decimal SalesmanCommisionAmount { get; set; }
         public decimal PromotionDiscountAmount{ get; set; }
 
