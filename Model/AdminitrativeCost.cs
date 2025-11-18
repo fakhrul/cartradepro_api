@@ -15,6 +15,10 @@ namespace SPOT_API.Models
         public decimal IntFsCostAmount { get; set; }
         public decimal InsuranceAmount { get; set; }
         public decimal PuspakomRegRoadTax { get; set; }
+        public decimal PuspakomAmount { get; set; }
+        public decimal TransferFeeAmount { get; set; }
+        public decimal RegistrationFeeAmount { get; set; }
+        public decimal RoadtaxAmount { get; set; }
         
             
         public virtual ICollection<AdminitrativeCostItem> AdminitrativeCostItems { get; set; }
