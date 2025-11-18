@@ -671,6 +671,7 @@ namespace SPOT_API.Controllers
                 .ThenInclude(c => c.CustomerIcDocuments)
                 .Include(c => c.Expense)
                 .ThenInclude(c => c.Expenses)
+                .ThenInclude(c => c.Document)
                 .Include(c => c.AdminitrativeCost)
                 .ThenInclude(c => c.AdminitrativeCostItems)
                 .Include(c => c.ApCompany)
@@ -3166,16 +3167,20 @@ namespace SPOT_API.Controllers
                 return BadRequest();
             }
 
-            var arrivalChecklist = new ExpenseItem
+            var expenseItem = new ExpenseItem
             {
                 ExpenseId = stock.ExpenseId,
+                ExpenseDate = obj.ExpenseDate,
+                Category = obj.Category,
                 Name = obj.Name,
+                BillOrInvoiceNo = obj.BillOrInvoiceNo,
                 Amount = obj.Amount,
                 Remarks = obj.Remarks,
+                DocumentId = obj.DocumentId
             };
 
-            _context.ExpenseItems.Add(arrivalChecklist);
-            stock.Expense.Expenses.Add(arrivalChecklist);
+            _context.ExpenseItems.Add(expenseItem);
+            stock.Expense.Expenses.Add(expenseItem);
 
             _context.Entry(stock.Expense).State = EntityState.Modified;
 
@@ -3248,9 +3253,13 @@ namespace SPOT_API.Controllers
                 return NotFound("Not found.");
             }
 
+            ba.ExpenseDate = obj.ExpenseDate;
+            ba.Category = obj.Category;
             ba.Name = obj.Name;
+            ba.BillOrInvoiceNo = obj.BillOrInvoiceNo;
             ba.Amount = obj.Amount;
             ba.Remarks = obj.Remarks;
+            ba.DocumentId = obj.DocumentId;
 
             _context.Entry(ba).State = EntityState.Modified;
 
