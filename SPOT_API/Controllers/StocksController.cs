@@ -281,6 +281,36 @@ namespace SPOT_API.Controllers
                                    .ThenByDescending(c => c.Vehicle.Model.Name)
                                    .ThenBy(c => c.StockNo);
                     }
+                    else if (sortColumn == "lotNo")
+                    {
+                        // Custom sorting for lotNo (ShowRoom.LotNo)
+                        query = sortAsc
+                            ? query.OrderBy(c => c.ShowRoom.LotNo ?? "")
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => c.ShowRoom.LotNo ?? "")
+                                   .ThenBy(c => c.StockNo);
+                    }
+                    else if (sortColumn == "yearMonth")
+                    {
+                        // Custom sorting for yearMonth (Vehicle.Year + Month combined)
+                        // Nulls go to the end for both ascending and descending
+                        query = sortAsc
+                            ? query.OrderBy(c => string.IsNullOrEmpty(c.Vehicle.Year) ? "9999" : c.Vehicle.Year)
+                                   .ThenBy(c => string.IsNullOrEmpty(c.Vehicle.Month) ? "99" : c.Vehicle.Month.PadLeft(2, '0'))
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => string.IsNullOrEmpty(c.Vehicle.Year) ? "0000" : c.Vehicle.Year)
+                                   .ThenByDescending(c => string.IsNullOrEmpty(c.Vehicle.Month) ? "00" : c.Vehicle.Month.PadLeft(2, '0'))
+                                   .ThenBy(c => c.StockNo);
+                    }
+                    else if (sortColumn == "price")
+                    {
+                        // Custom sorting for price (Pricing.RecommendedSalePrice)
+                        query = sortAsc
+                            ? query.OrderBy(c => c.Pricing.RecommendedSalePrice)
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => c.Pricing.RecommendedSalePrice)
+                                   .ThenBy(c => c.StockNo);
+                    }
                     else
                     {
                         query = sortAsc
