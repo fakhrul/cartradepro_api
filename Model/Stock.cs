@@ -11,6 +11,7 @@ namespace SPOT_API.Models
     {
 
         public DateTime RegistrationDate { get; set; } = DateTime.Now.ToUniversalTime();
+        public DateTime? MovedToStockAt { get; set; }
 
         public string StockNo { get; set; }
 

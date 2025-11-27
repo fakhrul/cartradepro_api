@@ -488,6 +488,7 @@ return BadRequest(ex.Message);
                     var obj = new Stock();
 
                     obj.StockNo = toBuy.StockNo;
+                    obj.MovedToStockAt = DateTime.UtcNow;
 
                     if (obj.StockStatusHistories == null)
                         obj.StockStatusHistories = new List<StockStatusHistory>();

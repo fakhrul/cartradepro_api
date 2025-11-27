@@ -311,6 +311,25 @@ namespace SPOT_API.Controllers
                             : query.OrderByDescending(c => c.Pricing.RecommendedSalePrice)
                                    .ThenBy(c => c.StockNo);
                     }
+                    else if (sortColumn == "arrivalStatus")
+                    {
+                        // Custom sorting for arrivalStatus (ArrivalState enum)
+                        query = sortAsc
+                            ? query.OrderBy(c => c.ArrivalState)
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => c.ArrivalState)
+                                   .ThenBy(c => c.StockNo);
+                    }
+                    else if (sortColumn == "eta")
+                    {
+                        // Custom sorting for eta (Import.EstimateDateOfArrival)
+                        // Nulls go to the end for both ascending and descending
+                        query = sortAsc
+                            ? query.OrderBy(c => c.Import.EstimateDateOfArrival == null ? DateTime.MaxValue : c.Import.EstimateDateOfArrival)
+                                   .ThenBy(c => c.StockNo)
+                            : query.OrderByDescending(c => c.Import.EstimateDateOfArrival == null ? DateTime.MinValue : c.Import.EstimateDateOfArrival)
+                                   .ThenBy(c => c.StockNo);
+                    }
                     else
                     {
                         query = sortAsc

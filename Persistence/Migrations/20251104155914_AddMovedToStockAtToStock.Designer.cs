@@ -12,8 +12,8 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    [Migration("20251118052726_AddUniqueIndexToVehicleChasisNo")]
-    partial class AddUniqueIndexToVehicleChasisNo
+    [Migration("20251104155914_AddMovedToStockAtToStock")]
+    partial class AddMovedToStockAtToStock
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -2648,9 +2648,6 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BrandId");
-
-                    b.HasIndex("ChasisNo")
-                        .IsUnique();
 
                     b.HasIndex("ModelId");
 
