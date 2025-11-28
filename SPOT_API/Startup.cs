@@ -158,6 +158,7 @@ namespace SPOT_API
                         new AutoWrapperExcludePath("/api/Documents/File", ExcludeMode.StartWith),
                         new AutoWrapperExcludePath("/Hello", ExcludeMode.StartWith),
                         new AutoWrapperExcludePath("/api/FingerPrints/DownloadTemplate", ExcludeMode.StartWith),
+                        new AutoWrapperExcludePath("/api/Stocks/bulk-import/template", ExcludeMode.StartWith),
                         
                         // StartWith
                         //new AutoWrapperExcludePaths("/dapr", ExcludeMode.StartWith),

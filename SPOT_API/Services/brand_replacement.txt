@@ -1,0 +1,13 @@
+                                // Set brand if provided - auto-create if doesn't exist (case-insensitive)
+                                if (!string.IsNullOrWhiteSpace(row.BrandName))
+                                {
+                                    var brandKey = row.BrandName.ToLower();
+                                    if (!brands.ContainsKey(brandKey))
+                                    {
+                                        var newBrand = new Brand { Name = row.BrandName.Trim() };
+                                        await _context.Brands.AddAsync(newBrand);
+                                        await _context.SaveChangesAsync();
+                                        brands[brandKey] = newBrand.Id;
+                                    }
+                                    vehicle.BrandId = brands[brandKey];
+                                }

@@ -1,0 +1,75 @@
+--- StockImportService.cs.orig
++++ StockImportService.cs
+@@ -348,29 +348,61 @@
+                                     Color = row.Color?.Trim()
+                                 };
+
+-                                // Set brand if provided
+-                                if (!string.IsNullOrWhiteSpace(row.BrandName) && brands.ContainsKey(row.BrandName.ToLower()))
++                                // Set brand if provided - auto-create if doesn't exist
++                                if (!string.IsNullOrWhiteSpace(row.BrandName))
+                                 {
+-                                    vehicle.BrandId = brands[row.BrandName.ToLower()];
++                                    var brandKey = row.BrandName.ToLower();
++                                    if (!brands.ContainsKey(brandKey))
++                                    {
++                                        var newBrand = new Brand { Name = row.BrandName.Trim() };
++                                        await _context.Brands.AddAsync(newBrand);
++                                        await _context.SaveChangesAsync();
++                                        brands[brandKey] = newBrand.Id;
++                                    }
++                                    vehicle.BrandId = brands[brandKey];
+                                 }
+
+-                                // Set model if provided
+-                                if (!string.IsNullOrWhiteSpace(row.ModelName) && models.ContainsKey(row.ModelName.ToLower()))
++                                // Set model if provided - auto-create if doesn't exist
++                                if (!string.IsNullOrWhiteSpace(row.ModelName))
+                                 {
+-                                    vehicle.ModelId = models[row.ModelName.ToLower()];
++                                    var modelKey = row.ModelName.ToLower();
++                                    if (!models.ContainsKey(modelKey))
++                                    {
++                                        var newModel = new Model { Name = row.ModelName.Trim() };
++                                        await _context.Models.AddAsync(newModel);
++                                        await _context.SaveChangesAsync();
++                                        models[modelKey] = newModel.Id;
++                                    }
++                                    vehicle.ModelId = models[modelKey];
+                                 }
+
+-                                // Set vehicle type if provided
+-                                if (!string.IsNullOrWhiteSpace(row.VehicleTypeName) && vehicleTypes.ContainsKey(row.VehicleTypeName.ToLower()))
++                                // Set vehicle type if provided - auto-create if doesn't exist
++                                if (!string.IsNullOrWhiteSpace(row.VehicleTypeName))
+                                 {
+-                                    vehicle.VehicleTypeId = vehicleTypes[row.VehicleTypeName.ToLower()];
++                                    var vehicleTypeKey = row.VehicleTypeName.ToLower();
++                                    if (!vehicleTypes.ContainsKey(vehicleTypeKey))
++                                    {
++                                        var newVehicleType = new VehicleType { Name = row.VehicleTypeName.Trim() };
++                                        await _context.VehicleTypes.AddAsync(newVehicleType);
++                                        await _context.SaveChangesAsync();
++                                        vehicleTypes[vehicleTypeKey] = newVehicleType.Id;
++                                    }
++                                    vehicle.VehicleTypeId = vehicleTypes[vehicleTypeKey];
+                                 }
+
+                                 var purchase = new Purchase();
+
+-                                // Set supplier if provided
+-                                if (!string.IsNullOrWhiteSpace(row.SupplierName) && suppliers.ContainsKey(row.SupplierName.ToLower()))
++                                // Set supplier if provided - auto-create if doesn't exist
++                                if (!string.IsNullOrWhiteSpace(row.SupplierName))
+                                 {
+-                                    purchase.SupplierId = suppliers[row.SupplierName.ToLower()];
++                                    var supplierKey = row.SupplierName.ToLower();
++                                    if (!suppliers.ContainsKey(supplierKey))
++                                    {
++                                        var newSupplier = new Supplier { Name = row.SupplierName.Trim() };
++                                        await _context.Suppliers.AddAsync(newSupplier);
++                                        await _context.SaveChangesAsync();
++                                        suppliers[supplierKey] = newSupplier.Id;
++                                    }
++                                    purchase.SupplierId = suppliers[supplierKey];
+                                 }

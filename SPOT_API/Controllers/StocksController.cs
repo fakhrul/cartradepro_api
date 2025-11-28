@@ -20,12 +20,14 @@ namespace SPOT_API.Controllers
         private readonly SpotDBContext _context;
         private readonly IUserAccessor _userAccessor;
         private readonly UserManager<AppUser> _userManager;
+        private readonly Services.StockImportService _importService;
 
-        public StocksController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
+        public StocksController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager, Services.StockImportService importService)
         {
             _context = context;
             _userAccessor = userAccessor;
             _userManager = userManager;
+            _importService = importService;
         }
 
         // GET: api/Stocks
@@ -3645,6 +3647,84 @@ namespace SPOT_API.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"An error occurred while updating the stock number: {ex.Message}");
+
+            }
+        }
+        // POST: api/Stocks/bulk-upload
+        // Validates CSV file and returns validation results
+        [HttpPost("bulk-upload")]
+        public async Task<ActionResult<StockImportResultDto>> BulkUpload([FromForm] IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { message = "No file uploaded or file is empty" });
+                }
+
+                if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                {
+                    return BadRequest(new { message = "Only CSV files are allowed" });
+                }
+
+                using (var stream = file.OpenReadStream())
+                {
+                    var result = await _importService.ValidateImportAsync(stream);
+                    return Ok(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Error processing file: {ex.Message}" });
+            }
+        }
+
+        // POST: api/Stocks/bulk-import/confirm
+        // Executes the import after validation
+        [HttpPost("bulk-import/confirm")]
+        public async Task<ActionResult<StockImportCompleteDto>> ConfirmBulkImport([FromBody] StockImportConfirmDto confirmDto)
+        {
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                if (user == null)
+                    return Unauthorized();
+
+                if (user.ProfileId == null)
+                    return BadRequest(new { message = "User profile not found" });
+
+                var result = await _importService.ExecuteImportAsync(
+                    confirmDto.ValidationToken,
+                    confirmDto.ImportOnlyValid,
+                    (Guid)user.ProfileId
+                );
+
+                if (!result.Success)
+                {
+                    return BadRequest(result);
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Error executing import: {ex.Message}" });
+            }
+        }
+
+        // GET: api/Stocks/bulk-import/template
+        // Downloads CSV template file
+        [HttpGet("bulk-import/template")]
+        public IActionResult DownloadTemplate()
+        {
+            try
+            {
+                var templateBytes = _importService.GenerateTemplate();
+                return File(templateBytes, "text/csv", "stock_import_template.csv");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Error generating template: {ex.Message}" });
             }
         }
     }
