@@ -1149,6 +1149,37 @@ namespace SPOT_API.Controllers
             return NoContent();
         }
 
+        // PUT: api/Stocks/UpdateNullMovedToStockDates
+        // One-time endpoint to update all stocks with null MovedToStockAt to default date
+        [HttpPut("UpdateNullMovedToStockDates")]
+        public async Task<IActionResult> UpdateNullMovedToStockDates()
+        {
+            try
+            {
+                var defaultDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+                var stocksWithNullDates = await _context.Stocks
+                    .Where(s => s.MovedToStockAt == null)
+                    .ToListAsync();
+
+                foreach (var stock in stocksWithNullDates)
+                {
+                    stock.MovedToStockAt = defaultDate;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new {
+                    message = $"Updated {stocksWithNullDates.Count} stock records to default date (01/01/2025)",
+                    count = stocksWithNullDates.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Error updating stock dates", error = ex.Message });
+            }
+        }
+
         // POST: api/Stocks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -1173,6 +1204,9 @@ namespace SPOT_API.Controllers
                         StockStatusId = stockStatus.Id,
                         StockId = obj.Id
                     });
+
+                    // Set the record date when stock is created
+                    obj.MovedToStockAt = DateTime.UtcNow;
 
                     // Initialize other entities
                     var vehicle = new Vehicle();
