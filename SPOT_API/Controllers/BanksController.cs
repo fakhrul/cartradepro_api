@@ -129,24 +129,40 @@ namespace SPOT_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-            if (user == null)
-                return Unauthorized();
-
-
-
-            var category = await _context.Banks
-                .FirstOrDefaultAsync(c => c.Id == id);
-            if (category == null)
+            try
             {
-                return NotFound();
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                if (user == null)
+                    return Unauthorized();
+
+                var bank = await _context.Banks
+                    .FirstOrDefaultAsync(c => c.Id == id);
+                if (bank == null)
+                {
+                    return NotFound();
+                }
+
+                // Unlink all Loans that reference this bank (set BankId to null)
+                var loans = await _context.Loans.Where(l => l.BankId == id).ToListAsync();
+                foreach (var loan in loans)
+                {
+                    loan.BankId = null;
+                }
+
+                // Now delete the bank
+                _context.Banks.Remove(bank);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-
-            _context.Banks.Remove(category);
-            await _context.SaveChangesAsync();
-
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    message = "Error deleting bank",
+                    error = ex.Message
+                });
+            }
         }
 
         private bool IsExists(Guid id)
