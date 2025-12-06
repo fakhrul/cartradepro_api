@@ -34,6 +34,26 @@ namespace SPOT_API.Models
 
         public bool IsEnable { get; set; }
 
+        // Company Information
+        [ForeignKey("SubCompany")]
+        public Guid? SubCompanyId { get; set; }
+        public virtual SubCompany SubCompany { get; set; }
+
+        public string BankAccount { get; set; }
+        public string TinNo { get; set; }
+        public string CompanyName { get; set; }
+        public string CompanyBankAccount { get; set; }
+        public string Address { get; set; }
+
+        // Document References
+        [ForeignKey("IcCopyDocument")]
+        public Guid? IcCopyDocumentId { get; set; }
+        public virtual Document IcCopyDocument { get; set; }
+
+        [ForeignKey("PhotoDocument")]
+        public Guid? PhotoDocumentId { get; set; }
+        public virtual Document PhotoDocument { get; set; }
+
         public virtual ICollection<ProfilePackage> ProfilePackages { get; set; }
 
     }

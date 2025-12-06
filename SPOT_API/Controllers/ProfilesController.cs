@@ -415,9 +415,25 @@ namespace SPOT_API.Controllers
 
                 return CreatedAtAction("GetProfile", new { id = profile.Id }, profile);
             }
+            catch (DbUpdateException ex)
+            {
+                // Check if it's a unique constraint violation
+                if (ex.InnerException is Npgsql.PostgresException postgresException)
+                {
+                    if (postgresException.SqlState == "23505") // Unique constraint violation
+                    {
+                        if (postgresException.ConstraintName == "IX_Profiles_Email")
+                        {
+                            return BadRequest("Email address already exists. Please use a different email.");
+                        }
+                        return BadRequest($"A unique constraint violation occurred: {postgresException.MessageText}");
+                    }
+                }
+                throw;
+            }
             catch (Exception ex)
             {
-                throw ex;
+                throw;
             }
 
         }
@@ -700,6 +716,172 @@ namespace SPOT_API.Controllers
         private bool ProfileExists(Guid id)
         {
             return _context.Profiles.Any(e => e.Id == id);
+        }
+
+        // PUT: api/Profiles/{id}/ic-copy-documents
+        [HttpPut("{id}/ic-copy-documents")]
+        public async Task<IActionResult> PutUpdateIcCopyDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var profile = await _context.Profiles.FirstOrDefaultAsync(c => c.Id == id);
+
+            if (profile == null)
+            {
+                return BadRequest();
+            }
+
+            // Update IC Copy Document
+            if (objs != null && objs.Count > 0)
+            {
+                profile.IcCopyDocumentId = objs[0].Id;
+            }
+
+            _context.Entry(profile).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProfileExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // PUT: api/Profiles/{id}/photo-documents
+        [HttpPut("{id}/photo-documents")]
+        public async Task<IActionResult> PutUpdatePhotoDocuments(Guid id, List<VehicleImageDto> objs)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var profile = await _context.Profiles.FirstOrDefaultAsync(c => c.Id == id);
+
+            if (profile == null)
+            {
+                return BadRequest();
+            }
+
+            // Update Photo Document
+            if (objs != null && objs.Count > 0)
+            {
+                profile.PhotoDocumentId = objs[0].Id;
+            }
+
+            _context.Entry(profile).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProfileExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/Profiles/{id}/ic-copy-documents
+        [HttpDelete("{id}/ic-copy-documents")]
+        public async Task<IActionResult> DeleteIcCopyDocument(Guid id)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var profile = await _context.Profiles.FirstOrDefaultAsync(c => c.Id == id);
+
+            if (profile == null)
+            {
+                return NotFound();
+            }
+
+            profile.IcCopyDocumentId = null;
+            _context.Entry(profile).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProfileExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/Profiles/{id}/photo-documents
+        [HttpDelete("{id}/photo-documents")]
+        public async Task<IActionResult> DeletePhotoDocument(Guid id)
+        {
+            var user = await _context.Users
+                .Include(c => c.Profile)
+                .FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+            if (user == null)
+                return Unauthorized();
+
+            var profile = await _context.Profiles.FirstOrDefaultAsync(c => c.Id == id);
+
+            if (profile == null)
+            {
+                return NotFound();
+            }
+
+            profile.PhotoDocumentId = null;
+            _context.Entry(profile).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProfileExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
     }
 }
