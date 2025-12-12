@@ -61,6 +61,7 @@ namespace SPOT_API.Controllers
                 return Unauthorized();
 
             var objs = await _context.Profiles
+                .Include(c => c.SubCompany)
                 //.Include(c => c.Leader)
                 //.Where(c => c.Role == "agent")
                 .ToListAsync();
@@ -265,6 +266,9 @@ namespace SPOT_API.Controllers
                 .Include("Leader.ProfilePackages")
                 //.Include("ProfilePackages.Profile")
                 .Include(c => c.Leader)
+                .Include(c => c.IcCopyDocument)
+                .Include(c => c.PhotoDocument)
+                .Include(c => c.SubCompany)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (profile == null)
