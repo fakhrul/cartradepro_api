@@ -1534,11 +1534,11 @@ namespace SPOT_API.Controllers
                 .Include(s => s.Registration).ThenInclude(r => r.ReceiptEDaftarDocuments)
                 .Include(s => s.Registration).ThenInclude(r => r.ReceiptKastamDocuments)
                 .Include(s => s.Sale).ThenInclude(s => s.CustomerIcDocuments)
-                .Include(s => s.Sale).ThenInclude(s => s.Loan).ThenInclude(l => l.LouDocuments)
+                .Include(s => s.Sale).ThenInclude(s => s.Loan).ThenInclude(l => l.LetterOfUndertakingDocuments)
                 .Include(s => s.Pricing)
                 .Include(s => s.ArrivalChecklist).ThenInclude(a => a.ArrivalChecklists)
-                .Include(s => s.Expense).ThenInclude(e => e.ExpenseItems)
-                .Include(s => s.AdminitrativeCost).ThenInclude(a => a.AdministrativeCostItems)
+                .Include(s => s.Expense).ThenInclude(e => e.Expenses)
+                .Include(s => s.AdminitrativeCost).ThenInclude(a => a.AdminitrativeCostItems)
                 .Include(s => s.Advertisement)
                 .Include(s => s.ApCompany)
                 .Include(s => s.ShowRoom)
@@ -1563,49 +1563,49 @@ namespace SPOT_API.Controllers
                 _context.VehiclePhotos.RemoveRange(stock.Vehicle.VehiclePhotoList);
 
             if (stock.Import?.BillOfLandingDocuments != null && stock.Import.BillOfLandingDocuments.Any())
-                _context.Documents.RemoveRange(stock.Import.BillOfLandingDocuments);
+                _context.BillOfLandingDocuments.RemoveRange(stock.Import.BillOfLandingDocuments);
 
             if (stock.Clearance != null)
             {
                 if (stock.Clearance.K8Documents != null && stock.Clearance.K8Documents.Any())
-                    _context.Documents.RemoveRange(stock.Clearance.K8Documents);
+                    _context.K8Documents.RemoveRange(stock.Clearance.K8Documents);
                 if (stock.Clearance.K1Documents != null && stock.Clearance.K1Documents.Any())
-                    _context.Documents.RemoveRange(stock.Clearance.K1Documents);
+                    _context.K1Documents.RemoveRange(stock.Clearance.K1Documents);
                 if (stock.Clearance.ExportCertificateDocuments != null && stock.Clearance.ExportCertificateDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Clearance.ExportCertificateDocuments);
+                    _context.ExportCertificateDocuments.RemoveRange(stock.Clearance.ExportCertificateDocuments);
             }
 
             if (stock.Registration != null)
             {
                 if (stock.Registration.JpjEHakMilikDocuments != null && stock.Registration.JpjEHakMilikDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.JpjEHakMilikDocuments);
+                    _context.JpjEHakMilikDocuments.RemoveRange(stock.Registration.JpjEHakMilikDocuments);
                 if (stock.Registration.JpjEDaftarDocuments != null && stock.Registration.JpjEDaftarDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.JpjEDaftarDocuments);
+                    _context.JpjEDaftarDocuments.RemoveRange(stock.Registration.JpjEDaftarDocuments);
                 if (stock.Registration.JpjGeranDocuments != null && stock.Registration.JpjGeranDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.JpjGeranDocuments);
+                    _context.JpjGeranDocuments.RemoveRange(stock.Registration.JpjGeranDocuments);
                 if (stock.Registration.PuspakomB2SlipDocuments != null && stock.Registration.PuspakomB2SlipDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.PuspakomB2SlipDocuments);
+                    _context.PuspakomB2SlipDocuments.RemoveRange(stock.Registration.PuspakomB2SlipDocuments);
                 if (stock.Registration.PuspakomB7SlipDocuments != null && stock.Registration.PuspakomB7SlipDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.PuspakomB7SlipDocuments);
+                    _context.PuspakomB7SlipDocuments.RemoveRange(stock.Registration.PuspakomB7SlipDocuments);
                 if (stock.Registration.InsuranceDocuments != null && stock.Registration.InsuranceDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.InsuranceDocuments);
+                    _context.InsuranceDocuments.RemoveRange(stock.Registration.InsuranceDocuments);
                 if (stock.Registration.RoadTaxDocuments != null && stock.Registration.RoadTaxDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.RoadTaxDocuments);
+                    _context.RoadTaxDocuments.RemoveRange(stock.Registration.RoadTaxDocuments);
                 if (stock.Registration.ReceiptEDaftarDocuments != null && stock.Registration.ReceiptEDaftarDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.ReceiptEDaftarDocuments);
+                    _context.ReceiptEDaftarDocuments.RemoveRange(stock.Registration.ReceiptEDaftarDocuments);
                 if (stock.Registration.ReceiptKastamDocuments != null && stock.Registration.ReceiptKastamDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Registration.ReceiptKastamDocuments);
+                    _context.ReceiptKastamDocuments.RemoveRange(stock.Registration.ReceiptKastamDocuments);
             }
 
             if (stock.Sale != null)
             {
                 if (stock.Sale.CustomerIcDocuments != null && stock.Sale.CustomerIcDocuments.Any())
-                    _context.Documents.RemoveRange(stock.Sale.CustomerIcDocuments);
+                    _context.CustomerIcDocuments.RemoveRange(stock.Sale.CustomerIcDocuments);
 
                 if (stock.Sale.Loan != null)
                 {
-                    if (stock.Sale.Loan.LouDocuments != null && stock.Sale.Loan.LouDocuments.Any())
-                        _context.Documents.RemoveRange(stock.Sale.Loan.LouDocuments);
+                    if (stock.Sale.Loan.LetterOfUndertakingDocuments != null && stock.Sale.Loan.LetterOfUndertakingDocuments.Any())
+                        _context.LetterOfUndertakingDocuments.RemoveRange(stock.Sale.Loan.LetterOfUndertakingDocuments);
                     _context.Loans.Remove(stock.Sale.Loan);
                 }
             }
@@ -1613,11 +1613,11 @@ namespace SPOT_API.Controllers
             if (stock.ArrivalChecklist?.ArrivalChecklists != null && stock.ArrivalChecklist.ArrivalChecklists.Any())
                 _context.ArrivalChecklistItems.RemoveRange(stock.ArrivalChecklist.ArrivalChecklists);
 
-            if (stock.Expense?.ExpenseItems != null && stock.Expense.ExpenseItems.Any())
-                _context.ExpenseItems.RemoveRange(stock.Expense.ExpenseItems);
+            if (stock.Expense?.Expenses != null && stock.Expense.Expenses.Any())
+                _context.ExpenseItems.RemoveRange(stock.Expense.Expenses);
 
-            if (stock.AdminitrativeCost?.AdministrativeCostItems != null && stock.AdminitrativeCost.AdministrativeCostItems.Any())
-                _context.AdministrativeCostItems.RemoveRange(stock.AdminitrativeCost.AdministrativeCostItems);
+            if (stock.AdminitrativeCost?.AdminitrativeCostItems != null && stock.AdminitrativeCost.AdminitrativeCostItems.Any())
+                _context.AdminitrativeCostItems.RemoveRange(stock.AdminitrativeCost.AdminitrativeCostItems);
 
             // 3. Delete owned entities (parent entities that Stock directly owns)
             if (stock.Vehicle != null)
