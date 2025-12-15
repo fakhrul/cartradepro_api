@@ -314,15 +314,19 @@ namespace SPOT_API.Services
 
             try
             {
+                Console.WriteLine($"[IMPORT] Starting import with token: {validationToken}, userId: {userId}");
+
                 // Retrieve cached validation data
                 if (!_validationCache.ContainsKey(validationToken))
                 {
+                    Console.WriteLine($"[IMPORT] ERROR: Validation token not found in cache");
                     result.Success = false;
                     result.Message = "Invalid or expired validation token";
                     return result;
                 }
 
                 var rows = _validationCache[validationToken];
+                Console.WriteLine($"[IMPORT] Found {rows.Count} rows to import");
 
                 // Load reference data
                 var brands = await _context.Brands.ToDictionaryAsync(b => b.Name.ToLower(), b => b.Id);
@@ -331,13 +335,17 @@ namespace SPOT_API.Services
                 var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.Name.ToLower(), s => s.Id);
                 var showrooms = await _context.ShowRooms.ToDictionaryAsync(s => s.LotNo.ToLower(), s => s.Id);
                 var draftStatus = await _context.StockStatuses.FirstOrDefaultAsync(s => s.Name == "Draft");
+                Console.WriteLine($"[IMPORT] Loaded reference data: {brands.Count} brands, {models.Count} models, {suppliers.Count} suppliers, {showrooms.Count} showrooms");
+                Console.WriteLine($"[IMPORT] Draft status: {(draftStatus != null ? draftStatus.Id.ToString() : "NULL")}");
 
                 using (var transaction = await _context.Database.BeginTransactionAsync())
                 {
+                    Console.WriteLine($"[IMPORT] Transaction started");
                     try
                     {
                         foreach (var row in rows)
                         {
+                            Console.WriteLine($"[IMPORT] Processing row {row.RowNumber}: StockNo={row.StockNo}");
                             try
                             {
                                 // Create all child entities (following Stock.Post pattern)
@@ -543,11 +551,14 @@ namespace SPOT_API.Services
                                 await _context.Clearances.AddAsync(clearance);
                                 await _context.Sales.AddAsync(sale);
                                 await _context.Stocks.AddAsync(stock);
+                                Console.WriteLine($"[IMPORT] Row {row.RowNumber}: Stock entity created with ID={stock.Id}, StockNo={stock.StockNo}");
 
                                 result.ImportedCount++;
                             }
                             catch (Exception rowEx)
                             {
+                                Console.WriteLine($"[IMPORT] Row {row.RowNumber} ERROR: {rowEx.Message}");
+                                Console.WriteLine($"[IMPORT] Stack trace: {rowEx.StackTrace}");
                                 result.FailedCount++;
                                 result.Errors.Add(new StockImportErrorDto
                                 {
@@ -559,23 +570,31 @@ namespace SPOT_API.Services
 
                                 if (!importOnlyValid)
                                 {
+                                    Console.WriteLine($"[IMPORT] Rolling back entire transaction due to error");
                                     throw; // Rollback entire transaction
                                 }
                             }
                         }
 
+                        Console.WriteLine($"[IMPORT] Saving changes to database...");
                         await _context.SaveChangesAsync();
+                        Console.WriteLine($"[IMPORT] Changes saved. Committing transaction...");
                         await transaction.CommitAsync();
+                        Console.WriteLine($"[IMPORT] Transaction committed successfully!");
 
                         result.Success = true;
                         result.Message = $"Successfully imported {result.ImportedCount} stocks. Failed: {result.FailedCount}";
 
                         // Clear cache
                         _validationCache.Remove(validationToken);
+                        Console.WriteLine($"[IMPORT] Cache cleared for token: {validationToken}");
                     }
                     catch (Exception ex)
                     {
+                        Console.WriteLine($"[IMPORT] TRANSACTION ERROR: {ex.Message}");
+                        Console.WriteLine($"[IMPORT] Stack trace: {ex.StackTrace}");
                         await transaction.RollbackAsync();
+                        Console.WriteLine($"[IMPORT] Transaction rolled back");
                         result.Success = false;
                         result.Message = $"Import failed: {ex.Message}";
                         result.ImportedCount = 0;
@@ -584,10 +603,13 @@ namespace SPOT_API.Services
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[IMPORT] EXECUTION ERROR: {ex.Message}");
+                Console.WriteLine($"[IMPORT] Stack trace: {ex.StackTrace}");
                 result.Success = false;
                 result.Message = $"Import execution error: {ex.Message}";
             }
 
+            Console.WriteLine($"[IMPORT] Import completed. Success: {result.Success}, Imported: {result.ImportedCount}, Failed: {result.FailedCount}");
             return result;
         }
 
