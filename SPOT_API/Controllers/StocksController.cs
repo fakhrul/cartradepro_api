@@ -1511,18 +1511,155 @@ namespace SPOT_API.Controllers
             if (user == null)
                 return Unauthorized();
 
-
-
-            var category = await _context.Stocks
+            // Load stock with all related entities to enable proper cascade deletion
+            var stock = await _context.Stocks
+                .Include(s => s.RemarksList)
+                .Include(s => s.StockStatusHistories)
+                .Include(s => s.Vehicle).ThenInclude(v => v.VehiclePhotoList)
+                .Include(s => s.Vehicle).ThenInclude(v => v.Brand)
+                .Include(s => s.Vehicle).ThenInclude(v => v.Model)
+                .Include(s => s.Vehicle).ThenInclude(v => v.VehicleType)
+                .Include(s => s.Purchase).ThenInclude(p => p.Supplier)
+                .Include(s => s.Import).ThenInclude(i => i.BillOfLandingDocuments)
+                .Include(s => s.Clearance).ThenInclude(c => c.K8Documents)
+                .Include(s => s.Clearance).ThenInclude(c => c.K1Documents)
+                .Include(s => s.Clearance).ThenInclude(c => c.ExportCertificateDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.JpjEHakMilikDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.JpjEDaftarDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.JpjGeranDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.PuspakomB2SlipDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.PuspakomB7SlipDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.InsuranceDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.RoadTaxDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.ReceiptEDaftarDocuments)
+                .Include(s => s.Registration).ThenInclude(r => r.ReceiptKastamDocuments)
+                .Include(s => s.Sale).ThenInclude(s => s.CustomerIcDocuments)
+                .Include(s => s.Sale).ThenInclude(s => s.Loan).ThenInclude(l => l.LouDocuments)
+                .Include(s => s.Pricing)
+                .Include(s => s.ArrivalChecklist).ThenInclude(a => a.ArrivalChecklists)
+                .Include(s => s.Expense).ThenInclude(e => e.ExpenseItems)
+                .Include(s => s.AdminitrativeCost).ThenInclude(a => a.AdministrativeCostItems)
+                .Include(s => s.Advertisement)
+                .Include(s => s.ApCompany)
+                .Include(s => s.ShowRoom)
                 .FirstOrDefaultAsync(c => c.Id == id);
-            if (category == null)
+
+            if (stock == null)
             {
                 return NotFound();
             }
 
-            _context.Stocks.Remove(category);
-            await _context.SaveChangesAsync();
+            // Delete in proper order to avoid foreign key violations
 
+            // 1. Delete Stock's direct dependents
+            if (stock.RemarksList != null && stock.RemarksList.Any())
+                _context.Remarks.RemoveRange(stock.RemarksList);
+
+            if (stock.StockStatusHistories != null && stock.StockStatusHistories.Any())
+                _context.StockStatusHistories.RemoveRange(stock.StockStatusHistories);
+
+            // 2. Delete nested document collections and child entities
+            if (stock.Vehicle?.VehiclePhotoList != null && stock.Vehicle.VehiclePhotoList.Any())
+                _context.VehiclePhotos.RemoveRange(stock.Vehicle.VehiclePhotoList);
+
+            if (stock.Import?.BillOfLandingDocuments != null && stock.Import.BillOfLandingDocuments.Any())
+                _context.Documents.RemoveRange(stock.Import.BillOfLandingDocuments);
+
+            if (stock.Clearance != null)
+            {
+                if (stock.Clearance.K8Documents != null && stock.Clearance.K8Documents.Any())
+                    _context.Documents.RemoveRange(stock.Clearance.K8Documents);
+                if (stock.Clearance.K1Documents != null && stock.Clearance.K1Documents.Any())
+                    _context.Documents.RemoveRange(stock.Clearance.K1Documents);
+                if (stock.Clearance.ExportCertificateDocuments != null && stock.Clearance.ExportCertificateDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Clearance.ExportCertificateDocuments);
+            }
+
+            if (stock.Registration != null)
+            {
+                if (stock.Registration.JpjEHakMilikDocuments != null && stock.Registration.JpjEHakMilikDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.JpjEHakMilikDocuments);
+                if (stock.Registration.JpjEDaftarDocuments != null && stock.Registration.JpjEDaftarDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.JpjEDaftarDocuments);
+                if (stock.Registration.JpjGeranDocuments != null && stock.Registration.JpjGeranDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.JpjGeranDocuments);
+                if (stock.Registration.PuspakomB2SlipDocuments != null && stock.Registration.PuspakomB2SlipDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.PuspakomB2SlipDocuments);
+                if (stock.Registration.PuspakomB7SlipDocuments != null && stock.Registration.PuspakomB7SlipDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.PuspakomB7SlipDocuments);
+                if (stock.Registration.InsuranceDocuments != null && stock.Registration.InsuranceDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.InsuranceDocuments);
+                if (stock.Registration.RoadTaxDocuments != null && stock.Registration.RoadTaxDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.RoadTaxDocuments);
+                if (stock.Registration.ReceiptEDaftarDocuments != null && stock.Registration.ReceiptEDaftarDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.ReceiptEDaftarDocuments);
+                if (stock.Registration.ReceiptKastamDocuments != null && stock.Registration.ReceiptKastamDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Registration.ReceiptKastamDocuments);
+            }
+
+            if (stock.Sale != null)
+            {
+                if (stock.Sale.CustomerIcDocuments != null && stock.Sale.CustomerIcDocuments.Any())
+                    _context.Documents.RemoveRange(stock.Sale.CustomerIcDocuments);
+
+                if (stock.Sale.Loan != null)
+                {
+                    if (stock.Sale.Loan.LouDocuments != null && stock.Sale.Loan.LouDocuments.Any())
+                        _context.Documents.RemoveRange(stock.Sale.Loan.LouDocuments);
+                    _context.Loans.Remove(stock.Sale.Loan);
+                }
+            }
+
+            if (stock.ArrivalChecklist?.ArrivalChecklists != null && stock.ArrivalChecklist.ArrivalChecklists.Any())
+                _context.ArrivalChecklistItems.RemoveRange(stock.ArrivalChecklist.ArrivalChecklists);
+
+            if (stock.Expense?.ExpenseItems != null && stock.Expense.ExpenseItems.Any())
+                _context.ExpenseItems.RemoveRange(stock.Expense.ExpenseItems);
+
+            if (stock.AdminitrativeCost?.AdministrativeCostItems != null && stock.AdminitrativeCost.AdministrativeCostItems.Any())
+                _context.AdministrativeCostItems.RemoveRange(stock.AdminitrativeCost.AdministrativeCostItems);
+
+            // 3. Delete owned entities (parent entities that Stock directly owns)
+            if (stock.Vehicle != null)
+                _context.Vehicles.Remove(stock.Vehicle);
+
+            if (stock.Purchase != null)
+                _context.Purchases.Remove(stock.Purchase);
+
+            if (stock.Import != null)
+                _context.Imports.Remove(stock.Import);
+
+            if (stock.Clearance != null)
+                _context.Clearances.Remove(stock.Clearance);
+
+            if (stock.Registration != null)
+                _context.Registrations.Remove(stock.Registration);
+
+            if (stock.Sale != null)
+                _context.Sales.Remove(stock.Sale);
+
+            if (stock.Pricing != null)
+                _context.Pricings.Remove(stock.Pricing);
+
+            if (stock.ArrivalChecklist != null)
+                _context.ArrivalChecklists.Remove(stock.ArrivalChecklist);
+
+            if (stock.Expense != null)
+                _context.Expenses.Remove(stock.Expense);
+
+            if (stock.AdminitrativeCost != null)
+                _context.AdminitrativeCosts.Remove(stock.AdminitrativeCost);
+
+            if (stock.Advertisement != null)
+                _context.Advertisements.Remove(stock.Advertisement);
+
+            if (stock.ApCompany != null)
+                _context.ApCompanies.Remove(stock.ApCompany);
+
+            // 4. Finally, delete the stock itself
+            _context.Stocks.Remove(stock);
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
