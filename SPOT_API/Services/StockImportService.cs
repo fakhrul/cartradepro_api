@@ -17,7 +17,7 @@ namespace SPOT_API.Services
     public class StockImportService
     {
         private readonly SpotDBContext _context;
-        private Dictionary<string, List<StockImportDto>> _validationCache = new Dictionary<string, List<StockImportDto>>();
+        private static Dictionary<string, List<StockImportDto>> _validationCache = new Dictionary<string, List<StockImportDto>>();
 
         public StockImportService(SpotDBContext context)
         {
@@ -328,12 +328,32 @@ namespace SPOT_API.Services
                 var rows = _validationCache[validationToken];
                 Console.WriteLine($"[IMPORT] Found {rows.Count} rows to import");
 
-                // Load reference data
-                var brands = await _context.Brands.ToDictionaryAsync(b => b.Name.ToLower(), b => b.Id);
-                var models = await _context.Models.ToDictionaryAsync(m => m.Name.ToLower(), m => m.Id);
-                var vehicleTypes = await _context.VehicleTypes.ToDictionaryAsync(vt => vt.Name.ToLower(), vt => vt.Id);
-                var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.Name.ToLower(), s => s.Id);
-                var showrooms = await _context.ShowRooms.ToDictionaryAsync(s => s.LotNo.ToLower(), s => s.Id);
+                // Load reference data (filter out null/empty names to avoid duplicate key errors)
+                var brands = await _context.Brands
+                    .Where(b => !string.IsNullOrWhiteSpace(b.Name))
+                    .GroupBy(b => b.Name.ToLower())
+                    .Select(g => g.First())
+                    .ToDictionaryAsync(b => b.Name.ToLower(), b => b.Id);
+                var models = await _context.Models
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Name))
+                    .GroupBy(m => m.Name.ToLower())
+                    .Select(g => g.First())
+                    .ToDictionaryAsync(m => m.Name.ToLower(), m => m.Id);
+                var vehicleTypes = await _context.VehicleTypes
+                    .Where(vt => !string.IsNullOrWhiteSpace(vt.Name))
+                    .GroupBy(vt => vt.Name.ToLower())
+                    .Select(g => g.First())
+                    .ToDictionaryAsync(vt => vt.Name.ToLower(), vt => vt.Id);
+                var suppliers = await _context.Suppliers
+                    .Where(s => !string.IsNullOrWhiteSpace(s.Name))
+                    .GroupBy(s => s.Name.ToLower())
+                    .Select(g => g.First())
+                    .ToDictionaryAsync(s => s.Name.ToLower(), s => s.Id);
+                var showrooms = await _context.ShowRooms
+                    .Where(s => !string.IsNullOrWhiteSpace(s.LotNo))
+                    .GroupBy(s => s.LotNo.ToLower())
+                    .Select(g => g.First())
+                    .ToDictionaryAsync(s => s.LotNo.ToLower(), s => s.Id);
                 var draftStatus = await _context.StockStatuses.FirstOrDefaultAsync(s => s.Name == "Draft");
                 Console.WriteLine($"[IMPORT] Loaded reference data: {brands.Count} brands, {models.Count} models, {suppliers.Count} suppliers, {showrooms.Count} showrooms");
                 Console.WriteLine($"[IMPORT] Draft status: {(draftStatus != null ? draftStatus.Id.ToString() : "NULL")}");
@@ -379,7 +399,12 @@ namespace SPOT_API.Services
                                     var modelKey = row.ModelName.ToLower();
                                     if (!models.ContainsKey(modelKey))
                                     {
-                                        var newModel = new Model { Name = row.ModelName.Trim() };
+                                        // Model requires a BrandId - use vehicle's BrandId or Guid.Empty if no brand
+                                        var newModel = new Model
+                                        {
+                                            Name = row.ModelName.Trim(),
+                                            BrandId = vehicle.BrandId ?? Guid.Empty
+                                        };
                                         await _context.Models.AddAsync(newModel);
                                         await _context.SaveChangesAsync();
                                         models[modelKey] = newModel.Id;

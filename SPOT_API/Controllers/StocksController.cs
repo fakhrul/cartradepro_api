@@ -77,6 +77,9 @@ namespace SPOT_API.Controllers
                     .ThenInclude(c => c.K8Documents)
                     .ThenInclude(c => c.Document)
                     .Include(c => c.Clearance)
+                    .ThenInclude(c => c.K1Documents)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Clearance)
                     .ThenInclude(c => c.ExportCertificateDocuments)
                     .ThenInclude(c => c.Document)
                     .Include(c => c.Sale)
@@ -94,6 +97,14 @@ namespace SPOT_API.Controllers
                     .Include(c => c.Registration)
                     .ThenInclude(c => c.ReceiptKastamDocuments)
                     .ThenInclude(c => c.Document)
+                    .Include(c => c.Registration)
+                    .ThenInclude(c => c.PuspakomB2SlipDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Registration)
+                    .ThenInclude(c => c.JpjGeranDocuments)
+                    .ThenInclude(c => c.Document)
+                    .Include(c => c.Expense)
+                    .ThenInclude(c => c.Expenses)
                     .Include(c => c.ShowRoom)
                                     .Include(c => c.Import)
                     .ThenInclude(c => c.BillOfLandingDocuments)
@@ -401,6 +412,14 @@ namespace SPOT_API.Controllers
                                 k.Clearance = null;
                             }
 
+                        if (obj.Clearance.K1Documents != null)
+                            foreach (var k in obj.Clearance.K1Documents)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Clearance = null;
+                            }
+
                         if (obj.Clearance.ExportCertificateDocuments != null)
                             foreach (var k in obj.Clearance.ExportCertificateDocuments)
                             {
@@ -465,6 +484,33 @@ namespace SPOT_API.Controllers
                                 if (k.Document != null)
                                     k.Document.Content = null;
                                 k.Registration = null;
+                            }
+
+                        if (obj.Registration.PuspakomB2SlipDocuments != null)
+                            foreach (var k in obj.Registration.PuspakomB2SlipDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Registration = null;
+                            }
+
+                        if (obj.Registration.JpjGeranDocuments != null)
+                            foreach (var k in obj.Registration.JpjGeranDocuments)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Registration = null;
+                            }
+                    }
+
+                    if (obj.Expense != null)
+                    {
+                        if (obj.Expense.Expenses != null)
+                            foreach (var k in obj.Expense.Expenses)
+                            {
+                                if (k.Document != null)
+                                    k.Document.Content = null;
+                                k.Expense = null;
                             }
                     }
 
@@ -3682,34 +3728,98 @@ namespace SPOT_API.Controllers
         // POST: api/Stocks/bulk-import/confirm
         // Executes the import after validation
         [HttpPost("bulk-import/confirm")]
-        public async Task<ActionResult<StockImportCompleteDto>> ConfirmBulkImport([FromBody] StockImportConfirmDto confirmDto)
+        public async Task<ActionResult<StockImportCompleteDto>> ConfirmBulkImport([FromBody] System.Text.Json.JsonElement requestBody)
         {
+            Console.WriteLine("===============================================");
+            Console.WriteLine("[CONTROLLER] ConfirmBulkImport METHOD ENTERED!");
+            Console.WriteLine($"[CONTROLLER] requestBody ValueKind: {requestBody.ValueKind}");
+            Console.WriteLine($"[CONTROLLER] requestBody raw: {requestBody}");
+            Console.WriteLine("===============================================");
+
+            // Try to extract the properties from JsonElement
+            string validationToken = null;
+            bool importOnlyValid = true;
+
+            try
+            {
+                if (requestBody.TryGetProperty("validationToken", out var tokenElement))
+                {
+                    validationToken = tokenElement.GetString();
+                }
+                else if (requestBody.TryGetProperty("ValidationToken", out var tokenElement2))
+                {
+                    validationToken = tokenElement2.GetString();
+                }
+
+                if (requestBody.TryGetProperty("importOnlyValid", out var importElement))
+                {
+                    importOnlyValid = importElement.GetBoolean();
+                }
+                else if (requestBody.TryGetProperty("ImportOnlyValid", out var importElement2))
+                {
+                    importOnlyValid = importElement2.GetBoolean();
+                }
+
+                Console.WriteLine($"[CONTROLLER] Extracted - ValidationToken: {validationToken}, ImportOnlyValid: {importOnlyValid}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CONTROLLER] Error extracting properties: {ex.Message}");
+                Console.WriteLine($"[CONTROLLER] Stack trace: {ex.StackTrace}");
+            }
+
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                Console.WriteLine($"[CONTROLLER] User found: {user?.UserName ?? "NULL"}");
                 if (user == null)
                     return Unauthorized();
 
                 if (user.ProfileId == null)
                     return BadRequest(new { message = "User profile not found" });
 
+                if (string.IsNullOrEmpty(validationToken))
+                    return BadRequest(new { message = "Validation token is required" });
+
+                Console.WriteLine($"[CONTROLLER] Calling ExecuteImportAsync with ProfileId: {user.ProfileId}");
                 var result = await _importService.ExecuteImportAsync(
-                    confirmDto.ValidationToken,
-                    confirmDto.ImportOnlyValid,
+                    validationToken,
+                    importOnlyValid,
                     (Guid)user.ProfileId
                 );
+                Console.WriteLine($"[CONTROLLER] ExecuteImportAsync returned. Success: {result.Success}");
 
                 if (!result.Success)
                 {
+                    Console.WriteLine($"[CONTROLLER] Import failed with message: {result.Message}");
                     return BadRequest(result);
                 }
 
+                Console.WriteLine($"[CONTROLLER] Import succeeded! Returning OK");
                 return Ok(result);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[CONTROLLER] Exception in ConfirmBulkImport: {ex.Message}");
+                Console.WriteLine($"[CONTROLLER] Stack trace: {ex.StackTrace}");
                 return BadRequest(new { message = $"Error executing import: {ex.Message}" });
             }
+        }
+
+        // TEST ENDPOINT - POST: api/Stocks/test-confirm
+        [HttpPost("test-confirm")]
+        public ActionResult<object> TestConfirm([FromBody] StockImportConfirmDto confirmDto)
+        {
+            Console.WriteLine("===============================================");
+            Console.WriteLine("[TEST] TEST-CONFIRM ENDPOINT HIT!");
+            Console.WriteLine($"[TEST] confirmDto is null: {confirmDto == null}");
+            if (confirmDto != null)
+            {
+                Console.WriteLine($"[TEST] ValidationToken: {confirmDto.ValidationToken}");
+                Console.WriteLine($"[TEST] ImportOnlyValid: {confirmDto.ImportOnlyValid}");
+            }
+            Console.WriteLine("===============================================");
+            return Ok(new { success = true, message = "Test endpoint works!", token = confirmDto?.ValidationToken });
         }
 
         // GET: api/Stocks/bulk-import/template
