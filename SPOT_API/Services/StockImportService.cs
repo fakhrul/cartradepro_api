@@ -162,15 +162,16 @@ namespace SPOT_API.Services
                         }
                     }
 
-                    if (!string.IsNullOrWhiteSpace(row.ModelName))
-                    {
-                        if (!models.Any(m => m.Name.Equals(row.ModelName.Trim(), StringComparison.OrdinalIgnoreCase)))
-                        {
-                            result.Errors.Add(CreateError(row.RowNumber, "ModelName", "Model not found in system", row.ModelName));
-                            isValid = false;
-                            result.Summary.MissingReferenceData++;
-                        }
-                    }
+                    // ModelName - auto-created if doesn't exist, no validation error needed
+                    // if (!string.IsNullOrWhiteSpace(row.ModelName))
+                    // {
+                    //     if (!models.Any(m => m.Name.Equals(row.ModelName.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    //     {
+                    //         result.Errors.Add(CreateError(row.RowNumber, "ModelName", "Model not found in system", row.ModelName));
+                    //         isValid = false;
+                    //         result.Summary.MissingReferenceData++;
+                    //     }
+                    // }
 
                     if (!string.IsNullOrWhiteSpace(row.VehicleTypeName))
                     {
@@ -182,25 +183,27 @@ namespace SPOT_API.Services
                         }
                     }
 
-                    if (!string.IsNullOrWhiteSpace(row.SupplierName))
-                    {
-                        if (!suppliers.Any(s => s.Name.Equals(row.SupplierName.Trim(), StringComparison.OrdinalIgnoreCase)))
-                        {
-                            result.Errors.Add(CreateError(row.RowNumber, "SupplierName", "Supplier not found in system", row.SupplierName));
-                            isValid = false;
-                            result.Summary.MissingReferenceData++;
-                        }
-                    }
+                    // SupplierName - auto-created if doesn't exist, no validation error needed
+                    // if (!string.IsNullOrWhiteSpace(row.SupplierName))
+                    // {
+                    //     if (!suppliers.Any(s => s.Name.Equals(row.SupplierName.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    //     {
+                    //         result.Errors.Add(CreateError(row.RowNumber, "SupplierName", "Supplier not found in system", row.SupplierName));
+                    //         isValid = false;
+                    //         result.Summary.MissingReferenceData++;
+                    //     }
+                    // }
 
-                    if (!string.IsNullOrWhiteSpace(row.ShowRoomLotNo))
-                    {
-                        if (!showrooms.Any(s => s.LotNo.Equals(row.ShowRoomLotNo.Trim(), StringComparison.OrdinalIgnoreCase)))
-                        {
-                            result.Errors.Add(CreateError(row.RowNumber, "ShowRoomLotNo", "Showroom not found in system", row.ShowRoomLotNo));
-                            isValid = false;
-                            result.Summary.MissingReferenceData++;
-                        }
-                    }
+                    // ShowRoomLotNo - auto-created if doesn't exist, no validation error needed
+                    // if (!string.IsNullOrWhiteSpace(row.ShowRoomLotNo))
+                    // {
+                    //     if (!showrooms.Any(s => s.LotNo.Equals(row.ShowRoomLotNo.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    //     {
+                    //         result.Errors.Add(CreateError(row.RowNumber, "ShowRoomLotNo", "Showroom not found in system", row.ShowRoomLotNo));
+                    //         isValid = false;
+                    //         result.Summary.MissingReferenceData++;
+                    //     }
+                    // }
 
                     // 3. DATA TYPE VALIDATION
                     if (!string.IsNullOrWhiteSpace(row.Year))
