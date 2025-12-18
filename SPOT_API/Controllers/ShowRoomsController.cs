@@ -129,43 +129,38 @@ namespace SPOT_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
                 if (user == null)
                     return Unauthorized();
 
-
-
-                var category = await _context.ShowRooms
+                var showroom = await _context.ShowRooms
                     .FirstOrDefaultAsync(c => c.Id == id);
-                if (category == null)
+                if (showroom == null)
                 {
                     return NotFound();
                 }
 
+                // Nullify ShowRoomId in all Stocks referencing this showroom
+                var stocks = await _context.Stocks
+                    .Where(c => c.ShowRoomId == id)
+                    .ToListAsync();
 
-                //var purchases = await _context.Purchases
-                //    .Where(c => c.ShowRoomId == id)
-                //    .ToListAsync();
+                foreach(var stock in stocks)
+                {
+                    stock.ShowRoomId = null;
+                    stock.ShowRoom = null;
+                }
 
-                //foreach(var purchase in purchases)
-                //{
-                //    purchase.ShowRoomId = null;
-                //}
-
-                _context.ShowRooms.Remove(category);
+                _context.ShowRooms.Remove(showroom);
                 await _context.SaveChangesAsync();
 
-
                 return NoContent();
-
             }
             catch (Exception ex)
             {
-
-                throw ex;
+                return BadRequest(ex.Message);
             }
         }
 
