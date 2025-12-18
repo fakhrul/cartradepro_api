@@ -17,6 +17,9 @@ namespace SPOT_API.DTOs
         public string Year { get; set; }
         public string Month { get; set; }
         public string Color { get; set; }
+        public string CodeModel { get; set; }
+        public string Description { get; set; }
+        public string ExternalLink { get; set; }
 
         // Pricing Fields
         public decimal RecommendedSalePrice { get; set; }

@@ -376,7 +376,10 @@ namespace SPOT_API.Services
                                     EngineCapacity = row.EngineCapacity?.Trim(),
                                     Year = !string.IsNullOrWhiteSpace(row.Year) ? row.Year.Trim() : null,
                                     Month = !string.IsNullOrWhiteSpace(row.Month) ? row.Month.Trim() : null,
-                                    Color = row.Color?.Trim()
+                                    Color = row.Color?.Trim(),
+                                    CodeModel = row.CodeModel?.Trim(),
+                                    Description = row.Description?.Trim(),
+                                    ExternalLink = row.ExternalLink?.Trim()
                                 };
 
                                 // Set brand if provided - auto-create if doesn't exist (case-insensitive)
@@ -646,16 +649,16 @@ namespace SPOT_API.Services
             var sb = new StringBuilder();
 
             // CSV Header
-            sb.AppendLine("StockNo,ChasisNo,BrandName,ModelName,VehicleTypeName,EngineNo,EngineCapacity,Year,Month,Color,RecommendedSalePrice,MinimumSalePrice,SupplierName,VehiclePriceSupplierCurrency,VehiclePriceLocalCurrency,SupplierCurrency,ShowRoomLotNo,LocationCode,ArrivalState");
+            sb.AppendLine("StockNo,ChasisNo,BrandName,ModelName,VehicleTypeName,EngineNo,EngineCapacity,Year,Month,Color,CodeModel,Description,ExternalLink,RecommendedSalePrice,MinimumSalePrice,SupplierName,VehiclePriceSupplierCurrency,VehiclePriceLocalCurrency,SupplierCurrency,ShowRoomLotNo,LocationCode,ArrivalState");
 
             // Sample Data Row 1
-            sb.AppendLine("STK001,ABC123XYZ456,Toyota,Camry,Sedan,1AZ123456,2500,2020,3,White,85000,80000,Japan Auto Supplier,2500000,85000,JPY,LOT001,YARD-A,Incoming");
+            sb.AppendLine("STK001,ABC123XYZ456,Toyota,Camry,Sedan,1AZ123456,2500,2020,3,White,ACV30,Premium sedan with sunroof and leather seats,https://example.com/vehicles/camry-2020,85000,80000,Japan Auto Supplier,2500000,85000,JPY,LOT001,YARD-A,Incoming");
 
             // Sample Data Row 2
-            sb.AppendLine("STK002,DEF789GHI012,Honda,Accord,Sedan,K24A987654,2400,2019,11,Black,78000,73000,Tokyo Motors,2300000,78000,JPY,LOT002,YARD-B,Received");
+            sb.AppendLine("STK002,DEF789GHI012,Honda,Accord,Sedan,K24A987654,2400,2019,11,Black,CU2,Sporty sedan with excellent fuel economy,https://example.com/vehicles/accord-2019,78000,73000,Tokyo Motors,2300000,78000,JPY,LOT002,YARD-B,Received");
 
             // Sample Data Row 3
-            sb.AppendLine("STK003,JKL345MNO678,Nissan,X-Trail,SUV,QR25456789,2500,2021,7,Silver,95000,90000,Osaka Trading,2800000,95000,JPY,LOT001,YARD-A,Incoming");
+            sb.AppendLine("STK003,JKL345MNO678,Nissan,X-Trail,SUV,QR25456789,2500,2021,7,Silver,T32,Family SUV with 4WD capability,https://example.com/vehicles/xtrail-2021,95000,90000,Osaka Trading,2800000,95000,JPY,LOT001,YARD-A,Incoming");
 
             return Encoding.UTF8.GetBytes(sb.ToString());
         }
