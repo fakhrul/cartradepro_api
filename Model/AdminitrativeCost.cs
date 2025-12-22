@@ -19,8 +19,9 @@ namespace SPOT_API.Models
         public decimal TransferFeeAmount { get; set; }
         public decimal RegistrationFeeAmount { get; set; }
         public decimal RoadtaxAmount { get; set; }
-        
-            
+        public decimal BodyPrice { get; set; }
+
+
         public virtual ICollection<AdminitrativeCostItem> AdminitrativeCostItems { get; set; }
 
     }

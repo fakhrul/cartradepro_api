@@ -29,6 +29,7 @@ namespace SPOT_API.Models
         public DateTime SaleDateTime { get; set; } = DateTime.Now.ToUniversalTime();
 
         public decimal SaleAmount { get; set; }
+        public decimal LouPurchasePrice { get; set; }
         public decimal DepositAmount { get; set; }
         public decimal TradeInAmount { get; set; }
 
@@ -49,7 +50,10 @@ namespace SPOT_API.Models
         public decimal SalesmanCommisionAmount { get; set; }
         public decimal PromotionDiscountAmount{ get; set; }
 
+        public string Warranty { get; set; }
+
         public virtual ICollection<CustomerIcDocument> CustomerIcDocuments { get; set; }
+        public virtual ICollection<ReceiptDocument> ReceiptDocuments { get; set; }
 
     }
 

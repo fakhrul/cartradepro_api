@@ -44,6 +44,7 @@ namespace SPOT_API.Persistence
         public DbSet<Loan> Loans { get; set; }
         public DbSet<Bank> Banks { get; set; }
         public DbSet<CustomerIcDocument> CustomerIcDocuments { get; set; }
+        public DbSet<ReceiptDocument> ReceiptDocuments { get; set; }
         public DbSet<Pricing> Pricings { get; set; }
         public DbSet<ArrivalChecklist> ArrivalChecklists { get; set; }
 
@@ -170,6 +171,9 @@ namespace SPOT_API.Persistence
                 entity.Property(e => e.CariCarzEndDate).HasColumnType("date");
             });
 
+            // Configure ReceiptDocument table name to match migration
+            modelBuilder.Entity<ReceiptDocument>()
+                .ToTable("ReceiptDocument");
 
             base.OnModelCreating(modelBuilder);
 

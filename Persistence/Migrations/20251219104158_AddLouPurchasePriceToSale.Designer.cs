@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20251219104158_AddLouPurchasePriceToSale")]
+    partial class AddLouPurchasePriceToSale
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,9 +163,6 @@ namespace Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("ApCostAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("BodyPrice")
                         .HasColumnType("numeric");
 
                     b.Property<DateTime>("CreatedOn")
@@ -1870,35 +1869,6 @@ namespace Persistence.Migrations
                     b.ToTable("PuspakomB7SlipDocuments");
                 });
 
-            modelBuilder.Entity("SPOT_API.Models.ReceiptDocument", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("DocumentId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("SaleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DocumentId");
-
-                    b.HasIndex("SaleId");
-
-                    b.ToTable("ReceiptDocument");
-                });
-
             modelBuilder.Entity("SPOT_API.Models.ReceiptEDaftarDocument", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2246,9 +2216,6 @@ namespace Persistence.Migrations
                     b.Property<DateTime?>("UpdatedOn")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Warranty")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -3338,25 +3305,6 @@ namespace Persistence.Migrations
                     b.Navigation("Registration");
                 });
 
-            modelBuilder.Entity("SPOT_API.Models.ReceiptDocument", b =>
-                {
-                    b.HasOne("SPOT_API.Models.Document", "Document")
-                        .WithMany()
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SPOT_API.Models.Sale", "Sale")
-                        .WithMany("ReceiptDocuments")
-                        .HasForeignKey("SaleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Document");
-
-                    b.Navigation("Sale");
-                });
-
             modelBuilder.Entity("SPOT_API.Models.ReceiptEDaftarDocument", b =>
                 {
                     b.HasOne("SPOT_API.Models.Document", "Document")
@@ -3812,8 +3760,6 @@ namespace Persistence.Migrations
             modelBuilder.Entity("SPOT_API.Models.Sale", b =>
                 {
                     b.Navigation("CustomerIcDocuments");
-
-                    b.Navigation("ReceiptDocuments");
                 });
 
             modelBuilder.Entity("SPOT_API.Models.Stock", b =>
