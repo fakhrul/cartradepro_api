@@ -48,7 +48,8 @@ namespace SPOT_API.Controllers
                     foreach (var v in obj.RoleModulePermissions)
                     {
                         v.Role = null;
-                        //v.Module.RoleModulePermissions = null;
+                        if (v.Module != null)
+                            v.Module.RoleModulePermissions = null;
                     }
             return objs;
         }
@@ -62,11 +63,13 @@ namespace SPOT_API.Controllers
             var obj = await _context.Roles
                 .Include(r => r.RoleModulePermissions)
                 .ThenInclude(rmp => rmp.Module)
-                //.ThenInclude(c => c.SubModules)
-                //.Include(c => c.RoleSubModulePermissions)
+                .Include(r => r.RoleSubModulePermissions)
+                .ThenInclude(rsmp => rsmp.SubModule)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
-            var modules = await _context.Modules.ToListAsync();
+            var modules = await _context.Modules
+                .AsNoTracking()
+                .ToListAsync();
 
             foreach (var module in modules)
             {
@@ -82,23 +85,65 @@ namespace SPOT_API.Controllers
 
                 if(!moduleAlreadyAvailable)
                 {
-                    obj.RoleModulePermissions.Add(new RoleModulePermission
+                    var newPermission = new RoleModulePermission
                     {
-                         Module = module,
-                         Role =  obj
-                    });
-                    _context.SaveChanges();
+                         ModuleId = module.Id,
+                         RoleId = obj.Id,
+                         CanAdd = false,
+                         CanUpdate = false,
+                         CanDelete = false,
+                         CanView = false
+                    };
+                    _context.RoleModulePermissions.Add(newPermission);
                 }
             }
 
+            // Create missing RoleSubModulePermissions for all SubModules
+            var subModules = await _context.SubModules
+                .AsNoTracking()
+                .ToListAsync();
 
-
-
-
-            foreach (var roleModule in obj.RoleModulePermissions)
+            foreach (var subModule in subModules)
             {
+                bool subModuleAlreadyAvailable = false;
+                if (obj.RoleSubModulePermissions != null)
+                {
+                    foreach (var roleSubModulePermission in obj.RoleSubModulePermissions)
+                    {
+                        if (roleSubModulePermission.SubModuleId == subModule.Id)
+                        {
+                            subModuleAlreadyAvailable = true;
+                            continue;
+                        }
+                    }
+                }
 
+                if (!subModuleAlreadyAvailable)
+                {
+                    var newPermission = new RoleSubModulePermission
+                    {
+                        SubModuleId = subModule.Id,
+                        RoleId = obj.Id,
+                        CanAdd = false,
+                        CanUpdate = false,
+                        CanDelete = false,
+                        CanView = false
+                    };
+                    _context.RoleSubModulePermissions.Add(newPermission);
+                }
             }
+
+            // Save all new permissions at once
+            await _context.SaveChangesAsync();
+
+            // Reload to ensure Module and SubModule navigation properties are loaded correctly after adding new permissions
+            obj = await _context.Roles
+                .Include(r => r.RoleModulePermissions)
+                .ThenInclude(rmp => rmp.Module)
+                .ThenInclude(m => m.SubModules)
+                .Include(r => r.RoleSubModulePermissions)
+                .ThenInclude(rsmp => rsmp.SubModule)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
             if (obj == null)
             {
@@ -110,30 +155,28 @@ namespace SPOT_API.Controllers
                     v.Role = null;
                     if (v.Module != null)
                     {
-                        if (v.Module.SubModules != null) 
+                        v.Module.RoleModulePermissions = null;
+                        if (v.Module.SubModules != null)
                             foreach (var subModule in v.Module.SubModules)
                             {
                                 subModule.Module = null;
+                                subModule.RoleSubModulePermissions = null;
                             }
                     }
-                    //v.Module.RoleModulePermissions = null;
                 }
 
 
 
-            //if (obj.RoleSubModulePermissions != null)
-            //    foreach (var v in obj.RoleSubModulePermissions)
-            //    {
-            //        v.Role = null;
-            //        if (v.SubModule != null)
-            //        {
-            //            //foreach (var subModule in v.Module.SubModules)
-            //            //{
-            //            //    subModule.Module = null;
-            //            //}
-            //        }
-            //        //v.Module.RoleModulePermissions = null;
-            //    }
+            if (obj.RoleSubModulePermissions != null)
+                foreach (var v in obj.RoleSubModulePermissions)
+                {
+                    v.Role = null;
+                    if (v.SubModule != null)
+                    {
+                        v.SubModule.RoleSubModulePermissions = null;
+                        v.SubModule.Module = null;
+                    }
+                }
 
             return obj;
         }
@@ -207,7 +250,7 @@ namespace SPOT_API.Controllers
             UpdateRoleModulePermissions(existingRole, obj);
 
             // Update RoleSubModulePermissions
-            //UpdateRoleSubModulePermissions(existingRole, obj);
+            UpdateRoleSubModulePermissions(existingRole, obj);
 
             try
             {

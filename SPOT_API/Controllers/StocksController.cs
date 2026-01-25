@@ -21,13 +21,15 @@ namespace SPOT_API.Controllers
         private readonly IUserAccessor _userAccessor;
         private readonly UserManager<AppUser> _userManager;
         private readonly Services.StockImportService _importService;
+        private readonly IAuditService _auditService;
 
-        public StocksController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager, Services.StockImportService importService)
+        public StocksController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager, Services.StockImportService importService, IAuditService auditService)
         {
             _context = context;
             _userAccessor = userAccessor;
             _userManager = userManager;
             _importService = importService;
+            _auditService = auditService;
         }
 
         // GET: api/Stocks
@@ -1129,8 +1131,16 @@ namespace SPOT_API.Controllers
             //obj.Advertisement.CariCarzStartDate = obj.Advertisement.CariCarzStartDate.ToUniversalTime();
             //obj.Advertisement.CariCarzEndDate = obj.Advertisement.CariCarzEndDate.ToUniversalTime();
 
-          
-                var prevObj = _context.Stocks.Include(c => c.Pricing).AsNoTracking().FirstOrDefault(c => c.Id == id);
+
+                // Get old values for audit log (before updating)
+                var prevObj = await _context.Stocks
+                    .Include(c => c.Pricing)
+                    .Include(c => c.Vehicle)
+                    .Include(c => c.Purchase)
+                    .Include(c => c.Sale)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.Id == id);
+
                 if (prevObj != null)
                     if (obj.Pricing.RecommendedSalePrice != prevObj.Pricing.RecommendedSalePrice)
                         obj.Pricing.LastPriceChange = DateTime.UtcNow;
@@ -1173,8 +1183,35 @@ namespace SPOT_API.Controllers
             //_context.Entry(obj.SellingPricing).State = EntityState.Modified;
 
 
-          
+
                 await _context.SaveChangesAsync();
+
+                // Log the stock update
+                await _auditService.LogAsync(
+                    AuditEventType.StockUpdated,
+                    "Stock Updated",
+                    $"Updated stock #{obj.StockNo} - {obj.Vehicle?.Brand?.Name} {obj.Vehicle?.Model?.Name}",
+                    entityType: "Stock",
+                    entityId: obj.Id.ToString(),
+                    entityName: $"Stock #{obj.StockNo}",
+                    oldValues: new
+                    {
+                        StockNo = prevObj?.StockNo,
+                        ChasisNo = prevObj?.Vehicle?.ChasisNo,
+                        RecommendedSalePrice = prevObj?.Pricing?.RecommendedSalePrice,
+                        VehiclePrice = prevObj?.Purchase?.VehiclePriceLocalCurrency,
+                        SaleAmount = prevObj?.Sale?.SaleAmount
+                    },
+                    newValues: new
+                    {
+                        StockNo = obj.StockNo,
+                        ChasisNo = obj.Vehicle?.ChasisNo,
+                        RecommendedSalePrice = obj.Pricing?.RecommendedSalePrice,
+                        VehiclePrice = obj.Purchase?.VehiclePriceLocalCurrency,
+                        SaleAmount = obj.Sale?.SaleAmount
+                    },
+                    severity: AuditSeverity.Low
+                );
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -1190,6 +1227,18 @@ namespace SPOT_API.Controllers
 
             catch (Exception ex)
             {
+                // Log update error
+                await _auditService.LogErrorAsync(
+                    AuditEventType.StockUpdated,
+                    "Stock Update Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "STOCK_UPDATE_ERROR",
+                    description: $"Failed to update stock #{obj.StockNo}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+
                 throw ex;
 
             }
@@ -1342,6 +1391,27 @@ namespace SPOT_API.Controllers
 
                     await transaction.CommitAsync();
 
+                    // Log the stock creation
+                    await _auditService.LogAsync(
+                        AuditEventType.StockCreated,
+                        "Stock Created",
+                        $"Created stock #{obj.StockNo} - {obj.Vehicle?.Brand?.Name} {obj.Vehicle?.Model?.Name} - Chasis: {obj.Vehicle?.ChasisNo}",
+                        entityType: "Stock",
+                        entityId: obj.Id.ToString(),
+                        entityName: $"Stock #{obj.StockNo}",
+                        newValues: new
+                        {
+                            StockNo = obj.StockNo,
+                            ChasisNo = obj.Vehicle?.ChasisNo,
+                            VehicleType = obj.Vehicle?.VehicleType?.Name,
+                            Brand = obj.Vehicle?.Brand?.Name,
+                            Model = obj.Vehicle?.Model?.Name,
+                            Status = stockStatus?.Name,
+                            MovedToStockAt = obj.MovedToStockAt
+                        },
+                        severity: AuditSeverity.Low
+                    );
+
                     // Nullify circular references for clean JSON response
                     foreach (var stockStatusHistory in obj.StockStatusHistories)
                         stockStatusHistory.Stock = null;
@@ -1362,6 +1432,17 @@ namespace SPOT_API.Controllers
                     // Rollback transaction in case of failure
                     await transaction.RollbackAsync();
 
+                    // Log database error
+                    await _auditService.LogErrorAsync(
+                        AuditEventType.StockCreated,
+                        "Stock Creation Failed - Database Error",
+                        dbEx.InnerException?.Message ?? dbEx.Message,
+                        dbEx.StackTrace,
+                        errorCode: "DB_UPDATE_ERROR",
+                        description: $"Failed to create stock - Chasis: {obj.Vehicle?.ChasisNo}",
+                        severity: AuditSeverity.High
+                    );
+
                     // Check for the inner exception for more details
                     if (dbEx.InnerException != null)
                     {
@@ -1374,6 +1455,18 @@ namespace SPOT_API.Controllers
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
+
+                    // Log general error
+                    await _auditService.LogErrorAsync(
+                        AuditEventType.StockCreated,
+                        "Stock Creation Failed",
+                        ex.Message,
+                        ex.StackTrace,
+                        errorCode: "STOCK_CREATE_ERROR",
+                        description: $"Failed to create stock - Chasis: {obj.Vehicle?.ChasisNo}",
+                        severity: AuditSeverity.High
+                    );
+
                     return BadRequest(ex.Message); // General exception fallback
                 }
             }
@@ -1663,7 +1756,47 @@ namespace SPOT_API.Controllers
             // 4. Finally, delete the stock itself
             _context.Stocks.Remove(stock);
 
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+
+                // Log the stock deletion
+                await _auditService.LogAsync(
+                    AuditEventType.StockDeleted,
+                    "Stock Deleted",
+                    $"Deleted stock #{stock.StockNo} - {stock.Vehicle?.Brand?.Name} {stock.Vehicle?.Model?.Name} - Chasis: {stock.Vehicle?.ChasisNo}",
+                    entityType: "Stock",
+                    entityId: stock.Id.ToString(),
+                    entityName: $"Stock #{stock.StockNo}",
+                    oldValues: new
+                    {
+                        StockNo = stock.StockNo,
+                        ChasisNo = stock.Vehicle?.ChasisNo,
+                        Brand = stock.Vehicle?.Brand?.Name,
+                        Model = stock.Vehicle?.Model?.Name,
+                        VehicleType = stock.Vehicle?.VehicleType?.Name,
+                        VehiclePrice = stock.Purchase?.VehiclePriceLocalCurrency,
+                        SalePrice = stock.Pricing?.RecommendedSalePrice,
+                        MovedToStockAt = stock.MovedToStockAt
+                    },
+                    severity: AuditSeverity.Medium
+                );
+            }
+            catch (Exception ex)
+            {
+                // Log deletion error
+                await _auditService.LogErrorAsync(
+                    AuditEventType.StockDeleted,
+                    "Stock Deletion Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "STOCK_DELETE_ERROR",
+                    description: $"Failed to delete stock #{stock.StockNo}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+                throw;
+            }
 
             return NoContent();
         }

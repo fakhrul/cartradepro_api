@@ -13,7 +13,6 @@ namespace SPOT_API.Persistence
     {
         public static async Task SeedData(SpotDBContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
         {
-            Console.WriteLine("=== SeedData started ===");
             try
             {
                 await SeedRoles(context, roleManager);
@@ -21,16 +20,11 @@ namespace SPOT_API.Persistence
                 await SeedRolePermissionsForMainModule(context);
                 await SeedUsers(context, userManager);
 
-                Console.WriteLine("=== Calling MigrateExistingUsersToUserRoles ===");
-                // Migration: Create UserRole records for existing users without them
-                await MigrateExistingUsersToUserRoles(context);
-                Console.WriteLine("=== MigrateExistingUsersToUserRoles completed ===");
-
                 //await SeedSpecificRoles(context, roleManager, "Marketing");
                 //await SeedModulesAndSubModulesForMarketing(context);
                 //await SeedRolePermissionsForMainModuleForMarketing(context);
                 //await SeedMarketingUser(context, userManager);
-
+                
                 await SeedBrand(context);
                 await SeedModel(context);
                 await SeedVehicleType(context);
@@ -52,12 +46,6 @@ namespace SPOT_API.Persistence
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR in SeedData: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
-                }
             }
             //}
 
@@ -1863,48 +1851,12 @@ London, W1A 1AA, United Kingdom.",
 
             var roles = new List<Role>
         {
-            new Role
-            {
-                Name = "Sales",
-                DisplayName = "Salesman",
-                Description = "Sales team with view-only vehicle access",
-                IsSystemRole = false
-            },
-            new Role
-            {
-                Name = "StockManager",
-                DisplayName = "Stock Manager",
-                Description = "Manages stock purchasing and inventory",
-                IsSystemRole = false
-            },
-            new Role
-            {
-                Name = "Registration",
-                DisplayName = "Registration Officer",
-                Description = "Handles vehicle registration and documentation",
-                IsSystemRole = false
-            },
-            new Role
-            {
-                Name = "Account",
-                DisplayName = "Account Manager",
-                Description = "Full access to accounting and reporting",
-                IsSystemRole = false
-            },
-            new Role
-            {
-                Name = "Advertisement",
-                DisplayName = "Marketing Manager",
-                Description = "Manages advertisements and marketing",
-                IsSystemRole = false
-            },
-            new Role
-            {
-                Name = "SuperAdmin",
-                DisplayName = "Super Administrator",
-                Description = "Full system access - cannot be deleted",
-                IsSystemRole = true
-            }
+            new Role { Name = "Admin" },
+            new Role { Name = "Stock Manager" },
+            new Role { Name = "Customer Manager" },
+            new Role { Name = "Finance Manager" },
+            new Role { Name = "Sales" },
+            new Role { Name = "Marketing" },
         };
 
             context.Roles.AddRange(roles);
@@ -1951,99 +1903,103 @@ London, W1A 1AA, United Kingdom.",
         {
             if (!context.Modules.Any())
             {
-                // Add main modules with codes and display order
+                // Add main modules
                 var modules = new List<Module>
             {
-                new Module { Name = "Dashboard", Code = "DASHBOARD", DisplayOrder = 1, Icon = "cil-speedometer" },
-                new Module { Name = "Stock to Buy", Code = "STOCK_TO_BUY", DisplayOrder = 2, Icon = "cil-cart" },
-                new Module { Name = "Stocks", Code = "STOCKS", DisplayOrder = 3, Icon = "cil-layers" },
-                new Module { Name = "Customer", Code = "CUSTOMER", DisplayOrder = 4, Icon = "cil-people" },
-                new Module { Name = "Vehicle", Code = "VEHICLE", DisplayOrder = 5, Icon = "cil-car-alt" },
-                new Module { Name = "Advertisement", Code = "ADVERTISEMENT", DisplayOrder = 6, Icon = "cil-bullhorn" },
-                new Module { Name = "Master Data", Code = "MASTER_DATA", DisplayOrder = 7, Icon = "cil-settings" },
-                new Module { Name = "Report", Code = "REPORT", DisplayOrder = 8, Icon = "cil-chart-line" },
-                new Module { Name = "Administration", Code = "ADMINISTRATION", DisplayOrder = 9, Icon = "cil-shield-alt" },
-                new Module { Name = "System", Code = "SYSTEM", DisplayOrder = 10, Icon = "cil-cog" },
-                new Module { Name = "Letters", Code = "LETTERS", DisplayOrder = 11, Icon = "cil-envelope-closed" }
+                new Module { Name = "Dashboard" },
+                new Module { Name = "Stocks" },
+                new Module { Name = "Customer" },
+                new Module { Name = "MasterData" },
+                new Module { Name = "Letters" },
+                new Module { Name = "Reports" },
+                new Module { Name = "Vehicle" },
+                new Module { Name = "Administration" },
+                new Module { Name = "System" },
+                new Module { Name = "Advertisement" },
             };
 
                 context.Modules.AddRange(modules);
                 await context.SaveChangesAsync();
 
-                // Add submodules for "Stocks" module (12 submodules based on Excel matrix)
-                var stocksModule = context.Modules.FirstOrDefault(m => m.Code == "STOCKS");
+                // Add submodules for "Stocks"
+                var stocksModule = context.Modules.FirstOrDefault(m => m.Name == "Stocks");
                 if (stocksModule != null)
                 {
                     var stockSubModules = new List<SubModule>
                 {
-                    new SubModule { Name = "Stock Info", Code = "STOCK_INFO", ModuleId = stocksModule.Id, DisplayOrder = 1 },
-                    new SubModule { Name = "Vehicle Info", Code = "VEHICLE_INFO", ModuleId = stocksModule.Id, DisplayOrder = 2 },
-                    new SubModule { Name = "Purchase", Code = "PURCHASE", ModuleId = stocksModule.Id, DisplayOrder = 3 },
-                    new SubModule { Name = "Import", Code = "IMPORT", ModuleId = stocksModule.Id, DisplayOrder = 4 },
-                    new SubModule { Name = "Clearance", Code = "CLEARANCE", ModuleId = stocksModule.Id, DisplayOrder = 5 },
-                    new SubModule { Name = "Sale", Code = "SALE", ModuleId = stocksModule.Id, DisplayOrder = 6 },
-                    new SubModule { Name = "Pricing", Code = "PRICING", ModuleId = stocksModule.Id, DisplayOrder = 7 },
-                    new SubModule { Name = "Arrival Checklist", Code = "ARRIVAL_CHECKLIST", ModuleId = stocksModule.Id, DisplayOrder = 8 },
-                    new SubModule { Name = "Registration", Code = "REGISTRATION", ModuleId = stocksModule.Id, DisplayOrder = 9 },
-                    new SubModule { Name = "Expenses", Code = "EXPENSES", ModuleId = stocksModule.Id, DisplayOrder = 10 },
-                    new SubModule { Name = "Administrative Cost", Code = "ADMINISTRATIVE_COST", ModuleId = stocksModule.Id, DisplayOrder = 11 },
-                    new SubModule { Name = "Disbursement", Code = "DISBURSEMENT", ModuleId = stocksModule.Id, DisplayOrder = 12 },
-                    new SubModule { Name = "Advertisement", Code = "ADVERTISEMENT", ModuleId = stocksModule.Id, DisplayOrder = 13 }
+                    new SubModule { Name = "Vehicle", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Purchase", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Import", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Clearance", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Sale", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "ArrivalChecklist", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Pricing", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Registration", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "AdminCost", ModuleId = stocksModule.Id },
+                    new SubModule { Name = "Advertisement", ModuleId = stocksModule.Id },
                 };
                     context.SubModules.AddRange(stockSubModules);
                 }
 
-                // Add submodules for "Master Data"
-                var masterDataModule = context.Modules.FirstOrDefault(m => m.Code == "MASTER_DATA");
+                // Add submodules for "MasterData"
+                var masterDataModule = context.Modules.FirstOrDefault(m => m.Name == "MasterData");
                 if (masterDataModule != null)
                 {
                     var masterDataSubModules = new List<SubModule>
                 {
-                    new SubModule { Name = "Suppliers", Code = "SUPPLIERS", ModuleId = masterDataModule.Id, DisplayOrder = 1 },
-                    new SubModule { Name = "Forwarders", Code = "FORWARDERS", ModuleId = masterDataModule.Id, DisplayOrder = 2 },
-                    new SubModule { Name = "Banks", Code = "BANKS", ModuleId = masterDataModule.Id, DisplayOrder = 3 },
-                    new SubModule { Name = "Brands", Code = "BRANDS", ModuleId = masterDataModule.Id, DisplayOrder = 4 },
-                    new SubModule { Name = "Models", Code = "MODELS", ModuleId = masterDataModule.Id, DisplayOrder = 5 },
-                    new SubModule { Name = "Showroom", Code = "SHOWROOM", ModuleId = masterDataModule.Id, DisplayOrder = 6 }
+                    new SubModule { Name = "Suppliers", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Forwarders", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Banks", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Brands", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Models", ModuleId = masterDataModule.Id },
+                    new SubModule { Name = "Showroom", ModuleId = masterDataModule.Id },
+
                 };
                     context.SubModules.AddRange(masterDataSubModules);
                 }
 
-                // Note: Letters module no longer has submodules (Disbursement moved to Stocks)
+                // Add submodules for "Letters"
+                var lettersModule = context.Modules.FirstOrDefault(m => m.Name == "Letters");
+                if (lettersModule != null)
+                {
+                    var lettersSubModules = new List<SubModule>
+                {
+                    new SubModule { Name = "Disrbustments", ModuleId = lettersModule.Id }
+                };
+                    context.SubModules.AddRange(lettersSubModules);
+                }
 
-                // Add submodules for "Report"
-                var reportsModule = context.Modules.FirstOrDefault(m => m.Code == "REPORT");
+                // Add submodules for "Reports"
+                var reportsModule = context.Modules.FirstOrDefault(m => m.Name == "Reports");
                 if (reportsModule != null)
                 {
                     var reportsSubModules = new List<SubModule>
                 {
-                    new SubModule { Name = "Sales Monthly", Code = "SALES_MONTHLY", ModuleId = reportsModule.Id, DisplayOrder = 1 },
-                    new SubModule { Name = "Sales Yearly", Code = "SALES_YEARLY", ModuleId = reportsModule.Id, DisplayOrder = 2 }
+                    new SubModule { Name = "SalesMonthly", ModuleId = reportsModule.Id },
+                    new SubModule { Name = "SalesYearly", ModuleId = reportsModule.Id }
                 };
                     context.SubModules.AddRange(reportsSubModules);
                 }
 
                 // Add submodules for "Administration"
-                var administrationModule = context.Modules.FirstOrDefault(m => m.Code == "ADMINISTRATION");
+                var administrationModule = context.Modules.FirstOrDefault(m => m.Name == "Administration");
                 if (administrationModule != null)
                 {
                     var administrationSubModules = new List<SubModule>
                 {
-                    new SubModule { Name = "User", Code = "USER", ModuleId = administrationModule.Id, DisplayOrder = 1 },
-                    new SubModule { Name = "Roles", Code = "ROLES", ModuleId = administrationModule.Id, DisplayOrder = 2 },
-                    new SubModule { Name = "Audit Logs", Code = "AUDIT_LOGS", ModuleId = administrationModule.Id, DisplayOrder = 3 }
+                    new SubModule { Name = "User", ModuleId = administrationModule.Id },
+                    new SubModule { Name = "Roles", ModuleId = administrationModule.Id }
                 };
                     context.SubModules.AddRange(administrationSubModules);
                 }
 
                 // Add submodules for "System"
-                var systemModule = context.Modules.FirstOrDefault(m => m.Code == "SYSTEM");
+                var systemModule = context.Modules.FirstOrDefault(m => m.Name == "System");
                 if (systemModule != null)
                 {
                     var systemSubModules = new List<SubModule>
                 {
-                    new SubModule { Name = "Company", Code = "COMPANY", ModuleId = systemModule.Id, DisplayOrder = 1 },
-                    new SubModule { Name = "Sub Company", Code = "SUB_COMPANY", ModuleId = systemModule.Id, DisplayOrder = 2 }
+                    new SubModule { Name = "Company", ModuleId = systemModule.Id }
                 };
                     context.SubModules.AddRange(systemSubModules);
                 }
@@ -2056,6 +2012,7 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedRolePermissionsForMainModule(SpotDBContext context)
         {
+
             if (context.RoleModulePermissions.Any())
                 return;
 
@@ -2063,200 +2020,152 @@ London, W1A 1AA, United Kingdom.",
             {
                 var roles = context.Roles.ToList();
                 var modules = context.Modules.Include(c => c.SubModules).ToList();
+                var roleModulePermissions = new List<RoleModulePermission>();
 
-                // Get all roles
-                var salesRole = roles.FirstOrDefault(r => r.Name == "Sales");
-                var stockManagerRole = roles.FirstOrDefault(r => r.Name == "StockManager");
-                var registrationRole = roles.FirstOrDefault(r => r.Name == "Registration");
-                var accountRole = roles.FirstOrDefault(r => r.Name == "Account");
-                var advertisementRole = roles.FirstOrDefault(r => r.Name == "Advertisement");
-                var superAdminRole = roles.FirstOrDefault(r => r.Name == "SuperAdmin");
-
-                // Helper method to create module permission
-                void AddModulePermission(Role role, Module module, bool canView, bool canAdd, bool canUpdate, bool canDelete)
-                {
-                    if (role == null || module == null) return;
-
-                    var permission = new RoleModulePermission
-                    {
-                        RoleId = role.Id,
-                        ModuleId = module.Id,
-                        CanView = canView,
-                        CanAdd = canAdd,
-                        CanUpdate = canUpdate,
-                        CanDelete = canDelete
-                    };
-                    context.RoleModulePermissions.Add(permission);
-                }
-
-                // Helper method to create submodule permission
-                void AddSubModulePermission(Role role, SubModule subModule, bool canView, bool canAdd, bool canUpdate, bool canDelete)
-                {
-                    if (role == null || subModule == null) return;
-
-                    var permission = new RoleSubModulePermission
-                    {
-                        RoleId = role.Id,
-                        SubModuleId = subModule.Id,
-                        CanView = canView,
-                        CanAdd = canAdd,
-                        CanUpdate = canUpdate,
-                        CanDelete = canDelete
-                    };
-                    context.RoleSubModulePermissions.Add(permission);
-                }
-
-                // Get all modules
-                var dashboardModule = modules.FirstOrDefault(m => m.Code == "DASHBOARD");
-                var stockToBuyModule = modules.FirstOrDefault(m => m.Code == "STOCK_TO_BUY");
-                var stocksModule = modules.FirstOrDefault(m => m.Code == "STOCKS");
-                var customerModule = modules.FirstOrDefault(m => m.Code == "CUSTOMER");
-                var vehicleModule = modules.FirstOrDefault(m => m.Code == "VEHICLE");
-                var masterDataModule = modules.FirstOrDefault(m => m.Code == "MASTER_DATA");
-                var reportsModule = modules.FirstOrDefault(m => m.Code == "REPORTS");
-                var administrationModule = modules.FirstOrDefault(m => m.Code == "ADMINISTRATION");
-                var systemModule = modules.FirstOrDefault(m => m.Code == "SYSTEM");
-                var advertisementModule = modules.FirstOrDefault(m => m.Code == "ADVERTISEMENT");
-                var lettersModule = modules.FirstOrDefault(m => m.Code == "LETTERS");
-
-                // Get Stocks submodules
-                var stockInfoSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "STOCK_INFO");
-                var vehicleInfoSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "VEHICLE_INFO");
-                var purchaseSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "PURCHASE");
-                var importSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "IMPORT");
-                var clearanceSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "CLEARANCE");
-                var saleSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "SALE");
-                var registrationSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "REGISTRATION");
-                var pricingSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "PRICING");
-                var arrivalChecklistSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "ARRIVAL_CHECKLIST");
-                var expensesSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "EXPENSES");
-                var administrativeCostSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "ADMINISTRATIVE_COST");
-                var disbursementSub = stocksModule?.SubModules.FirstOrDefault(s => s.Code == "DISBURSEMENT");
-
-                // ============================================================
-                // SALES ROLE - View only on Vehicle module
-                // ============================================================
-                if (salesRole != null)
-                {
-                    AddModulePermission(salesRole, dashboardModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                    AddModulePermission(salesRole, vehicleModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                }
-
-                // ============================================================
-                // STOCK MANAGER ROLE
-                // ============================================================
-                if (stockManagerRole != null)
-                {
-                    // Modules: Stock to Buy, Stocks, Customer, Vehicle, Master Data
-                    AddModulePermission(stockManagerRole, dashboardModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                    AddModulePermission(stockManagerRole, stockToBuyModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(stockManagerRole, stocksModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(stockManagerRole, customerModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(stockManagerRole, vehicleModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(stockManagerRole, masterDataModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-
-                    // Submodules: Stock Info, Vehicle Info, Purchase, Import, Clearance, Pricing, Arrival Checklist, Expenses, Administrative Cost
-                    AddSubModulePermission(stockManagerRole, stockInfoSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, vehicleInfoSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, purchaseSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, importSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, clearanceSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, pricingSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, arrivalChecklistSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, expensesSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(stockManagerRole, administrativeCostSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                }
-
-                // ============================================================
-                // REGISTRATION ROLE
-                // ============================================================
-                if (registrationRole != null)
-                {
-                    // Modules: Stocks, Customer
-                    AddModulePermission(registrationRole, dashboardModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                    AddModulePermission(registrationRole, stocksModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(registrationRole, customerModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-
-                    // Submodules: Stock Info, Vehicle Info, Clearance, Sale, Registration, Expenses, Administrative Cost, Disbursement
-                    AddSubModulePermission(registrationRole, stockInfoSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, vehicleInfoSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, clearanceSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, saleSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, registrationSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, expensesSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, administrativeCostSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(registrationRole, disbursementSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                }
-
-                // ============================================================
-                // ACCOUNT ROLE
-                // ============================================================
-                if (accountRole != null)
-                {
-                    // Modules: Stock to Buy, Stocks, Customer, Vehicle, Master Data, Report, Administration
-                    AddModulePermission(accountRole, dashboardModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                    AddModulePermission(accountRole, stockToBuyModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(accountRole, stocksModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(accountRole, customerModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(accountRole, vehicleModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(accountRole, masterDataModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(accountRole, reportsModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(accountRole, administrationModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-
-                    // All stock submodules
-                    AddSubModulePermission(accountRole, stockInfoSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, vehicleInfoSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, purchaseSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, importSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, clearanceSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, saleSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, registrationSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, pricingSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, arrivalChecklistSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, expensesSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, administrativeCostSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddSubModulePermission(accountRole, disbursementSub, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                }
-
-                // ============================================================
-                // ADVERTISEMENT ROLE
-                // ============================================================
-                if (advertisementRole != null)
-                {
-                    // Modules: Advertisement
-                    AddModulePermission(advertisementRole, dashboardModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                    AddModulePermission(advertisementRole, advertisementModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-                    AddModulePermission(advertisementRole, stocksModule, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-
-                    // Submodules: Stock Info (view only), Vehicle Info (view only) for managing ads
-                    AddSubModulePermission(advertisementRole, stockInfoSub, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                    AddSubModulePermission(advertisementRole, vehicleInfoSub, canView: true, canAdd: false, canUpdate: false, canDelete: false);
-                }
-
-                // ============================================================
-                // SUPER ADMIN ROLE - Full access to everything
-                // ============================================================
-                if (superAdminRole != null)
+                foreach (var role in roles)
                 {
                     foreach (var module in modules)
                     {
-                        AddModulePermission(superAdminRole, module, canView: true, canAdd: true, canUpdate: true, canDelete: true);
-
-                        // Add all submodule permissions
-                        foreach (var subModule in module.SubModules)
+                        var permission = new RoleModulePermission
                         {
-                            AddSubModulePermission(superAdminRole, subModule, canView: true, canAdd: true, canUpdate: true, canDelete: true);
+                            RoleId = role.Id,
+                            ModuleId = module.Id
+                        };
+                        if (role.Name == "Admin")
+                        {
+                            permission.CanAdd = true;
+                            permission.CanUpdate = true;
+                            permission.CanDelete = true;
+                            permission.CanView = true;
+
+                            var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                            foreach (var subModule in module.SubModules)
+                            {
+                                var subModulePermission = new RoleSubModulePermission
+                                {
+                                    SubModuleId = subModule.Id,
+                                    RoleId = role.Id,
+                                    CanAdd = true,
+                                    CanUpdate = true,
+                                    CanDelete = true,
+                                    CanView = true
+                                };
+                                roleSubModulePermissions.Add(subModulePermission);
+                            }
+                            context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                            await context.SaveChangesAsync();
                         }
+                        else if (role.Name == "Customer Manager")
+                        {
+                            if (module.Name == "Dashboard" ||
+                                //module.Name == "Stocks" ||
+                                module.Name == "Customer" ||
+                                //module.Name == "MasterData" ||
+                                //module.Name == "Letters" ||
+                                //module.Name == "Reports" ||
+                                module.Name == "Vehicle"
+                                //module.Name == "Administration" ||
+                                //module.Name == "System"
+                                )
+                            {
+                                permission.CanAdd = true;
+                                permission.CanUpdate = true;
+                                permission.CanDelete = true;
+                                permission.CanView = true;
+
+                                var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                                foreach (var subModule in module.SubModules)
+                                {
+                                    var subModulePermission = new RoleSubModulePermission
+                                    {
+                                        SubModuleId = subModule.Id,
+                                        RoleId = role.Id,
+                                        CanAdd = true,
+                                        CanUpdate = true,
+                                        CanDelete = true,
+                                        CanView = true
+                                    };
+                                    roleSubModulePermissions.Add(subModulePermission);
+                                }
+                                context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                                await context.SaveChangesAsync();
+
+                            }
+                        }
+                        else if (role.Name == "Sales")
+                        {
+                            if (
+                                module.Name == "Vehicle"
+                                )
+                            {
+                                permission.CanAdd = true;
+                                permission.CanUpdate = true;
+                                permission.CanDelete = true;
+                                permission.CanView = true;
+
+                                var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                                foreach (var subModule in module.SubModules)
+                                {
+                                    var subModulePermission = new RoleSubModulePermission
+                                    {
+                                        SubModuleId = subModule.Id,
+                                        RoleId = role.Id,
+                                        CanAdd = true,
+                                        CanUpdate = true,
+                                        CanDelete = true,
+                                        CanView = true
+                                    };
+                                    roleSubModulePermissions.Add(subModulePermission);
+                                }
+                                context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                                await context.SaveChangesAsync();
+
+                            }
+                        }
+                        else if (role.Name == "Marketing")
+                        {
+                            if (
+                                module.Name == "Advertisement"
+                                )
+                            {
+                                permission.CanAdd = true;
+                                permission.CanUpdate = true;
+                                permission.CanDelete = true;
+                                permission.CanView = true;
+
+                                var roleSubModulePermissions = new List<RoleSubModulePermission>();
+                                foreach (var subModule in module.SubModules)
+                                {
+                                    var subModulePermission = new RoleSubModulePermission
+                                    {
+                                        SubModuleId = subModule.Id,
+                                        RoleId = role.Id,
+                                        CanAdd = true,
+                                        CanUpdate = true,
+                                        CanDelete = true,
+                                        CanView = true
+                                    };
+                                    roleSubModulePermissions.Add(subModulePermission);
+                                }
+                                context.RoleSubModulePermissions.AddRange(roleSubModulePermissions);
+                                await context.SaveChangesAsync();
+
+                            }
+                        }
+                        roleModulePermissions.Add(permission);
+
+
                     }
                 }
-
+                context.RoleModulePermissions.AddRange(roleModulePermissions);
                 await context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                // Log the exception (you might want to use a logging framework here)
-                throw new Exception($"Error seeding role permissions: {ex.Message}", ex);
+
             }
+           
+
         }
 
         //private static async Task SeedRolePermissionsForSubModule(SpotDBContext context)
@@ -2342,7 +2251,7 @@ London, W1A 1AA, United Kingdom.",
         {
             await SeedSuperAdminUser(context, userManager);
             await SeedStockManagerUser(context, userManager);
-            // await SeedCustomerManagerUser(context, userManager); // No matching role in new system
+            await SeedCustomerManagerUser(context, userManager);
             await SeedFinanceManagerUser(context, userManager);
             await SeedSalesUser(context, userManager);
             await SeedMarketingUser(context, userManager);
@@ -2350,15 +2259,15 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedSuperAdminUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "SuperAdmin").Any())
+            if (context.Profiles.Where(c => c.Role == "Admin").Any())
                 return;
 
             var userAdminProfile = new Profile
             {
-                FullName = "Super Administrator",
+                FullName = "Administrator",
                 Email = "admin@email.com",
                 Phone = "0192563019",
-                Role = "SuperAdmin",
+                Role = "Admin",
             };
 
             await context.Profiles.AddAsync(userAdminProfile);
@@ -2370,77 +2279,45 @@ London, W1A 1AA, United Kingdom.",
                 UserName = "admin@email.com",
                 ProfileId = userAdminProfile.Id,
                 Email = "admin@email.com",
-                Role = "SuperAdmin"
+                Role = "Admin"
             };
 
             await CreateAppUser(userManager, userAdmin);
-            if (!await userManager.IsInRoleAsync(userAdmin, "SuperAdmin"))
+            if (!await userManager.IsInRoleAsync(userAdmin, "Admin"))
             {
-                await userManager.AddToRoleAsync(userAdmin, "SuperAdmin");
-            }
-
-            // Create UserRole record for custom UserRoles table
-            var superAdminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "SuperAdmin");
-            if (superAdminRole != null && !await context.UserRoles.AnyAsync(ur => ur.UserId == userAdmin.Id && ur.RoleId == superAdminRole.Id))
-            {
-                var userRole = new UserRole
-                {
-                    UserId = userAdmin.Id,
-                    RoleId = superAdminRole.Id,
-                    IsActive = true,
-                    AssignedBy = "System",
-                    AssignedAt = DateTime.UtcNow
-                };
-                await context.UserRoles.AddAsync(userRole);
-                await context.SaveChangesAsync();
+                await userManager.AddToRoleAsync(userAdmin, "Admin");
             }
         }
 
         private static async Task SeedMarketingUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "Advertisement").Any())
+            if (context.Profiles.Where(c => c.Role == "Marketing").Any())
                 return;
 
-            var marketingProfile = new Profile
+            var salesProfile = new Profile
             {
-                FullName = "Marketing Manager",
+                FullName = "Marketing",
                 Email = "marketing@email.com",
                 Phone = "0192563019",
-                Role = "Advertisement",
+                Role = "Marketing",
             };
 
-            await context.Profiles.AddAsync(marketingProfile);
+            await context.Profiles.AddAsync(salesProfile);
             await context.SaveChangesAsync();
 
-            var marketingUser = new AppUser
+            var salesUser = new AppUser
             {
-                DisplayName = "Marketing Manager",
+                DisplayName = "Marketing",
                 UserName = "marketing@email.com",
-                ProfileId = marketingProfile.Id,
+                ProfileId = salesProfile.Id,
                 Email = "marketing@email.com",
-                Role = "Advertisement"
+                Role = "Marketing"
             };
 
-            await CreateAppUser(userManager, marketingUser);
-            if (!await userManager.IsInRoleAsync(marketingUser, "Advertisement"))
+            await CreateAppUser(userManager, salesUser);
+            if (!await userManager.IsInRoleAsync(salesUser, "Marketing"))
             {
-                await userManager.AddToRoleAsync(marketingUser, "Advertisement");
-            }
-
-            // Create UserRole record for custom UserRoles table
-            var advertisementRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Advertisement");
-            if (advertisementRole != null && !await context.UserRoles.AnyAsync(ur => ur.UserId == marketingUser.Id && ur.RoleId == advertisementRole.Id))
-            {
-                var userRole = new UserRole
-                {
-                    UserId = marketingUser.Id,
-                    RoleId = advertisementRole.Id,
-                    IsActive = true,
-                    AssignedBy = "System",
-                    AssignedAt = DateTime.UtcNow
-                };
-                await context.UserRoles.AddAsync(userRole);
-                await context.SaveChangesAsync();
+                await userManager.AddToRoleAsync(salesUser, "Marketing");
             }
         }
 
@@ -2474,35 +2351,19 @@ London, W1A 1AA, United Kingdom.",
             {
                 await userManager.AddToRoleAsync(salesUser, "Sales");
             }
-
-            // Create UserRole record for custom UserRoles table
-            var salesRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Sales");
-            if (salesRole != null && !await context.UserRoles.AnyAsync(ur => ur.UserId == salesUser.Id && ur.RoleId == salesRole.Id))
-            {
-                var userRole = new UserRole
-                {
-                    UserId = salesUser.Id,
-                    RoleId = salesRole.Id,
-                    IsActive = true,
-                    AssignedBy = "System",
-                    AssignedAt = DateTime.UtcNow
-                };
-                await context.UserRoles.AddAsync(userRole);
-                await context.SaveChangesAsync();
-            }
         }
 
         private static async Task SeedFinanceManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "Account").Any())
+            if (context.Profiles.Where(c => c.Role == "Finance Manager").Any())
                 return;
 
             var financeManagerProfile = new Profile
             {
-                FullName = "Account Manager",
+                FullName = "Finance Manager",
                 Email = "finance@email.com",
                 Phone = "0192563019",
-                Role = "Account",
+                Role = "Finance Manager",
             };
 
             await context.Profiles.AddAsync(financeManagerProfile);
@@ -2510,33 +2371,17 @@ London, W1A 1AA, United Kingdom.",
 
             var financeManagerUser = new AppUser
             {
-                DisplayName = "Account Manager",
+                DisplayName = "Finance Manager",
                 UserName = "finance@email.com",
                 ProfileId = financeManagerProfile.Id,
                 Email = "finance@email.com",
-                Role = "Account"
+                Role = "Finance Manager"
             };
 
             await CreateAppUser(userManager, financeManagerUser);
-            if (!await userManager.IsInRoleAsync(financeManagerUser, "Account"))
+            if (!await userManager.IsInRoleAsync(financeManagerUser, "Finance Manager"))
             {
-                await userManager.AddToRoleAsync(financeManagerUser, "Account");
-            }
-
-            // Create UserRole record for custom UserRoles table
-            var accountRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Account");
-            if (accountRole != null && !await context.UserRoles.AnyAsync(ur => ur.UserId == financeManagerUser.Id && ur.RoleId == accountRole.Id))
-            {
-                var userRole = new UserRole
-                {
-                    UserId = financeManagerUser.Id,
-                    RoleId = accountRole.Id,
-                    IsActive = true,
-                    AssignedBy = "System",
-                    AssignedAt = DateTime.UtcNow
-                };
-                await context.UserRoles.AddAsync(userRole);
-                await context.SaveChangesAsync();
+                await userManager.AddToRoleAsync(financeManagerUser, "Finance Manager");
             }
         }
 
@@ -2574,7 +2419,7 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedStockManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "StockManager").Any())
+            if (context.Profiles.Where(c => c.Role == "Stock Manager").Any())
                 return;
 
             var stockManagerProfile = new Profile
@@ -2582,7 +2427,7 @@ London, W1A 1AA, United Kingdom.",
                 FullName = "Stock Manager",
                 Email = "stock@email.com",
                 Phone = "0192563019",
-                Role = "StockManager",
+                Role = "Stock Manager",
             };
 
             await context.Profiles.AddAsync(stockManagerProfile);
@@ -2594,29 +2439,13 @@ London, W1A 1AA, United Kingdom.",
                 UserName = "stock@email.com",
                 ProfileId = stockManagerProfile.Id,
                 Email = "stock@email.com",
-                Role = "StockManager"
+                Role = "Stock Manager"
             };
 
             await CreateAppUser(userManager, stockManagerUser);
-            if (!await userManager.IsInRoleAsync(stockManagerUser, "StockManager"))
+            if (!await userManager.IsInRoleAsync(stockManagerUser, "Stock Manager"))
             {
-                await userManager.AddToRoleAsync(stockManagerUser, "StockManager");
-            }
-
-            // Create UserRole record for custom UserRoles table
-            var stockManagerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "StockManager");
-            if (stockManagerRole != null && !await context.UserRoles.AnyAsync(ur => ur.UserId == stockManagerUser.Id && ur.RoleId == stockManagerRole.Id))
-            {
-                var userRole = new UserRole
-                {
-                    UserId = stockManagerUser.Id,
-                    RoleId = stockManagerRole.Id,
-                    IsActive = true,
-                    AssignedBy = "System",
-                    AssignedAt = DateTime.UtcNow
-                };
-                await context.UserRoles.AddAsync(userRole);
-                await context.SaveChangesAsync();
+                await userManager.AddToRoleAsync(stockManagerUser, "Stock Manager");
             }
         }
 
@@ -2626,95 +2455,6 @@ London, W1A 1AA, United Kingdom.",
             if (!result.Succeeded)
             {
                 throw new Exception(string.Join("; ", result.Errors.Select(e => e.Description)));
-            }
-        }
-
-        /// <summary>
-        /// Migration method: Creates UserRole records for existing users without them
-        /// This is safe to run multiple times (idempotent) and works with production data
-        /// </summary>
-        private static async Task MigrateExistingUsersToUserRoles(SpotDBContext context)
-        {
-            Console.WriteLine("Starting UserRole migration for existing users...");
-
-            // Map old role names to new role names
-            var roleMapping = new Dictionary<string, string>
-            {
-                { "Admin", "SuperAdmin" },
-                { "Stock Manager", "StockManager" },
-                { "Finance Manager", "Account" },
-                { "Marketing", "Advertisement" },
-                { "Sales", "Sales" },
-                { "StockManager", "StockManager" },
-                { "Account", "Account" },
-                { "Advertisement", "Advertisement" },
-                { "SuperAdmin", "SuperAdmin" },
-                { "Registration", "Registration" }
-            };
-
-            // Get all users
-            var allUsers = await context.Users.ToListAsync();
-            var processedCount = 0;
-            var skippedCount = 0;
-
-            foreach (var user in allUsers)
-            {
-                // Skip users without a role
-                if (string.IsNullOrEmpty(user.Role))
-                {
-                    Console.WriteLine($"Skipping user {user.Email} - no role assigned");
-                    skippedCount++;
-                    continue;
-                }
-
-                // Map old role name to new role name
-                var roleName = roleMapping.ContainsKey(user.Role) ? roleMapping[user.Role] : user.Role;
-
-                // Find the role in the custom Roles table
-                var role = await context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
-                if (role == null)
-                {
-                    Console.WriteLine($"Warning: Role '{roleName}' not found for user {user.Email}");
-                    skippedCount++;
-                    continue;
-                }
-
-                // Check if UserRole already exists
-                var existingUserRole = await context.UserRoles
-                    .FirstOrDefaultAsync(ur => ur.UserId == user.Id && ur.RoleId == role.Id);
-
-                if (existingUserRole != null)
-                {
-                    Console.WriteLine($"UserRole already exists for {user.Email} with role {roleName}");
-                    skippedCount++;
-                    continue;
-                }
-
-                // Create new UserRole record
-                var userRole = new UserRole
-                {
-                    UserId = user.Id,
-                    RoleId = role.Id,
-                    IsActive = true,
-                    AssignedBy = "System Migration",
-                    AssignedAt = DateTime.UtcNow,
-                    CreatedBy = "System"
-                };
-
-                await context.UserRoles.AddAsync(userRole);
-                processedCount++;
-                Console.WriteLine($"Created UserRole for {user.Email} with role {roleName}");
-            }
-
-            // Save all changes at once
-            if (processedCount > 0)
-            {
-                await context.SaveChangesAsync();
-                Console.WriteLine($"UserRole migration completed: {processedCount} created, {skippedCount} skipped");
-            }
-            else
-            {
-                Console.WriteLine($"UserRole migration completed: No new records needed ({skippedCount} users already have UserRoles)");
             }
         }
 

@@ -20,12 +20,14 @@ namespace SPOT_API.Controllers
         private readonly SpotDBContext _context;
         private readonly IUserAccessor _userAccessor;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IAuditService _auditService;
 
-        public BrandsController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
+        public BrandsController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager, IAuditService auditService)
         {
             _context = context;
             _userAccessor = userAccessor;
             _userManager = userManager;
+            _auditService = auditService;
         }
 
         // GET: api/Brands
@@ -76,15 +78,37 @@ namespace SPOT_API.Controllers
                 return BadRequest();
             }
 
+            // Get old values for audit log (before updating)
+            var prevObj = await _context.Brands
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             _context.Entry(obj).State = EntityState.Modified;
-
-
 
             try
             {
                 await _context.SaveChangesAsync();
+
+                // Log the brand update
+                await _auditService.LogAsync(
+                    AuditEventType.BrandUpdated,
+                    "Brand Updated",
+                    $"Updated brand: {obj.Name}",
+                    entityType: "Brand",
+                    entityId: obj.Id.ToString(),
+                    entityName: obj.Name,
+                    oldValues: new
+                    {
+                        Name = prevObj?.Name
+                    },
+                    newValues: new
+                    {
+                        Name = obj.Name
+                    },
+                    severity: AuditSeverity.Low
+                );
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!IsExists(id))
                 {
@@ -92,19 +116,33 @@ namespace SPOT_API.Controllers
                 }
                 else
                 {
+                    await _auditService.LogErrorAsync(
+                        AuditEventType.BrandUpdated,
+                        "Brand Update Failed - Concurrency Error",
+                        ex.Message,
+                        ex.StackTrace,
+                        errorCode: "CONCURRENCY_ERROR",
+                        description: $"Concurrency conflict updating brand: {obj.Name}",
+                        entityId: id.ToString(),
+                        severity: AuditSeverity.High
+                    );
                     throw;
                 }
             }
-
             catch (Exception ex)
             {
-                throw ex;
-
+                await _auditService.LogErrorAsync(
+                    AuditEventType.BrandUpdated,
+                    "Brand Update Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "BRAND_UPDATE_ERROR",
+                    description: $"Failed to update brand: {obj.Name}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
-
-
-
-
 
             return NoContent();
         }
@@ -123,9 +161,46 @@ namespace SPOT_API.Controllers
                 _context.Brands.Add(obj);
                 await _context.SaveChangesAsync();
 
+                // Log the brand creation
+                await _auditService.LogAsync(
+                    AuditEventType.BrandCreated,
+                    "Brand Created",
+                    $"Created brand: {obj.Name}",
+                    entityType: "Brand",
+                    entityId: obj.Id.ToString(),
+                    entityName: obj.Name,
+                    newValues: new
+                    {
+                        Name = obj.Name
+                    },
+                    severity: AuditSeverity.Low
+                );
+            }
+            catch (DbUpdateException dbEx)
+            {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.BrandCreated,
+                    "Brand Creation Failed - Database Error",
+                    dbEx.InnerException?.Message ?? dbEx.Message,
+                    dbEx.StackTrace,
+                    errorCode: "DB_UPDATE_ERROR",
+                    description: $"Failed to create brand: {obj.Name}",
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
             catch (Exception ex)
             {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.BrandCreated,
+                    "Brand Creation Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "BRAND_CREATE_ERROR",
+                    description: $"Failed to create brand: {obj.Name}",
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
 
             return CreatedAtAction("Get", new { id = obj.Id }, obj);
@@ -135,24 +210,53 @@ namespace SPOT_API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-            if (user == null)
-                return Unauthorized();
-
-
-
-            var category = await _context.Brands
-                .FirstOrDefaultAsync(c => c.Id == id);
-            if (category == null)
+            try
             {
-                return NotFound();
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                if (user == null)
+                    return Unauthorized();
+
+                var brand = await _context.Brands
+                    .FirstOrDefaultAsync(c => c.Id == id);
+                if (brand == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Brands.Remove(brand);
+                await _context.SaveChangesAsync();
+
+                // Log the brand deletion
+                await _auditService.LogAsync(
+                    AuditEventType.BrandDeleted,
+                    "Brand Deleted",
+                    $"Deleted brand: {brand.Name}",
+                    entityType: "Brand",
+                    entityId: brand.Id.ToString(),
+                    entityName: brand.Name,
+                    oldValues: new
+                    {
+                        Name = brand.Name
+                    },
+                    severity: AuditSeverity.Medium
+                );
+
+                return NoContent();
             }
-
-            _context.Brands.Remove(category);
-            await _context.SaveChangesAsync();
-
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.BrandDeleted,
+                    "Brand Deletion Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "BRAND_DELETE_ERROR",
+                    description: $"Failed to delete brand with ID: {id}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+                throw;
+            }
         }
 
         private bool IsExists(Guid id)

@@ -91,12 +91,16 @@ namespace SPOT_API.Persistence
         public DbSet<StockStatusHistory> StockStatusHistories { get; set; }
         public DbSet<Company> Companies  { get; set; }
 
-        public DbSet<Role> Roles { get; set; }
+        public new DbSet<Role> Roles { get; set; }  // 'new' keyword to hide Identity's Roles property
         public DbSet<Module> Modules { get; set; }
         public DbSet<RoleModulePermission> RoleModulePermissions { get; set; }
 
         public DbSet<SubModule> SubModules { get; set; }
         public DbSet<RoleSubModulePermission> RoleSubModulePermissions { get; set; }
+
+        // New entities for role/permission revamp
+        public new DbSet<UserRole> UserRoles { get; set; }  // 'new' keyword to hide Identity's UserRoles property
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         public SpotDBContext(DbContextOptions<SpotDBContext> options)
             : base(options)
@@ -174,6 +178,28 @@ namespace SPOT_API.Persistence
             // Configure ReceiptDocument table name to match migration
             modelBuilder.Entity<ReceiptDocument>()
                 .ToTable("ReceiptDocument");
+
+            // Configure UserRole indexes
+            modelBuilder.Entity<UserRole>()
+                .HasIndex(ur => ur.UserId);
+            modelBuilder.Entity<UserRole>()
+                .HasIndex(ur => ur.RoleId);
+            modelBuilder.Entity<UserRole>()
+                .HasIndex(ur => new { ur.IsActive, ur.EffectiveUntil });
+
+            // Configure AuditLog indexes
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.UserId);
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.Timestamp);
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.Action);
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.EventType);
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => new { a.EntityType, a.EntityId });
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.Severity);
 
             base.OnModelCreating(modelBuilder);
 

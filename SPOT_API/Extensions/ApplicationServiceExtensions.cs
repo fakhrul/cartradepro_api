@@ -80,6 +80,11 @@ namespace SPOT_API.Extensions
             //services.AddAutoMapper(typeof(MappingProfiles).Assembly);
             services.AddScoped<IUserAccessor, UserAccessor>();
             services.AddScoped<Services.StockImportService>();
+            
+            // Register Authorization and Audit services
+            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddScoped<IAuditService, AuditService>();
+            services.AddHttpContextAccessor();
 
             services.AddScoped(_ =>
             {

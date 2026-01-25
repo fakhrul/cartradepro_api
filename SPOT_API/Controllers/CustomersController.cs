@@ -20,12 +20,14 @@ namespace SPOT_API.Controllers
         private readonly SpotDBContext _context;
         private readonly IUserAccessor _userAccessor;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IAuditService _auditService;
 
-        public CustomersController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
+        public CustomersController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager, IAuditService auditService)
         {
             _context = context;
             _userAccessor = userAccessor;
             _userManager = userManager;
+            _auditService = auditService;
         }
 
         // GET: api/Customers
@@ -149,15 +151,45 @@ namespace SPOT_API.Controllers
                 return BadRequest();
             }
 
+            // Get old values for audit log (before updating)
+            var prevObj = await _context.Customers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             _context.Entry(obj).State = EntityState.Modified;
-
-
 
             try
             {
                 await _context.SaveChangesAsync();
+
+                // Log the customer update
+                await _auditService.LogAsync(
+                    AuditEventType.CustomerUpdated,
+                    "Customer Updated",
+                    $"Updated customer: {obj.Name} - IC: {obj.IcNumber}",
+                    entityType: "Customer",
+                    entityId: obj.Id.ToString(),
+                    entityName: obj.Name,
+                    oldValues: new
+                    {
+                        Name = prevObj?.Name,
+                        IcNumber = prevObj?.IcNumber,
+                        Phone = prevObj?.Phone,
+                        Email = prevObj?.Email,
+                        Address = prevObj?.Address
+                    },
+                    newValues: new
+                    {
+                        Name = obj.Name,
+                        IcNumber = obj.IcNumber,
+                        Phone = obj.Phone,
+                        Email = obj.Email,
+                        Address = obj.Address
+                    },
+                    severity: AuditSeverity.Low
+                );
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!IsExists(id))
                 {
@@ -165,19 +197,33 @@ namespace SPOT_API.Controllers
                 }
                 else
                 {
+                    await _auditService.LogErrorAsync(
+                        AuditEventType.CustomerUpdated,
+                        "Customer Update Failed - Concurrency Error",
+                        ex.Message,
+                        ex.StackTrace,
+                        errorCode: "CONCURRENCY_ERROR",
+                        description: $"Concurrency conflict updating customer: {obj.Name}",
+                        entityId: id.ToString(),
+                        severity: AuditSeverity.High
+                    );
                     throw;
                 }
             }
-
             catch (Exception ex)
             {
-                throw ex;
-
+                await _auditService.LogErrorAsync(
+                    AuditEventType.CustomerUpdated,
+                    "Customer Update Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "CUSTOMER_UPDATE_ERROR",
+                    description: $"Failed to update customer: {obj.Name}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
-
-
-
-
 
             return NoContent();
         }
@@ -196,9 +242,50 @@ namespace SPOT_API.Controllers
                 _context.Customers.Add(obj);
                 await _context.SaveChangesAsync();
 
+                // Log the customer creation
+                await _auditService.LogAsync(
+                    AuditEventType.CustomerCreated,
+                    "Customer Created",
+                    $"Created customer: {obj.Name} - IC: {obj.IcNumber}",
+                    entityType: "Customer",
+                    entityId: obj.Id.ToString(),
+                    entityName: obj.Name,
+                    newValues: new
+                    {
+                        Name = obj.Name,
+                        IcNumber = obj.IcNumber,
+                        Phone = obj.Phone,
+                        Email = obj.Email,
+                        Address = obj.Address
+                    },
+                    severity: AuditSeverity.Low
+                );
+            }
+            catch (DbUpdateException dbEx)
+            {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.CustomerCreated,
+                    "Customer Creation Failed - Database Error",
+                    dbEx.InnerException?.Message ?? dbEx.Message,
+                    dbEx.StackTrace,
+                    errorCode: "DB_UPDATE_ERROR",
+                    description: $"Failed to create customer: {obj.Name} - IC: {obj.IcNumber}",
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
             catch (Exception ex)
             {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.CustomerCreated,
+                    "Customer Creation Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "CUSTOMER_CREATE_ERROR",
+                    description: $"Failed to create customer: {obj.Name}",
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
 
             return CreatedAtAction("Get", new { id = obj.Id }, obj);
@@ -214,16 +301,14 @@ namespace SPOT_API.Controllers
                 if (user == null)
                     return Unauthorized();
 
-
-
-                var category = await _context.Customers
+                var customer = await _context.Customers
                     .FirstOrDefaultAsync(c => c.Id == id);
-                if (category == null)
+                if (customer == null)
                 {
                     return NotFound();
                 }
 
-                _context.Customers.Remove(category);
+                _context.Customers.Remove(customer);
 
                 var sales = await _context.Sales
                     .Where(c => c.CustomerId == id)
@@ -236,11 +321,39 @@ namespace SPOT_API.Controllers
                 }
                 await _context.SaveChangesAsync();
 
+                // Log the customer deletion
+                await _auditService.LogAsync(
+                    AuditEventType.CustomerDeleted,
+                    "Customer Deleted",
+                    $"Deleted customer: {customer.Name} - IC: {customer.IcNumber}",
+                    entityType: "Customer",
+                    entityId: customer.Id.ToString(),
+                    entityName: customer.Name,
+                    oldValues: new
+                    {
+                        Name = customer.Name,
+                        IcNumber = customer.IcNumber,
+                        Phone = customer.Phone,
+                        Email = customer.Email,
+                        Address = customer.Address
+                    },
+                    severity: AuditSeverity.Medium
+                );
 
                 return NoContent();
             }
             catch (Exception ex)
             {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.CustomerDeleted,
+                    "Customer Deletion Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "CUSTOMER_DELETE_ERROR",
+                    description: $"Failed to delete customer with ID: {id}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
                 return BadRequest(ex.Message);
             }
 

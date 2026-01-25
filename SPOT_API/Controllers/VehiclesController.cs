@@ -20,12 +20,14 @@ namespace SPOT_API.Controllers
         private readonly SpotDBContext _context;
         private readonly IUserAccessor _userAccessor;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IAuditService _auditService;
 
-        public VehiclesController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager)
+        public VehiclesController(SpotDBContext context, IUserAccessor userAccessor, UserManager<AppUser> userManager, IAuditService auditService)
         {
             _context = context;
             _userAccessor = userAccessor;
             _userManager = userManager;
+            _auditService = auditService;
         }
 
         // GET: api/Vehicles
@@ -69,15 +71,61 @@ namespace SPOT_API.Controllers
                 return BadRequest();
             }
 
+            // Get old values for audit log (before updating)
+            var prevObj = await _context.Vehicles
+                .Include(v => v.Brand)
+                .Include(v => v.Model)
+                .Include(v => v.VehicleType)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == id);
+
             _context.Entry(obj).State = EntityState.Modified;
-
-
 
             try
             {
                 await _context.SaveChangesAsync();
+
+                // Load related entities for audit log
+                await _context.Entry(obj).Reference(v => v.Brand).LoadAsync();
+                await _context.Entry(obj).Reference(v => v.Model).LoadAsync();
+                await _context.Entry(obj).Reference(v => v.VehicleType).LoadAsync();
+
+                // Log the vehicle update
+                await _auditService.LogAsync(
+                    AuditEventType.VehicleUpdated,
+                    "Vehicle Updated",
+                    $"Updated vehicle: {obj.Brand?.Name} {obj.Model?.Name} - Chasis: {obj.ChasisNo}",
+                    entityType: "Vehicle",
+                    entityId: obj.Id.ToString(),
+                    entityName: $"{obj.Brand?.Name} {obj.Model?.Name} - {obj.ChasisNo}",
+                    oldValues: new
+                    {
+                        ChasisNo = prevObj?.ChasisNo,
+                        Brand = prevObj?.Brand?.Name,
+                        Model = prevObj?.Model?.Name,
+                        VehicleType = prevObj?.VehicleType?.Name,
+                        Year = prevObj?.Year,
+                        Month = prevObj?.Month,
+                        Color = prevObj?.Color,
+                        EngineNo = prevObj?.EngineNo,
+                        EngineCapacity = prevObj?.EngineCapacity
+                    },
+                    newValues: new
+                    {
+                        ChasisNo = obj.ChasisNo,
+                        Brand = obj.Brand?.Name,
+                        Model = obj.Model?.Name,
+                        VehicleType = obj.VehicleType?.Name,
+                        Year = obj.Year,
+                        Month = obj.Month,
+                        Color = obj.Color,
+                        EngineNo = obj.EngineNo,
+                        EngineCapacity = obj.EngineCapacity
+                    },
+                    severity: AuditSeverity.Low
+                );
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
                 if (!IsExists(id))
                 {
@@ -85,19 +133,33 @@ namespace SPOT_API.Controllers
                 }
                 else
                 {
+                    await _auditService.LogErrorAsync(
+                        AuditEventType.VehicleUpdated,
+                        "Vehicle Update Failed - Concurrency Error",
+                        ex.Message,
+                        ex.StackTrace,
+                        errorCode: "CONCURRENCY_ERROR",
+                        description: $"Concurrency conflict updating vehicle - Chasis: {obj.ChasisNo}",
+                        entityId: id.ToString(),
+                        severity: AuditSeverity.High
+                    );
                     throw;
                 }
             }
-
             catch (Exception ex)
             {
-                throw ex;
-
+                await _auditService.LogErrorAsync(
+                    AuditEventType.VehicleUpdated,
+                    "Vehicle Update Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "VEHICLE_UPDATE_ERROR",
+                    description: $"Failed to update vehicle - Chasis: {obj.ChasisNo}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
-
-
-
-
 
             return NoContent();
         }
@@ -105,7 +167,7 @@ namespace SPOT_API.Controllers
         // POST: api/Vehicles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Vehicle>> Post(Vehicle category)
+        public async Task<ActionResult<Vehicle>> Post(Vehicle obj)
         {
             try
             {
@@ -113,40 +175,129 @@ namespace SPOT_API.Controllers
                 if (user == null)
                     return Unauthorized();
 
-              
-                _context.Vehicles.Add(category);
+                _context.Vehicles.Add(obj);
                 await _context.SaveChangesAsync();
 
+                // Load related entities for audit log
+                await _context.Entry(obj).Reference(v => v.Brand).LoadAsync();
+                await _context.Entry(obj).Reference(v => v.Model).LoadAsync();
+                await _context.Entry(obj).Reference(v => v.VehicleType).LoadAsync();
+
+                // Log the vehicle creation
+                await _auditService.LogAsync(
+                    AuditEventType.VehicleCreated,
+                    "Vehicle Created",
+                    $"Created vehicle: {obj.Brand?.Name} {obj.Model?.Name} - Chasis: {obj.ChasisNo}",
+                    entityType: "Vehicle",
+                    entityId: obj.Id.ToString(),
+                    entityName: $"{obj.Brand?.Name} {obj.Model?.Name} - {obj.ChasisNo}",
+                    newValues: new
+                    {
+                        ChasisNo = obj.ChasisNo,
+                        Brand = obj.Brand?.Name,
+                        Model = obj.Model?.Name,
+                        VehicleType = obj.VehicleType?.Name,
+                        Year = obj.Year,
+                        Month = obj.Month,
+                        Color = obj.Color,
+                        EngineNo = obj.EngineNo,
+                        EngineCapacity = obj.EngineCapacity
+                    },
+                    severity: AuditSeverity.Low
+                );
+            }
+            catch (DbUpdateException dbEx)
+            {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.VehicleCreated,
+                    "Vehicle Creation Failed - Database Error",
+                    dbEx.InnerException?.Message ?? dbEx.Message,
+                    dbEx.StackTrace,
+                    errorCode: "DB_UPDATE_ERROR",
+                    description: $"Failed to create vehicle - Chasis: {obj.ChasisNo}",
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
             catch (Exception ex)
             {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.VehicleCreated,
+                    "Vehicle Creation Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "VEHICLE_CREATE_ERROR",
+                    description: $"Failed to create vehicle - Chasis: {obj.ChasisNo}",
+                    severity: AuditSeverity.High
+                );
+                throw;
             }
 
-            return CreatedAtAction("Get", new { id = category.Id }, category);
+            return CreatedAtAction("Get", new { id = obj.Id }, obj);
         }
 
         // DELETE: api/Vehicles/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
-            if (user == null)
-                return Unauthorized();
-
-
-
-            var category = await _context.Vehicles
-                .FirstOrDefaultAsync(c => c.Id == id);
-            if (category == null)
+            try
             {
-                return NotFound();
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.UserName == _userAccessor.GetUsername());
+                if (user == null)
+                    return Unauthorized();
+
+                var vehicle = await _context.Vehicles
+                    .Include(v => v.Brand)
+                    .Include(v => v.Model)
+                    .Include(v => v.VehicleType)
+                    .FirstOrDefaultAsync(c => c.Id == id);
+                if (vehicle == null)
+                {
+                    return NotFound();
+                }
+
+                _context.Vehicles.Remove(vehicle);
+                await _context.SaveChangesAsync();
+
+                // Log the vehicle deletion
+                await _auditService.LogAsync(
+                    AuditEventType.VehicleDeleted,
+                    "Vehicle Deleted",
+                    $"Deleted vehicle: {vehicle.Brand?.Name} {vehicle.Model?.Name} - Chasis: {vehicle.ChasisNo}",
+                    entityType: "Vehicle",
+                    entityId: vehicle.Id.ToString(),
+                    entityName: $"{vehicle.Brand?.Name} {vehicle.Model?.Name} - {vehicle.ChasisNo}",
+                    oldValues: new
+                    {
+                        ChasisNo = vehicle.ChasisNo,
+                        Brand = vehicle.Brand?.Name,
+                        Model = vehicle.Model?.Name,
+                        VehicleType = vehicle.VehicleType?.Name,
+                        Year = vehicle.Year,
+                        Month = vehicle.Month,
+                        Color = vehicle.Color,
+                        EngineNo = vehicle.EngineNo,
+                        EngineCapacity = vehicle.EngineCapacity
+                    },
+                    severity: AuditSeverity.Medium
+                );
+
+                return NoContent();
             }
-
-            _context.Vehicles.Remove(category);
-            await _context.SaveChangesAsync();
-
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                await _auditService.LogErrorAsync(
+                    AuditEventType.VehicleDeleted,
+                    "Vehicle Deletion Failed",
+                    ex.Message,
+                    ex.StackTrace,
+                    errorCode: "VEHICLE_DELETE_ERROR",
+                    description: $"Failed to delete vehicle with ID: {id}",
+                    entityId: id.ToString(),
+                    severity: AuditSeverity.High
+                );
+                throw;
+            }
         }
 
         private bool IsExists(Guid id)

@@ -16,7 +16,7 @@ namespace SPOT_API.Models
         /// <summary>
         /// Created On TimeStamp
         /// </summary>
-     
+
         [Required]
         [JsonIgnore]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -28,6 +28,24 @@ namespace SPOT_API.Models
         [JsonIgnore]
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime? UpdatedOn { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// User who created this record (string to match AppUser.Id from IdentityUser)
+        /// </summary>
+        [JsonIgnore]
+        public string CreatedBy { get; set; }
+
+        /// <summary>
+        /// User who last updated this record (string to match AppUser.Id from IdentityUser)
+        /// </summary>
+        [JsonIgnore]
+        public string UpdatedBy { get; set; }
+
+        /// <summary>
+        /// User who deleted this record (for soft deletes) (string to match AppUser.Id from IdentityUser)
+        /// </summary>
+        [JsonIgnore]
+        public string DeletedBy { get; set; }
 
         public BaseModel()
         {

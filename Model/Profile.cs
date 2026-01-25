@@ -34,6 +34,16 @@ namespace SPOT_API.Models
 
         public bool IsEnable { get; set; }
 
+        /// <summary>
+        /// User's job title/position
+        /// </summary>
+        public string Position { get; set; }
+
+        /// <summary>
+        /// User's office or showroom location
+        /// </summary>
+        public string OfficeLocation { get; set; }
+
         // Company Information
         [ForeignKey("SubCompany")]
         public Guid? SubCompanyId { get; set; }
