@@ -1136,8 +1136,18 @@ namespace SPOT_API.Controllers
                 var prevObj = await _context.Stocks
                     .Include(c => c.Pricing)
                     .Include(c => c.Vehicle)
+                        .ThenInclude(v => v.Brand)
+                    .Include(c => c.Vehicle)
+                        .ThenInclude(v => v.Model)
                     .Include(c => c.Purchase)
                     .Include(c => c.Sale)
+                        .ThenInclude(s => s.Loan)
+                    .Include(c => c.Sale)
+                        .ThenInclude(s => s.Customer)
+                    .Include(c => c.Import)
+                    .Include(c => c.Clearance)
+                    .Include(c => c.Registration)
+                    .Include(c => c.Expense)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -1186,7 +1196,7 @@ namespace SPOT_API.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Log the stock update
+                // Log the stock update with comprehensive field tracking
                 await _auditService.LogAsync(
                     AuditEventType.StockUpdated,
                     "Stock Updated",
@@ -1196,19 +1206,127 @@ namespace SPOT_API.Controllers
                     entityName: $"Stock #{obj.StockNo}",
                     oldValues: new
                     {
+                        // Stock basic info
                         StockNo = prevObj?.StockNo,
+                        ArrivalState = prevObj?.ArrivalState.ToString(),
+                        IsOpen = prevObj?.IsOpen,
+                        IsBooked = prevObj?.IsBooked,
+                        IsSold = prevObj?.IsSold,
+                        LocationCode = prevObj?.LocationCode,
+
+                        // Vehicle info
                         ChasisNo = prevObj?.Vehicle?.ChasisNo,
+                        Brand = prevObj?.Vehicle?.Brand?.Name,
+                        Model = prevObj?.Vehicle?.Model?.Name,
+                        Year = prevObj?.Vehicle?.Year,
+                        Color = prevObj?.Vehicle?.Color,
+                        EngineCapacity = prevObj?.Vehicle?.EngineCapacity,
+                        EngineNo = prevObj?.Vehicle?.EngineNo,
+
+                        // Pricing
                         RecommendedSalePrice = prevObj?.Pricing?.RecommendedSalePrice,
-                        VehiclePrice = prevObj?.Purchase?.VehiclePriceLocalCurrency,
-                        SaleAmount = prevObj?.Sale?.SaleAmount
+                        MinimumSalePrice = prevObj?.Pricing?.MinimumSalePrice,
+
+                        // Purchase details
+                        VehiclePriceLocal = prevObj?.Purchase?.VehiclePriceLocalCurrency,
+                        VehiclePriceSupplier = prevObj?.Purchase?.VehiclePriceSupplierCurrency,
+                        BodyPriceLocal = prevObj?.Purchase?.BodyPriceLocalCurrency,
+
+                        // Import details
+                        ShipName = prevObj?.Import?.ShipName,
+                        EstDepartureDate = prevObj?.Import?.EstimateDateOfDeparture,
+                        EstArrivalDate = prevObj?.Import?.EstimateDateOfArrival,
+
+                        // Clearance
+                        ApprovedPermitNo = prevObj?.Clearance?.ApprovedPermitNo,
+                        LotNo = prevObj?.Clearance?.LotNo,
+                        K8DocumentNo = prevObj?.Clearance?.K8DocumentNo,
+                        K1DocumentNo = prevObj?.Clearance?.K1DocumentNo,
+
+                        // Registration
+                        RACNo = prevObj?.Registration?.RACNo,
+                        VehicleRegNo = prevObj?.Registration?.VehicleRegistrationNumber,
+                        VehicleRegDate = prevObj?.Registration?.VehicleRegistrationDate,
+
+                        // Sale details
+                        SaleAmount = prevObj?.Sale?.SaleAmount,
+                        SaleDateTime = prevObj?.Sale?.SaleDateTime,
+                        CustomerName = prevObj?.Sale?.Customer?.Name,
+                        DepositAmount = prevObj?.Sale?.DepositAmount,
+                        TradeInAmount = prevObj?.Sale?.TradeInAmount,
+
+                        // Loan
+                        ApprovedLoanAmount = prevObj?.Sale?.Loan?.ApprovedLoanAmount,
+                        RequestedLoanAmount = prevObj?.Sale?.Loan?.RequestedLoanAmount,
+
+                        // Expenses
+                        ServiceEzCareCost = prevObj?.Expense?.ServiceEzCareCostAmount,
+                        InteriorCost = prevObj?.Expense?.InteriorCostAmount,
+                        PaintCost = prevObj?.Expense?.PaintCostAmount,
+                        TyreCost = prevObj?.Expense?.TyreCostAmount,
+                        RentalCost = prevObj?.Expense?.RentalCostAmount
                     },
                     newValues: new
                     {
+                        // Stock basic info
                         StockNo = obj.StockNo,
+                        ArrivalState = obj.ArrivalState.ToString(),
+                        IsOpen = obj.IsOpen,
+                        IsBooked = obj.IsBooked,
+                        IsSold = obj.IsSold,
+                        LocationCode = obj.LocationCode,
+
+                        // Vehicle info
                         ChasisNo = obj.Vehicle?.ChasisNo,
+                        Brand = obj.Vehicle?.Brand?.Name,
+                        Model = obj.Vehicle?.Model?.Name,
+                        Year = obj.Vehicle?.Year,
+                        Color = obj.Vehicle?.Color,
+                        EngineCapacity = obj.Vehicle?.EngineCapacity,
+                        EngineNo = obj.Vehicle?.EngineNo,
+
+                        // Pricing
                         RecommendedSalePrice = obj.Pricing?.RecommendedSalePrice,
-                        VehiclePrice = obj.Purchase?.VehiclePriceLocalCurrency,
-                        SaleAmount = obj.Sale?.SaleAmount
+                        MinimumSalePrice = obj.Pricing?.MinimumSalePrice,
+
+                        // Purchase details
+                        VehiclePriceLocal = obj.Purchase?.VehiclePriceLocalCurrency,
+                        VehiclePriceSupplier = obj.Purchase?.VehiclePriceSupplierCurrency,
+                        BodyPriceLocal = obj.Purchase?.BodyPriceLocalCurrency,
+
+                        // Import details
+                        ShipName = obj.Import?.ShipName,
+                        EstDepartureDate = obj.Import?.EstimateDateOfDeparture,
+                        EstArrivalDate = obj.Import?.EstimateDateOfArrival,
+
+                        // Clearance
+                        ApprovedPermitNo = obj.Clearance?.ApprovedPermitNo,
+                        LotNo = obj.Clearance?.LotNo,
+                        K8DocumentNo = obj.Clearance?.K8DocumentNo,
+                        K1DocumentNo = obj.Clearance?.K1DocumentNo,
+
+                        // Registration
+                        RACNo = obj.Registration?.RACNo,
+                        VehicleRegNo = obj.Registration?.VehicleRegistrationNumber,
+                        VehicleRegDate = obj.Registration?.VehicleRegistrationDate,
+
+                        // Sale details
+                        SaleAmount = obj.Sale?.SaleAmount,
+                        SaleDateTime = obj.Sale?.SaleDateTime,
+                        CustomerName = obj.Sale?.Customer?.Name,
+                        DepositAmount = obj.Sale?.DepositAmount,
+                        TradeInAmount = obj.Sale?.TradeInAmount,
+
+                        // Loan
+                        ApprovedLoanAmount = obj.Sale?.Loan?.ApprovedLoanAmount,
+                        RequestedLoanAmount = obj.Sale?.Loan?.RequestedLoanAmount,
+
+                        // Expenses
+                        ServiceEzCareCost = obj.Expense?.ServiceEzCareCostAmount,
+                        InteriorCost = obj.Expense?.InteriorCostAmount,
+                        PaintCost = obj.Expense?.PaintCostAmount,
+                        TyreCost = obj.Expense?.TyreCostAmount,
+                        RentalCost = obj.Expense?.RentalCostAmount
                     },
                     severity: AuditSeverity.Low
                 );
