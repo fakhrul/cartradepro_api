@@ -32,8 +32,9 @@ namespace SPOT_API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 50,
             [FromQuery] string userId = null,
-            [FromQuery] AuditEventType? eventType = null,
-            [FromQuery] AuditSeverity? severity = null,
+            [FromQuery] string userName = null,
+            [FromQuery] string eventType = null,
+            [FromQuery] string severity = null,
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null,
             [FromQuery] string entityType = null,
@@ -50,11 +51,14 @@ namespace SPOT_API.Controllers
                 if (!string.IsNullOrEmpty(userId))
                     query = query.Where(a => a.UserId == userId);
 
-                if (eventType.HasValue)
-                    query = query.Where(a => a.EventType == eventType.Value);
+                if (!string.IsNullOrEmpty(userName))
+                    query = query.Where(a => a.User != null && a.User.UserName.Contains(userName));
 
-                if (severity.HasValue)
-                    query = query.Where(a => a.Severity == severity.Value);
+                if (!string.IsNullOrEmpty(eventType) && Enum.TryParse<AuditEventType>(eventType, out var parsedEventType))
+                    query = query.Where(a => a.EventType == parsedEventType);
+
+                if (!string.IsNullOrEmpty(severity) && Enum.TryParse<AuditSeverity>(severity, out var parsedSeverity))
+                    query = query.Where(a => a.Severity == parsedSeverity);
 
                 if (startDate.HasValue)
                     query = query.Where(a => a.Timestamp >= startDate.Value);
@@ -84,8 +88,8 @@ namespace SPOT_API.Controllers
                         a.Id,
                         a.UserId,
                         UserName = a.User != null ? a.User.UserName : null,
-                        a.EventType,
-                        a.Severity,
+                        EventType = a.EventType.ToString(),
+                        Severity = a.Severity.ToString(),
                         a.Action,
                         a.Description,
                         a.IsSuccess,
