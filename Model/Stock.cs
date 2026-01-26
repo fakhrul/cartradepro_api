@@ -98,6 +98,7 @@ namespace SPOT_API.Models
         public bool IsLou { get; set; } = false;
         public bool IsSold { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
+        public bool IsRequestDuty { get; set; } = false;
 
 
 

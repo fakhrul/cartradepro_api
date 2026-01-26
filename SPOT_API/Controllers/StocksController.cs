@@ -255,6 +255,8 @@ namespace SPOT_API.Controllers
                                 query = query.Where(c => c.IsSold == true);
                             if (filter.Value.ToLower().Contains("cancelled"))
                                 query = query.Where(c => c.IsCancelled == true);
+                            if (filter.Value.ToLower().Contains("request duty") || filter.Value.ToLower().Contains("requestduty"))
+                                query = query.Where(c => c.IsRequestDuty == true);
                             if (filter.Value.ToLower().Contains("booking"))
                                 query = query.Where(c => c.IsBooked == true);
 
