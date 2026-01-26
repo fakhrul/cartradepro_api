@@ -20,6 +20,8 @@ namespace SPOT_API.Models
 
         public decimal ApprovedLoanAmount { get; set; }
 
+        public string HpSerial { get; set; }
+
         public string LoanTenure { get; set; }
 
         public virtual ICollection<LetterOfUndertakingDocument> LetterOfUndertakingDocuments { get; set; }
