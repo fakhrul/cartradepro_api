@@ -76,6 +76,22 @@ namespace SPOT_API.Controllers
                     return Unauthorized();
                 }
 
+                // Check if user's profile is enabled
+                if (user.ProfileId.HasValue)
+                {
+                    var profile = await _context.Profiles.FindAsync(user.ProfileId.Value);
+                    if (profile != null && !profile.IsEnable)
+                    {
+                        await _auditService.LogAuthenticationAsync(
+                            AuditEventType.LoginFailed,
+                            user.Id,
+                            false,
+                            $"Login blocked for disabled account: {user.UserName}",
+                            "Account has been disabled");
+                        return Unauthorized("Your account has been disabled. Please contact your administrator.");
+                    }
+                }
+
                 // Update last login timestamp
                 user.LastLoginAt = DateTime.UtcNow;
                 await _userManager.UpdateAsync(user);
