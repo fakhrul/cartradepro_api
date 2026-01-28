@@ -441,5 +441,126 @@ namespace SPOT_API.Controllers
             return BadRequest(result.Errors);
         }
 
+        /// <summary>
+        /// Fix Registration role permissions - sets submodule permissions to match seed data expectations
+        /// GET: api/Roles/fix-registration-permissions
+        /// </summary>
+        [HttpGet("fix-registration-permissions")]
+        public async Task<ActionResult> FixRegistrationPermissions()
+        {
+            try
+            {
+                var results = new List<string>();
+
+                // Find the Registration role
+                var registrationRole = await _context.Roles
+                    .FirstOrDefaultAsync(r => r.Name == "Registration");
+
+                if (registrationRole == null)
+                {
+                    return BadRequest(new { success = false, message = "Registration role not found" });
+                }
+
+                results.Add($"Found Registration role with ID: {registrationRole.Id}");
+
+                // Define which submodules should have full permissions for Registration role
+                var subModuleCodes = new[]
+                {
+                    "STOCK_INFO", "VEHICLE_INFO", "CLEARANCE", "SALE",
+                    "REGISTRATION", "EXPENSES", "ADMINISTRATIVE_COST", "DISBURSEMENT"
+                };
+
+                int updatedCount = 0;
+                int createdCount = 0;
+
+                foreach (var code in subModuleCodes)
+                {
+                    // Find the submodule
+                    var subModule = await _context.SubModules
+                        .FirstOrDefaultAsync(sm => sm.Code == code);
+
+                    if (subModule == null)
+                    {
+                        results.Add($"Warning: SubModule '{code}' not found in database");
+                        continue;
+                    }
+
+                    // Check if permission exists
+                    var existing = await _context.RoleSubModulePermissions
+                        .FirstOrDefaultAsync(rsmp =>
+                            rsmp.RoleId == registrationRole.Id &&
+                            rsmp.SubModuleId == subModule.Id);
+
+                    if (existing != null)
+                    {
+                        // Update existing permission
+                        existing.CanView = true;
+                        existing.CanAdd = true;
+                        existing.CanUpdate = true;
+                        existing.CanDelete = true;
+                        updatedCount++;
+                        results.Add($"Updated permission for '{subModule.Name}' (Code: {code})");
+                    }
+                    else
+                    {
+                        // Create new permission
+                        var newPermission = new RoleSubModulePermission
+                        {
+                            RoleId = registrationRole.Id,
+                            SubModuleId = subModule.Id,
+                            CanView = true,
+                            CanAdd = true,
+                            CanUpdate = true,
+                            CanDelete = true,
+                            CreatedBy = "System Fix"
+                        };
+                        _context.RoleSubModulePermissions.Add(newPermission);
+                        createdCount++;
+                        results.Add($"Created permission for '{subModule.Name}' (Code: {code})");
+                    }
+                }
+
+                // Also ensure STOCKS module permission exists and is enabled
+                var stocksModule = await _context.Modules
+                    .FirstOrDefaultAsync(m => m.Code == "STOCKS");
+
+                if (stocksModule != null)
+                {
+                    var modulePermission = await _context.RoleModulePermissions
+                        .FirstOrDefaultAsync(rmp =>
+                            rmp.RoleId == registrationRole.Id &&
+                            rmp.ModuleId == stocksModule.Id);
+
+                    if (modulePermission != null)
+                    {
+                        modulePermission.CanView = true;
+                        results.Add($"Updated STOCKS module permission to CanView=true");
+                    }
+                }
+
+                // Save all changes
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Registration role permissions fixed: {updatedCount} updated, {createdCount} created",
+                    updated = updatedCount,
+                    created = createdCount,
+                    details = results
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Failed to fix permissions",
+                    error = ex.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
+        }
+
     }
 }
