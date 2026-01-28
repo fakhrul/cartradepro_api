@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -412,6 +413,31 @@ namespace SPOT_API.Controllers
 
                 await _userManager.CreateAsync(newAppUser, profileDto.PlainPassword);
 
+                // Create UserRole record for the new user
+                var role = await _context.Roles
+                    .FirstOrDefaultAsync(r => r.Name.ToLower() == profile.Role.ToLower());
+
+                if (role != null)
+                {
+                    // Get current user ID for AssignedBy
+                    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                    // Create UserRole record to enable login
+                    var userRole = new UserRole
+                    {
+                        UserId = newAppUser.Id,
+                        RoleId = role.Id,
+                        AssignedBy = currentUserId ?? "System",
+                        AssignedAt = DateTime.UtcNow,
+                        EffectiveFrom = null,  // Immediate activation
+                        EffectiveUntil = null, // Permanent role
+                        IsActive = true,
+                        CreatedBy = currentUserId ?? "System"
+                    };
+
+                    _context.UserRoles.Add(userRole);
+                    await _context.SaveChangesAsync();
+                }
 
                 if (profile.AppUser != null && profile.AppUser.Profile != null)
                     profile.AppUser = null;
