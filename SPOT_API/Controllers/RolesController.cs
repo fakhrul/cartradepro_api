@@ -562,5 +562,105 @@ namespace SPOT_API.Controllers
             }
         }
 
+        /// <summary>
+        /// Fix missing SubModules for STOCKS module
+        /// GET: api/Roles/fix-missing-submodules
+        /// </summary>
+        [HttpGet("fix-missing-submodules")]
+        public async Task<ActionResult> FixMissingSubModules()
+        {
+            try
+            {
+                var results = new List<string>();
+
+                // Find the STOCKS module
+                var stocksModule = await _context.Modules
+                    .FirstOrDefaultAsync(m => m.Code == "STOCKS");
+
+                if (stocksModule == null)
+                {
+                    return BadRequest(new { success = false, message = "STOCKS module not found" });
+                }
+
+                results.Add($"Found STOCKS module with ID: {stocksModule.Id}");
+
+                // Define all SubModules that should exist (from Seed.cs)
+                var expectedSubModules = new[]
+                {
+                    new { Name = "Stock Info", Code = "STOCK_INFO", DisplayOrder = 1 },
+                    new { Name = "Vehicle Info", Code = "VEHICLE_INFO", DisplayOrder = 2 },
+                    new { Name = "Purchase", Code = "PURCHASE", DisplayOrder = 3 },
+                    new { Name = "Import", Code = "IMPORT", DisplayOrder = 4 },
+                    new { Name = "Clearance", Code = "CLEARANCE", DisplayOrder = 5 },
+                    new { Name = "Sale", Code = "SALE", DisplayOrder = 6 },
+                    new { Name = "Pricing", Code = "PRICING", DisplayOrder = 7 },
+                    new { Name = "Arrival Checklist", Code = "ARRIVAL_CHECKLIST", DisplayOrder = 8 },
+                    new { Name = "Registration", Code = "REGISTRATION", DisplayOrder = 9 },
+                    new { Name = "Expenses", Code = "EXPENSES", DisplayOrder = 10 },
+                    new { Name = "Administrative Cost", Code = "ADMINISTRATIVE_COST", DisplayOrder = 11 },
+                    new { Name = "Disbursement", Code = "DISBURSEMENT", DisplayOrder = 12 },
+                    new { Name = "Advertisement", Code = "ADVERTISEMENT", DisplayOrder = 13 }
+                };
+
+                int createdCount = 0;
+                int existingCount = 0;
+
+                foreach (var expected in expectedSubModules)
+                {
+                    // Check if SubModule already exists
+                    var existing = await _context.SubModules
+                        .FirstOrDefaultAsync(sm => sm.Code == expected.Code && sm.ModuleId == stocksModule.Id);
+
+                    if (existing != null)
+                    {
+                        existingCount++;
+                        results.Add($"SubModule '{expected.Name}' (Code: {expected.Code}) already exists");
+                    }
+                    else
+                    {
+                        // Create the missing SubModule
+                        var newSubModule = new SubModule
+                        {
+                            Name = expected.Name,
+                            Code = expected.Code,
+                            ModuleId = stocksModule.Id,
+                            DisplayOrder = expected.DisplayOrder,
+                            CreatedBy = "System Fix"
+                        };
+
+                        _context.SubModules.Add(newSubModule);
+                        createdCount++;
+                        results.Add($"Created SubModule '{expected.Name}' (Code: {expected.Code})");
+                    }
+                }
+
+                // Save all changes
+                if (createdCount > 0)
+                {
+                    await _context.SaveChangesAsync();
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = $"SubModules check completed: {createdCount} created, {existingCount} already exist",
+                    created = createdCount,
+                    existing = existingCount,
+                    total = expectedSubModules.Length,
+                    details = results
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Failed to fix SubModules",
+                    error = ex.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
+        }
+
     }
 }
