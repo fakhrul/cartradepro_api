@@ -665,41 +665,28 @@ namespace SPOT_API.Controllers
         // GET: api/Roles/modules-template
         // Returns all modules and submodules for creating new roles
         [HttpGet("modules-template")]
-        public async Task<ActionResult> GetModulesTemplate()
+        public async Task<ActionResult<IEnumerable<Module>>> GetModulesTemplate()
         {
-            try
-            {
-                var modules = await _context.Modules
-                    .Include(m => m.SubModules)
-                    .OrderBy(m => m.Name)
-                    .ToListAsync();
+            var modules = await _context.Modules
+                .Include(m => m.SubModules)
+                .OrderBy(m => m.Name)
+                .ToListAsync();
 
-                // Clean circular references
-                foreach (var module in modules)
+            // Clean circular references
+            foreach (var module in modules)
+            {
+                if (module.SubModules != null)
                 {
-                    if (module.SubModules != null)
+                    foreach (var subModule in module.SubModules)
                     {
-                        foreach (var subModule in module.SubModules)
-                        {
-                            subModule.Module = null;
-                            subModule.RoleSubModulePermissions = null;
-                        }
+                        subModule.Module = null;
+                        subModule.RoleSubModulePermissions = null;
                     }
-                    module.RoleModulePermissions = null;
                 }
+                module.RoleModulePermissions = null;
+            }
 
-                return Ok(new { success = true, result = modules });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Failed to load modules template",
-                    error = ex.Message,
-                    stackTrace = ex.StackTrace
-                });
-            }
+            return modules;
         }
 
     }
