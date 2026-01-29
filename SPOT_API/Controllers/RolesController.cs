@@ -662,5 +662,45 @@ namespace SPOT_API.Controllers
             }
         }
 
+        // GET: api/Roles/modules-template
+        // Returns all modules and submodules for creating new roles
+        [HttpGet("modules-template")]
+        public async Task<ActionResult> GetModulesTemplate()
+        {
+            try
+            {
+                var modules = await _context.Modules
+                    .Include(m => m.SubModules)
+                    .OrderBy(m => m.Name)
+                    .ToListAsync();
+
+                // Clean circular references
+                foreach (var module in modules)
+                {
+                    if (module.SubModules != null)
+                    {
+                        foreach (var subModule in module.SubModules)
+                        {
+                            subModule.Module = null;
+                            subModule.RoleSubModulePermissions = null;
+                        }
+                    }
+                    module.RoleModulePermissions = null;
+                }
+
+                return Ok(new { success = true, result = modules });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Failed to load modules template",
+                    error = ex.Message,
+                    stackTrace = ex.StackTrace
+                });
+            }
+        }
+
     }
 }
