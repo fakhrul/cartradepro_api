@@ -671,23 +671,22 @@ namespace SPOT_API.Controllers
             {
                 var modules = await _context.Modules
                     .Include(m => m.SubModules)
-                    .AsNoTracking()
                     .OrderBy(m => m.Name)
-                    .Select(m => new
-                    {
-                        m.Id,
-                        m.Name,
-                        m.Code,
-                        m.DisplayOrder,
-                        SubModules = m.SubModules.Select(sm => new
-                        {
-                            sm.Id,
-                            sm.Name,
-                            sm.Code,
-                            sm.DisplayOrder
-                        }).OrderBy(sm => sm.DisplayOrder).ToList()
-                    })
                     .ToListAsync();
+
+                // Clean circular references
+                foreach (var module in modules)
+                {
+                    if (module.SubModules != null)
+                    {
+                        foreach (var subModule in module.SubModules)
+                        {
+                            subModule.Module = null;
+                            subModule.RoleSubModulePermissions = null;
+                        }
+                    }
+                    module.RoleModulePermissions = null;
+                }
 
                 return Ok(new { success = true, result = modules });
             }
