@@ -94,7 +94,7 @@ namespace Application.Services
                     SubModules = new List<SubModule>()
                 },
 
-                // 7. MasterData (with 5 submodules)
+                // 7. MasterData (with 6 submodules)
                 new Module
                 {
                     Id = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b"),
@@ -107,7 +107,8 @@ namespace Application.Services
                         new SubModule { Id = Guid.Parse("98d78cd4-5915-40f2-9c23-9056b18abf3e"), Name = "Forwarders", Code = "FORWARDERS", DisplayOrder = 2, ModuleId = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b") },
                         new SubModule { Id = Guid.Parse("9a9811c9-7df1-433f-8e9d-a1154e255335"), Name = "Banks", Code = "BANKS", DisplayOrder = 3, ModuleId = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b") },
                         new SubModule { Id = Guid.Parse("4137dae7-5ca5-4eeb-b9b7-e9fb3923bc60"), Name = "Brands", Code = "BRANDS", DisplayOrder = 4, ModuleId = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b") },
-                        new SubModule { Id = Guid.Parse("5237283d-cae9-4a87-85eb-332ff8ccf448"), Name = "Sub Companies", Code = "SUB_COMPANIES", DisplayOrder = 5, ModuleId = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b") }
+                        new SubModule { Id = Guid.Parse("5237283d-cae9-4a87-85eb-332ff8ccf448"), Name = "Sub Companies", Code = "SUB_COMPANIES", DisplayOrder = 5, ModuleId = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b") },
+                        new SubModule { Id = Guid.Parse("a1f5e3d9-4c2b-4a87-9d3e-8b9f7c6d5e4f"), Name = "Showrooms", Code = "SHOWROOMS", DisplayOrder = 6, ModuleId = Guid.Parse("27134597-6f0e-42e3-9c8a-861878a33d2b") }
                     }
                 },
 
