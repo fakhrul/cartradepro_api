@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Application.Services;
 using Microsoft.EntityFrameworkCore;
 using SPOT_API.Models;
 using SPOT_API.Persistence;
@@ -11,6 +12,7 @@ namespace Infrastructure.Security
 {
     /// <summary>
     /// Implementation of authorization service for permission checks
+    /// Uses JSONB permissions stored in Role.Permissions column
     /// </summary>
     public class AuthorizationService : IAuthorizationService
     {
@@ -33,40 +35,42 @@ namespace Infrastructure.Security
             if (await IsSuperAdminAsync(userId))
                 return true;
 
-            // Get the module
-            var module = await _context.Modules
-                .FirstOrDefaultAsync(m => m.Code == moduleCode);
-
+            // Get the module from hardcoded list
+            var module = ModulesProvider.GetModuleByCode(moduleCode);
             if (module == null)
                 return false;
 
-            // Get user's active role IDs
-            var activeRoleIds = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.IsActive)
-                .Where(ur => !ur.EffectiveFrom.HasValue || ur.EffectiveFrom.Value <= DateTime.UtcNow)
-                .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
-                .Select(ur => ur.RoleId)
-                .ToListAsync();
-
-            if (!activeRoleIds.Any())
+            // Get user's active roles with JSONB permissions
+            var activeRoles = await GetUserActiveRolesWithPermissionsAsync(userId);
+            if (!activeRoles.Any())
                 return false;
 
-            // Check module permissions for any of the user's active roles
-            var permissions = await _context.RoleModulePermissions
-                .Where(rmp => activeRoleIds.Contains(rmp.RoleId) && rmp.ModuleId == module.Id)
-                .ToListAsync();
+            // Check if any role grants the permission (OR logic)
+            foreach (var role in activeRoles)
+            {
+                var permissions = role.PermissionsObject;
+                if (permissions == null || permissions.Modules == null)
+                    continue;
 
-            bool hasPermission = false;
-            if (permissionType == PermissionType.View)
-                hasPermission = permissions.Any(rmp => rmp.CanView);
-            else if (permissionType == PermissionType.Add)
-                hasPermission = permissions.Any(rmp => rmp.CanAdd);
-            else if (permissionType == PermissionType.Update)
-                hasPermission = permissions.Any(rmp => rmp.CanUpdate);
-            else if (permissionType == PermissionType.Delete)
-                hasPermission = permissions.Any(rmp => rmp.CanDelete);
+                if (!permissions.Modules.ContainsKey(module.Name))
+                    continue;
 
-            return hasPermission;
+                var modulePerm = permissions.Modules[module.Name];
+
+                bool hasPermission = permissionType switch
+                {
+                    PermissionType.View => modulePerm.CanView,
+                    PermissionType.Add => modulePerm.CanAdd,
+                    PermissionType.Update => modulePerm.CanUpdate,
+                    PermissionType.Delete => modulePerm.CanDelete,
+                    _ => false
+                };
+
+                if (hasPermission)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -81,54 +85,71 @@ namespace Infrastructure.Security
             if (await IsSuperAdminAsync(userId))
                 return true;
 
-            // Get the submodule
-            var subModule = await _context.SubModules
-                .FirstOrDefaultAsync(sm => sm.Code == subModuleCode);
-
+            // Get the submodule from hardcoded list
+            var subModule = ModulesProvider.GetSubModuleByCode(subModuleCode);
             if (subModule == null)
                 return false;
 
-            // Get user's active role IDs
-            var activeRoleIds = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.IsActive)
-                .Where(ur => !ur.EffectiveFrom.HasValue || ur.EffectiveFrom.Value <= DateTime.UtcNow)
-                .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
-                .Select(ur => ur.RoleId)
-                .ToListAsync();
+            // Find the parent module
+            var allModules = ModulesProvider.GetModules();
+            var parentModule = allModules.FirstOrDefault(m =>
+                m.SubModules != null && m.SubModules.Any(sm => sm.Id == subModule.Id));
 
-            if (!activeRoleIds.Any())
+            if (parentModule == null)
                 return false;
 
-            // Check submodule permissions for any of the user's active roles
-            var permissions = await _context.RoleSubModulePermissions
-                .Where(rsmp => activeRoleIds.Contains(rsmp.RoleId) && rsmp.SubModuleId == subModule.Id)
-                .ToListAsync();
+            // Get user's active roles with JSONB permissions
+            var activeRoles = await GetUserActiveRolesWithPermissionsAsync(userId);
+            if (!activeRoles.Any())
+                return false;
 
-            bool hasPermission = false;
-            if (permissionType == PermissionType.View)
-                hasPermission = permissions.Any(rsmp => rsmp.CanView);
-            else if (permissionType == PermissionType.Add)
-                hasPermission = permissions.Any(rsmp => rsmp.CanAdd);
-            else if (permissionType == PermissionType.Update)
-                hasPermission = permissions.Any(rsmp => rsmp.CanUpdate);
-            else if (permissionType == PermissionType.Delete)
-                hasPermission = permissions.Any(rsmp => rsmp.CanDelete);
+            // Check if any role grants the permission (OR logic)
+            foreach (var role in activeRoles)
+            {
+                var permissions = role.PermissionsObject;
+                if (permissions == null || permissions.Modules == null)
+                    continue;
 
-            return hasPermission;
+                if (!permissions.Modules.ContainsKey(parentModule.Name))
+                    continue;
+
+                var modulePerm = permissions.Modules[parentModule.Name];
+                if (modulePerm.SubModules == null || !modulePerm.SubModules.ContainsKey(subModule.Name))
+                    continue;
+
+                var subModulePerm = modulePerm.SubModules[subModule.Name];
+
+                bool hasPermission = permissionType switch
+                {
+                    PermissionType.View => subModulePerm.CanView,
+                    PermissionType.Add => subModulePerm.CanAdd,
+                    PermissionType.Update => subModulePerm.CanUpdate,
+                    PermissionType.Delete => subModulePerm.CanDelete,
+                    _ => false
+                };
+
+                if (hasPermission)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>
-        /// Get all modules accessible by user
+        /// Get all modules accessible by user with aggregated permissions across all active roles
         /// </summary>
         public async Task<List<ModulePermissionDto>> GetUserModulesAsync(string userId)
         {
             if (string.IsNullOrEmpty(userId))
                 return new List<ModulePermissionDto>();
 
+            // Get hardcoded modules
+            var allModules = ModulesProvider.GetModules();
+
             // Check if user is Super Admin - grant all modules
             if (await IsSuperAdminAsync(userId))
             {
-                return await _context.Modules
+                return allModules
                     .OrderBy(m => m.DisplayOrder)
                     .Select(m => new ModulePermissionDto
                     {
@@ -142,63 +163,80 @@ namespace Infrastructure.Security
                         CanUpdate = true,
                         CanDelete = true
                     })
-                    .ToListAsync();
+                    .ToList();
             }
 
-            // Get user's active role IDs
-            var activeRoleIds = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.IsActive)
-                .Where(ur => !ur.EffectiveFrom.HasValue || ur.EffectiveFrom.Value <= DateTime.UtcNow)
-                .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
-                .Select(ur => ur.RoleId)
-                .ToListAsync();
-
-            if (!activeRoleIds.Any())
+            // Get user's active roles with JSONB permissions
+            var activeRoles = await GetUserActiveRolesWithPermissionsAsync(userId);
+            if (!activeRoles.Any())
                 return new List<ModulePermissionDto>();
 
-            // Get all module permissions for active roles, aggregated
-            var modulePermissions = await _context.RoleModulePermissions
-                .Where(rmp => activeRoleIds.Contains(rmp.RoleId))
-                .Include(rmp => rmp.Module)
-                .GroupBy(rmp => rmp.ModuleId)
-                .Select(g => new ModulePermissionDto
-                {
-                    ModuleId = g.Key,
-                    ModuleName = g.First().Module.Name,
-                    ModuleCode = g.First().Module.Code,
-                    DisplayOrder = g.First().Module.DisplayOrder,
-                    Icon = g.First().Module.Icon,
-                    CanView = g.Any(rmp => rmp.CanView),
-                    CanAdd = g.Any(rmp => rmp.CanAdd),
-                    CanUpdate = g.Any(rmp => rmp.CanUpdate),
-                    CanDelete = g.Any(rmp => rmp.CanDelete)
-                })
-                .OrderBy(m => m.DisplayOrder)
-                .ToListAsync();
+            // Aggregate permissions across all roles (OR logic)
+            var modulePermissionsDict = new Dictionary<string, ModulePermissionDto>();
 
-            return modulePermissions;
+            foreach (var role in activeRoles)
+            {
+                var permissions = role.PermissionsObject;
+                if (permissions == null || permissions.Modules == null)
+                    continue;
+
+                foreach (var moduleName in permissions.Modules.Keys)
+                {
+                    var modulePerm = permissions.Modules[moduleName];
+                    var module = allModules.FirstOrDefault(m => m.Name == moduleName);
+
+                    if (module == null)
+                        continue;
+
+                    if (!modulePermissionsDict.ContainsKey(moduleName))
+                    {
+                        modulePermissionsDict[moduleName] = new ModulePermissionDto
+                        {
+                            ModuleId = module.Id,
+                            ModuleName = module.Name,
+                            ModuleCode = module.Code,
+                            DisplayOrder = module.DisplayOrder,
+                            Icon = module.Icon,
+                            CanView = modulePerm.CanView,
+                            CanAdd = modulePerm.CanAdd,
+                            CanUpdate = modulePerm.CanUpdate,
+                            CanDelete = modulePerm.CanDelete
+                        };
+                    }
+                    else
+                    {
+                        // OR logic: if any role grants permission, user has it
+                        var existing = modulePermissionsDict[moduleName];
+                        existing.CanView = existing.CanView || modulePerm.CanView;
+                        existing.CanAdd = existing.CanAdd || modulePerm.CanAdd;
+                        existing.CanUpdate = existing.CanUpdate || modulePerm.CanUpdate;
+                        existing.CanDelete = existing.CanDelete || modulePerm.CanDelete;
+                    }
+                }
+            }
+
+            return modulePermissionsDict.Values
+                .OrderBy(m => m.DisplayOrder)
+                .ToList();
         }
 
         /// <summary>
-        /// Get all submodules accessible by user for a specific module
+        /// Get all submodules accessible by user for a specific module with aggregated permissions
         /// </summary>
         public async Task<List<SubModulePermissionDto>> GetUserSubModulesAsync(string userId, string moduleCode)
         {
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(moduleCode))
                 return new List<SubModulePermissionDto>();
 
-            // Get the module
-            var module = await _context.Modules
-                .FirstOrDefaultAsync(m => m.Code == moduleCode);
-
+            // Get the module from hardcoded list
+            var module = ModulesProvider.GetModuleByCode(moduleCode);
             if (module == null)
                 return new List<SubModulePermissionDto>();
 
             // Check if user is Super Admin - grant all submodules
             if (await IsSuperAdminAsync(userId))
             {
-                return await _context.SubModules
-                    .Where(sm => sm.ModuleId == module.Id)
+                return (module.SubModules ?? new List<SubModule>())
                     .OrderBy(sm => sm.DisplayOrder)
                     .Select(sm => new SubModulePermissionDto
                     {
@@ -212,42 +250,68 @@ namespace Infrastructure.Security
                         CanUpdate = true,
                         CanDelete = true
                     })
-                    .ToListAsync();
+                    .ToList();
             }
 
-            // Get user's active role IDs
-            var activeRoleIds = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.IsActive)
-                .Where(ur => !ur.EffectiveFrom.HasValue || ur.EffectiveFrom.Value <= DateTime.UtcNow)
-                .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
-                .Select(ur => ur.RoleId)
-                .ToListAsync();
-
-            if (!activeRoleIds.Any())
+            // Get user's active roles with JSONB permissions
+            var activeRoles = await GetUserActiveRolesWithPermissionsAsync(userId);
+            if (!activeRoles.Any())
                 return new List<SubModulePermissionDto>();
 
-            // Get all submodule permissions for active roles and this module, aggregated
-            var subModulePermissions = await _context.RoleSubModulePermissions
-                .Where(rsmp => activeRoleIds.Contains(rsmp.RoleId))
-                .Include(rsmp => rsmp.SubModule)
-                .Where(rsmp => rsmp.SubModule.ModuleId == module.Id)
-                .GroupBy(rsmp => rsmp.SubModuleId)
-                .Select(g => new SubModulePermissionDto
-                {
-                    SubModuleId = g.Key,
-                    SubModuleName = g.First().SubModule.Name,
-                    SubModuleCode = g.First().SubModule.Code,
-                    DisplayOrder = g.First().SubModule.DisplayOrder,
-                    Icon = g.First().SubModule.Icon,
-                    CanView = g.Any(rsmp => rsmp.CanView),
-                    CanAdd = g.Any(rsmp => rsmp.CanAdd),
-                    CanUpdate = g.Any(rsmp => rsmp.CanUpdate),
-                    CanDelete = g.Any(rsmp => rsmp.CanDelete)
-                })
-                .OrderBy(sm => sm.DisplayOrder)
-                .ToListAsync();
+            // Aggregate submodule permissions across all roles (OR logic)
+            var subModulePermissionsDict = new Dictionary<string, SubModulePermissionDto>();
 
-            return subModulePermissions;
+            foreach (var role in activeRoles)
+            {
+                var permissions = role.PermissionsObject;
+                if (permissions == null || permissions.Modules == null)
+                    continue;
+
+                if (!permissions.Modules.ContainsKey(module.Name))
+                    continue;
+
+                var modulePerm = permissions.Modules[module.Name];
+                if (modulePerm.SubModules == null)
+                    continue;
+
+                foreach (var subModuleName in modulePerm.SubModules.Keys)
+                {
+                    var subModulePerm = modulePerm.SubModules[subModuleName];
+                    var subModule = module.SubModules?.FirstOrDefault(sm => sm.Name == subModuleName);
+
+                    if (subModule == null)
+                        continue;
+
+                    if (!subModulePermissionsDict.ContainsKey(subModuleName))
+                    {
+                        subModulePermissionsDict[subModuleName] = new SubModulePermissionDto
+                        {
+                            SubModuleId = subModule.Id,
+                            SubModuleName = subModule.Name,
+                            SubModuleCode = subModule.Code,
+                            DisplayOrder = subModule.DisplayOrder,
+                            Icon = subModule.Icon,
+                            CanView = subModulePerm.CanView,
+                            CanAdd = subModulePerm.CanAdd,
+                            CanUpdate = subModulePerm.CanUpdate,
+                            CanDelete = subModulePerm.CanDelete
+                        };
+                    }
+                    else
+                    {
+                        // OR logic: if any role grants permission, user has it
+                        var existing = subModulePermissionsDict[subModuleName];
+                        existing.CanView = existing.CanView || subModulePerm.CanView;
+                        existing.CanAdd = existing.CanAdd || subModulePerm.CanAdd;
+                        existing.CanUpdate = existing.CanUpdate || subModulePerm.CanUpdate;
+                        existing.CanDelete = existing.CanDelete || subModulePerm.CanDelete;
+                    }
+                }
+            }
+
+            return subModulePermissionsDict.Values
+                .OrderBy(sm => sm.DisplayOrder)
+                .ToList();
         }
 
         /// <summary>
@@ -270,19 +334,7 @@ namespace Infrastructure.Security
         /// </summary>
         public async Task<List<Role>> GetUserActiveRolesAsync(string userId)
         {
-            if (string.IsNullOrEmpty(userId))
-                return new List<Role>();
-
-            var activeRoles = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.IsActive)
-                .Where(ur => !ur.EffectiveFrom.HasValue || ur.EffectiveFrom.Value <= DateTime.UtcNow)
-                .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
-                .Include(ur => ur.Role)
-                .Select(ur => ur.Role)
-                .Distinct()
-                .ToListAsync();
-
-            return activeRoles;
+            return await GetUserActiveRolesWithPermissionsAsync(userId);
         }
 
         /// <summary>
@@ -300,6 +352,26 @@ namespace Infrastructure.Security
                 .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
                 .Include(ur => ur.Role)
                 .AnyAsync(ur => ur.Role.Name == "SuperAdmin");
+        }
+
+        /// <summary>
+        /// Internal helper: Get user's active roles with permissions loaded
+        /// </summary>
+        private async Task<List<Role>> GetUserActiveRolesWithPermissionsAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+                return new List<Role>();
+
+            var activeRoles = await _context.UserRoles
+                .Where(ur => ur.UserId == userId && ur.IsActive)
+                .Where(ur => !ur.EffectiveFrom.HasValue || ur.EffectiveFrom.Value <= DateTime.UtcNow)
+                .Where(ur => !ur.EffectiveUntil.HasValue || ur.EffectiveUntil.Value >= DateTime.UtcNow)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role)
+                .Distinct()
+                .ToListAsync();
+
+            return activeRoles;
         }
     }
 }

@@ -17,8 +17,9 @@ namespace SPOT_API.Persistence
             try
             {
                 await SeedRoles(context, roleManager);
-                await SeedModulesAndSubModules(context);
-                await SeedRolePermissionsForMainModule(context);
+                // Commented out - Modules/SubModules are now hardcoded in RolesController, Permissions stored as JSONB
+                // await SeedModulesAndSubModules(context);
+                // await SeedRolePermissionsForMainModule(context);
                 await SeedUsers(context, userManager);
 
                 Console.WriteLine("=== Calling MigrateExistingUsersToUserRoles ===");
@@ -2350,7 +2351,8 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedSuperAdminUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "SuperAdmin").Any())
+            // Check if SuperAdmin profile already exists by email (unique constraint)
+            if (context.Profiles.Any(c => c.Email == "admin@email.com"))
                 return;
 
             var userAdminProfile = new Profile
@@ -2398,7 +2400,8 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedMarketingUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "Advertisement").Any())
+            // Check if Marketing profile already exists by email (unique constraint)
+            if (context.Profiles.Any(c => c.Email == "marketing@email.com"))
                 return;
 
             var marketingProfile = new Profile
@@ -2446,7 +2449,8 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedSalesUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "Sales").Any())
+            // Check if Sales profile already exists by email (unique constraint)
+            if (context.Profiles.Any(c => c.Email == "sale@email.com"))
                 return;
 
             var salesProfile = new Profile
@@ -2494,7 +2498,8 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedFinanceManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "Account").Any())
+            // Check if Finance profile already exists by email (unique constraint)
+            if (context.Profiles.Any(c => c.Email == "finance@email.com"))
                 return;
 
             var financeManagerProfile = new Profile
@@ -2542,7 +2547,8 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedCustomerManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "Customer Manager").Any())
+            // Check if Customer Manager profile already exists by email (unique constraint)
+            if (context.Profiles.Any(c => c.Email == "customer@email.com"))
                 return;
 
             var customerManagerProfile = new Profile
@@ -2574,7 +2580,8 @@ London, W1A 1AA, United Kingdom.",
 
         private static async Task SeedStockManagerUser(SpotDBContext context, UserManager<AppUser> userManager)
         {
-            if (context.Profiles.Where(c => c.Role == "StockManager").Any())
+            // Check if Stock Manager profile already exists by email (unique constraint)
+            if (context.Profiles.Any(c => c.Email == "stock@email.com"))
                 return;
 
             var stockManagerProfile = new Profile

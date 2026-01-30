@@ -201,6 +201,11 @@ namespace SPOT_API.Persistence
             modelBuilder.Entity<AuditLog>()
                 .HasIndex(a => a.Severity);
 
+            // Configure Role Permissions column as JSONB
+            modelBuilder.Entity<Role>()
+                .Property(r => r.Permissions)
+                .HasColumnType("jsonb");
+
             base.OnModelCreating(modelBuilder);
 
             // Apply configuration to all DateTime properties

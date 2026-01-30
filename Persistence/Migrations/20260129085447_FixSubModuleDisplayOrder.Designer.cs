@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SPOT_API.Persistence;
@@ -11,9 +12,10 @@ using SPOT_API.Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(SpotDBContext))]
-    partial class SpotDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260129085447_FixSubModuleDisplayOrder")]
+    partial class FixSubModuleDisplayOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2699,9 +2701,6 @@ namespace Persistence.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Permissions")
                         .HasColumnType("text");
 
                     b.Property<string>("UpdatedBy")
