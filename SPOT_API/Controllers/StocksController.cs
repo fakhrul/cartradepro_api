@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using SPOT_API.DTOs;
 using SPOT_API.Models;
 using SPOT_API.Persistence;
+using Npgsql;
 
 namespace SPOT_API.Controllers
 {
@@ -672,37 +673,67 @@ namespace SPOT_API.Controllers
         //}
 
         [HttpGet("GetNextStockNumber")]
-        public ActionResult<string> GetNextStockNumber()
+        public async Task<ActionResult<string>> GetNextStockNumber()
         {
-            // Get the latest serial number that follows a numeric pattern
-            var latestSerialNumber = _context.Stocks
-                .OrderByDescending(p => p.CreatedOn)
-                .Select(p => p.StockNo)
-                .FirstOrDefault();
+            // Get all existing stock numbers
+            var existingStockNumbers = await _context.Stocks
+                .Select(s => s.StockNo)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToListAsync();
 
-            if (string.IsNullOrEmpty(latestSerialNumber))
+            if (existingStockNumbers.Count == 0)
             {
                 return "SN0001"; // Default initial serial number
             }
 
-            // Extract numeric part from the latest serial number
-            var numericPart = latestSerialNumber.SkipWhile(c => !char.IsDigit(c)).ToArray();
-            if (numericPart.Length == 0)
+            // Group stock numbers by prefix and find max numeric value
+            var stockGroups = existingStockNumbers
+                .Select(stockNo => {
+                    // Extract prefix (all characters before first digit)
+                    var match = System.Text.RegularExpressions.Regex.Match(stockNo, @"^([A-Za-z]*)(\d+)$");
+                    if (match.Success)
+                    {
+                        var prefix = match.Groups[1].Value;
+                        var numericPart = match.Groups[2].Value;
+                        if (int.TryParse(numericPart, out int number))
+                        {
+                            return new { Prefix = string.IsNullOrEmpty(prefix) ? "SN" : prefix, Number = number, Length = numericPart.Length };
+                        }
+                    }
+                    return null;
+                })
+                .Where(x => x != null)
+                .GroupBy(x => x.Prefix)
+                .Select(g => new {
+                    Prefix = g.Key,
+                    MaxNumber = g.Max(x => x.Number),
+                    PaddingLength = g.Max(x => x.Length)
+                })
+                .OrderByDescending(g => g.MaxNumber)
+                .FirstOrDefault();
+
+            // Default to "SN" prefix if no valid pattern found
+            string prefix = stockGroups?.Prefix ?? "SN";
+            int nextNumber = (stockGroups?.MaxNumber ?? 0) + 1;
+            int paddingLength = stockGroups?.PaddingLength ?? 4;
+
+            // Generate next stock number
+            string suggestedStockNo;
+            int attempts = 0;
+            do
             {
-                return latestSerialNumber + "1"; // Fallback if no numeric part found
-            }
+                suggestedStockNo = $"{prefix}{nextNumber.ToString().PadLeft(paddingLength, '0')}";
 
-            var number = new string(numericPart);
-            if (int.TryParse(number, out int currentNumber))
-            {
-                var newNumber = currentNumber + 1;
-                var newNumberString = newNumber.ToString().PadLeft(number.Length, '0');
+                // Safety check: verify this number doesn't exist (shouldn't happen, but just in case)
+                var exists = await _context.Stocks.AnyAsync(s => s.StockNo == suggestedStockNo);
+                if (!exists)
+                    break;
 
-                // Replace the old numeric part with the new incremented numeric part
-                return latestSerialNumber.Substring(0, latestSerialNumber.Length - number.Length) + newNumberString;
-            }
+                nextNumber++;
+                attempts++;
+            } while (attempts < 100); // Prevent infinite loop
 
-            return latestSerialNumber + "1"; // Fallback if parsing fails
+            return suggestedStockNo;
         }
 
         // GET: api/Stocks/5
@@ -1487,6 +1518,19 @@ namespace SPOT_API.Controllers
                     await _context.Registrations.AddAsync(registration);
                     obj.RegistrationId = registration.Id;
 
+                    // Check for duplicate StockNo (only if StockNo is not null or empty)
+                    if (!string.IsNullOrWhiteSpace(obj.StockNo))
+                    {
+                        var duplicateStockExists = await _context.Stocks
+                            .AnyAsync(s => s.StockNo.ToLower() == obj.StockNo.ToLower());
+
+                        if (duplicateStockExists)
+                        {
+                            await transaction.RollbackAsync();
+                            return BadRequest($"Stock number '{obj.StockNo}' already exists. Please use a different stock number.");
+                        }
+                    }
+
                     // Expense
                     var expense = new Expense();
                     await _context.Expenses.AddAsync(expense);
@@ -1565,22 +1609,72 @@ namespace SPOT_API.Controllers
                     // Rollback transaction in case of failure
                     await transaction.RollbackAsync();
 
-                    // Log database error
+                    // Check for PostgreSQL unique constraint violation
+                    if (dbEx.InnerException is PostgresException postgresEx)
+                    {
+                        // 23505 = unique_violation
+                        if (postgresEx.SqlState == "23505")
+                        {
+                            // Check which constraint was violated
+                            if (postgresEx.ConstraintName == "IX_Stocks_StockNo")
+                            {
+                                await _auditService.LogErrorAsync(
+                                    AuditEventType.StockCreated,
+                                    "Stock Creation Failed - Duplicate Stock Number",
+                                    $"Attempted to create stock with duplicate StockNo: {obj.StockNo}",
+                                    postgresEx.StackTrace,
+                                    errorCode: "DUPLICATE_STOCK_NUMBER",
+                                    description: $"Stock number '{obj.StockNo}' already exists",
+                                    severity: AuditSeverity.Medium
+                                );
+
+                                return BadRequest($"Stock number '{obj.StockNo}' already exists. Please use a different stock number.");
+                            }
+                            else if (postgresEx.Message.Contains("ChasisNo"))
+                            {
+                                await _auditService.LogErrorAsync(
+                                    AuditEventType.StockCreated,
+                                    "Stock Creation Failed - Duplicate Chasis Number",
+                                    $"Attempted to create stock with duplicate ChasisNo: {obj.Vehicle?.ChasisNo}",
+                                    postgresEx.StackTrace,
+                                    errorCode: "DUPLICATE_CHASIS_NUMBER",
+                                    description: $"Chasis number '{obj.Vehicle?.ChasisNo}' already exists",
+                                    severity: AuditSeverity.Medium
+                                );
+
+                                return BadRequest($"Chasis number '{obj.Vehicle?.ChasisNo}' already exists. Please use a different chasis number.");
+                            }
+
+                            // Generic unique constraint violation
+                            await _auditService.LogErrorAsync(
+                                AuditEventType.StockCreated,
+                                "Stock Creation Failed - Unique Constraint Violation",
+                                postgresEx.Message,
+                                postgresEx.StackTrace,
+                                errorCode: "UNIQUE_CONSTRAINT_VIOLATION",
+                                description: $"Unique constraint '{postgresEx.ConstraintName}' violated",
+                                severity: AuditSeverity.Medium
+                            );
+
+                            return BadRequest($"A unique constraint violation occurred. Please check your input and try again.");
+                        }
+                    }
+
+                    // Log database error for other cases
                     await _auditService.LogErrorAsync(
                         AuditEventType.StockCreated,
                         "Stock Creation Failed - Database Error",
                         dbEx.InnerException?.Message ?? dbEx.Message,
                         dbEx.StackTrace,
                         errorCode: "DB_UPDATE_ERROR",
-                        description: $"Failed to create stock - Chasis: {obj.Vehicle?.ChasisNo}",
+                        description: $"Failed to create stock - StockNo: {obj.StockNo}, Chasis: {obj.Vehicle?.ChasisNo}",
                         severity: AuditSeverity.High
                     );
 
-                    // Check for the inner exception for more details
+                    // Return generic database error message
                     if (dbEx.InnerException != null)
                     {
-                        var sqlException = dbEx.InnerException; // Could be SqlException or another type based on the database provider
-                        return BadRequest($"A database error occurred: {sqlException.Message}");
+                        return BadRequest($"A database error occurred: {dbEx.InnerException.Message}");
                     }
 
                     return BadRequest("An error occurred while saving the entity changes.");
