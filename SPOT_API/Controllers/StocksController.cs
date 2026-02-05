@@ -1188,7 +1188,20 @@ namespace SPOT_API.Controllers
 
             _context.Entry(obj.AdminitrativeCost).State = EntityState.Modified;
             _context.Entry(obj.Expense).State = EntityState.Modified;
-            _context.Entry(obj.Advertisement).State = EntityState.Modified;
+
+            // Check if Advertisement exists - if not, create it
+            if (obj.AdvertisementId == null || obj.Advertisement.Id == Guid.Empty)
+            {
+                // New Advertisement - add it to database
+                obj.Advertisement.Id = Guid.NewGuid();
+                obj.AdvertisementId = obj.Advertisement.Id;
+                _context.Entry(obj.Advertisement).State = EntityState.Added;
+            }
+            else
+            {
+                // Existing Advertisement - update it
+                _context.Entry(obj.Advertisement).State = EntityState.Modified;
+            }
 
             //_context.Entry(obj.Vehicle.VehiclePhotoList).State = EntityState.Modified;
 
