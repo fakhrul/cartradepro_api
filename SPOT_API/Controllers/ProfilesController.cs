@@ -520,8 +520,62 @@ namespace SPOT_API.Controllers
             {
                 if(user2.Role != profileDto.Profile.Role)
                 {
+                    Console.WriteLine($"=== [ProfilesController] Role change detected ===");
+                    Console.WriteLine($"User: {user2.UserName}");
+                    Console.WriteLine($"Old Role: {user2.Role}");
+                    Console.WriteLine($"New Role: {profileDto.Profile.Role}");
+
+                    // Update AppUser Role field (legacy)
                     user2.Role = profileDto.Profile.Role;
                     var result = await _userManager.UpdateAsync(user2);
+
+                    // Deactivate all existing UserRole records
+                    var existingUserRoles = await _context.UserRoles
+                        .Where(ur => ur.UserId == user2.Id && ur.IsActive)
+                        .ToListAsync();
+
+                    Console.WriteLine($"Deactivating {existingUserRoles.Count} existing UserRole records...");
+                    foreach (var userRole in existingUserRoles)
+                    {
+                        userRole.IsActive = false;
+                        userRole.EffectiveUntil = DateTime.UtcNow;
+                        _context.Entry(userRole).State = EntityState.Modified;
+                    }
+                    await _context.SaveChangesAsync();
+
+                    // Find the new Role
+                    var newRole = await _context.Roles
+                        .FirstOrDefaultAsync(r => r.Name.ToLower() == profileDto.Profile.Role.ToLower());
+
+                    if (newRole != null)
+                    {
+                        Console.WriteLine($"Creating new UserRole record with role: {newRole.Name}");
+
+                        // Get current user ID for AssignedBy
+                        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                        // Create new active UserRole record
+                        var newUserRole = new UserRole
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user2.Id,
+                            RoleId = newRole.Id,
+                            IsActive = true,
+                            EffectiveFrom = DateTime.UtcNow,
+                            EffectiveUntil = null,
+                            AssignedBy = currentUserId,
+                            AssignedAt = DateTime.UtcNow
+                        };
+
+                        _context.UserRoles.Add(newUserRole);
+                        await _context.SaveChangesAsync();
+
+                        Console.WriteLine($"Successfully updated role for {user2.UserName} to {newRole.Name}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"WARNING: Role '{profileDto.Profile.Role}' not found in Roles table!");
+                    }
                 }
             }
 

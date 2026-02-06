@@ -60,7 +60,7 @@ namespace Application.Services
                         new SubModule { Id = Guid.Parse("8d9eedd2-7e1d-4fb5-ae21-c404340fdee6"), Name = "Expenses", Code = "EXPENSES", DisplayOrder = 10, ModuleId = Guid.Parse("1f105d62-788e-4e23-85b6-379900273f71") },
                         new SubModule { Id = Guid.Parse("7d154a97-3fbe-4636-942f-f124f5945439"), Name = "Administrative Cost", Code = "ADMINISTRATIVE_COST", DisplayOrder = 11, ModuleId = Guid.Parse("1f105d62-788e-4e23-85b6-379900273f71") },
                         new SubModule { Id = Guid.Parse("d8f32175-a289-4f15-a674-6db0a443d08e"), Name = "Disbursement", Code = "DISBURSEMENT", DisplayOrder = 12, ModuleId = Guid.Parse("1f105d62-788e-4e23-85b6-379900273f71") },
-                        new SubModule { Id = Guid.Parse("9f8355e7-1d99-44e3-a83b-fd2a277aa2ed"), Name = "Advertisement", Code = "ADVERTISEMENT", DisplayOrder = 13, ModuleId = Guid.Parse("1f105d62-788e-4e23-85b6-379900273f71") }
+                        new SubModule { Id = Guid.Parse("9f8355e7-1d99-44e3-a83b-fd2a277aa2ed"), Name = "Advertisement", Code = "STOCK_ADVERTISEMENT", DisplayOrder = 13, ModuleId = Guid.Parse("1f105d62-788e-4e23-85b6-379900273f71") }
                     }
                 },
 

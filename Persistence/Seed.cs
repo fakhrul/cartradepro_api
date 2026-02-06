@@ -1989,7 +1989,7 @@ London, W1A 1AA, United Kingdom.",
                     new SubModule { Name = "Expenses", Code = "EXPENSES", ModuleId = stocksModule.Id, DisplayOrder = 10 },
                     new SubModule { Name = "Administrative Cost", Code = "ADMINISTRATIVE_COST", ModuleId = stocksModule.Id, DisplayOrder = 11 },
                     new SubModule { Name = "Disbursement", Code = "DISBURSEMENT", ModuleId = stocksModule.Id, DisplayOrder = 12 },
-                    new SubModule { Name = "Advertisement", Code = "ADVERTISEMENT", ModuleId = stocksModule.Id, DisplayOrder = 13 }
+                    new SubModule { Name = "Advertisement", Code = "STOCK_ADVERTISEMENT", ModuleId = stocksModule.Id, DisplayOrder = 13 }
                 };
                     context.SubModules.AddRange(stockSubModules);
                 }
